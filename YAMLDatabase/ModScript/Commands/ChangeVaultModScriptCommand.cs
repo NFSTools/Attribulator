@@ -1,0 +1,47 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using VaultLib.Core;
+using VaultLib.Core.Data;
+using VaultLib.Core.DB;
+
+namespace YAMLDatabase.ModScript.Commands
+{
+    // change_vault class node vaultName
+    public class ChangeVaultModScriptCommand : BaseModScriptCommand
+    {
+        public string ClassName { get; set; }
+        public string CollectionName { get; set; }
+        public string VaultName { get; set; }
+
+        public override void Parse(List<string> parts)
+        {
+            if (parts.Count != 4)
+            {
+                throw new ModScriptParserException($"Expected 4 tokens, got {parts.Count}");
+            }
+
+            ClassName = CleanHashString(parts[1]);
+            CollectionName = CleanHashString(parts[2]);
+            VaultName = CleanHashString(parts[3]);
+        }
+
+        public override void Execute(Database database)
+        {
+            VltCollection collection = GetCollection(database, ClassName, CollectionName);
+            //Vault vault = database.FindVault(VaultName);
+            Vault vault;
+
+            try
+            {
+                vault = database.FindVault(VaultName);
+            }
+            catch (InvalidOperationException e)
+            {
+                throw new ModScriptCommandExecutionException($"Cannot find vault '{VaultName}'", e);
+            }
+
+            collection.SetVault(vault);
+        }
+    }
+}

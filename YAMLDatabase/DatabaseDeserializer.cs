@@ -12,6 +12,7 @@ using VaultLib.Core.DB;
 using VaultLib.Core.Hashing;
 using VaultLib.Core.Types;
 using VaultLib.Core.Types.EA.Reflection;
+using YAMLDatabase.ModScript.Utils;
 using YAMLDatabase.Profiles;
 using YamlDotNet.Serialization;
 
@@ -41,13 +42,12 @@ namespace YAMLDatabase
         /// <summary>
         /// Deserializes the files.
         /// </summary>
-        public void Deserialize()
+        public LoadedDatabase Deserialize()
         {
             var deserializer = new DeserializerBuilder().Build();
 
             using var dbs = new StreamReader(Path.Combine(_inputDirectory, "info.yml"));
             var loadedDatabase = deserializer.Deserialize<LoadedDatabase>(dbs);
-
 
             foreach (var loadedDatabaseClass in loadedDatabase.Classes)
             {
@@ -94,70 +94,77 @@ namespace YAMLDatabase
                 {
                     var vaultDirectory = Path.Combine(baseDirectory, vault).Trim();
                     var newVault = new Vault(vault) { Database = _database, IsPrimaryVault = vault == "db" };
-
-                    foreach (var dataFile in Directory.GetFiles(vaultDirectory, "*.yml"))
+                    if (Directory.Exists(vaultDirectory))
                     {
-                        var className = Path.GetFileNameWithoutExtension(dataFile);
-                        var vltClass = _database.FindClass(className);
 
-                        if (vltClass == null)
+                        foreach (var dataFile in Directory.GetFiles(vaultDirectory, "*.yml"))
                         {
-                            throw new InvalidDataException($"Unknown class: {className} ({dataFile})");
-                        }
+                            var className = Path.GetFileNameWithoutExtension(dataFile);
+                            var vltClass = _database.FindClass(className);
 
-#if DEBUG
-                        Debug.WriteLine("Processing class '{0}' in vault '{1}' (file: {2})", className, vault, dataFile);
-#else
-                        Console.WriteLine("Processing class '{0}' in vault '{1}' (file: {2})", className, vault, dataFile);
-#endif
-
-                        using var vr = new StreamReader(dataFile);
-                        var collections = deserializer.Deserialize<List<LoadedCollection>>(vr);
-
-                        foreach (var loadedCollection in collections)
-                        {
-                            // BUG 16.02.2020: we have to do this to get around a YamlDotNet bug
-                            if (loadedCollection.Name == null)
-                                loadedCollection.Name = "null";
-
-                            foreach (var k in loadedCollection.Data.Keys.ToList().Where(k => loadedCollection.Data[k] == null))
+                            if (vltClass == null)
                             {
-                                loadedCollection.Data[k] = "null";
+                                throw new InvalidDataException($"Unknown class: {className} ({dataFile})");
                             }
-                        }
 
-                        var newCollections = new List<VltCollection>();
+                            //#if DEBUG
+                            //                        Debug.WriteLine("Processing class '{0}' in vault '{1}' (file: {2})", className, vault, dataFile);
+                            //#else
+                            //                        Console.WriteLine("Processing class '{0}' in vault '{1}' (file: {2})", className, vault, dataFile);
+                            //#endif
 
-                        void AddCollectionsToList(ICollection<VltCollection> collectionList,
-                            IEnumerable<LoadedCollection> collectionsToAdd)
-                        {
-                            if (collectionList == null)
-                                throw new Exception("collectionList should not be null!");
-                            collectionsToAdd ??= new List<LoadedCollection>();
+                            using var vr = new StreamReader(dataFile);
+                            var collections = deserializer.Deserialize<List<LoadedCollection>>(vr);
 
-                            foreach (var loadedCollection in collectionsToAdd)
+                            foreach (var loadedCollection in collections)
                             {
-                                var newVltCollection = new VltCollection(newVault, vltClass, loadedCollection.Name);
+                                // BUG 16.02.2020: we have to do this to get around a YamlDotNet bug
+                                if (loadedCollection.Name == null)
+                                    loadedCollection.Name = "null";
 
-                                foreach (var (key, value) in loadedCollection.Data)
+                                foreach (var k in loadedCollection.Data.Keys.ToList().Where(k => loadedCollection.Data[k] == null))
                                 {
-                                    newVltCollection.SetRawValue(key,
-                                        ConvertSerializedValueToDataValue(vltClass, vltClass[key],
-                                            newVltCollection, value));
+                                    loadedCollection.Data[k] = "null";
                                 }
+                            }
 
-                                collectionParentDictionary[newVltCollection] = loadedCollection.ParentName;
-                                collectionList.Add(newVltCollection);
-                                collectionDictionary[newVltCollection.ShortPath] = newVltCollection;
+                            var newCollections = new List<VltCollection>();
+
+                            void AddCollectionsToList(ICollection<VltCollection> collectionList,
+                                IEnumerable<LoadedCollection> collectionsToAdd)
+                            {
+                                if (collectionList == null)
+                                    throw new Exception("collectionList should not be null!");
+                                collectionsToAdd ??= new List<LoadedCollection>();
+
+                                foreach (var loadedCollection in collectionsToAdd)
+                                {
+                                    var newVltCollection = new VltCollection(newVault, vltClass, loadedCollection.Name);
+
+                                    foreach (var (key, value) in loadedCollection.Data)
+                                    {
+                                        newVltCollection.SetRawValue(key,
+                                            ConvertSerializedValueToDataValue(vltClass, vltClass[key],
+                                                newVltCollection, value));
+                                    }
+
+                                    collectionParentDictionary[newVltCollection] = loadedCollection.ParentName;
+                                    collectionList.Add(newVltCollection);
+                                    collectionDictionary[newVltCollection.ShortPath] = newVltCollection;
+                                }
+                            }
+
+                            AddCollectionsToList(newCollections, collections);
+
+                            foreach (var newCollection in newCollections)
+                            {
+                                _database.RowManager.AddCollection(newCollection);
                             }
                         }
-
-                        AddCollectionsToList(newCollections, collections);
-
-                        foreach (var newCollection in newCollections)
-                        {
-                            _database.RowManager.AddCollection(newCollection);
-                        }
+                    }
+                    else
+                    {
+                        Debug.WriteLine("WARN: vault {0} has no folder", new object[] { vault });
                     }
 
                     vaultsToSaveDictionary[file.Name].Add(newVault);
@@ -182,6 +189,8 @@ namespace YAMLDatabase
             }
 
             _loadedDatabase = loadedDatabase;
+
+            return loadedDatabase;
         }
 
         /// <summary>
@@ -223,7 +232,7 @@ namespace YAMLDatabase
             if (serializedValue is string str &&
                 instance is PrimitiveTypeBase primitiveTypeBase)
             {
-                return DoPrimitiveConversion(primitiveTypeBase, str);
+                return ValueConversionUtils.DoPrimitiveConversion(primitiveTypeBase, str);
             }
 
             if (serializedValue is Dictionary<object, object> dictionary)
@@ -320,80 +329,6 @@ namespace YAMLDatabase
             }
 
             return instance;
-        }
-
-        private static VLTBaseType DoPrimitiveConversion(PrimitiveTypeBase primitiveTypeBase, string str)
-        {
-            // Do primitive conversion
-            var primitiveInfoAttribute =
-                primitiveTypeBase.GetType().GetCustomAttribute<PrimitiveInfoAttribute>();
-
-            if (primitiveInfoAttribute == null)
-            {
-                // Try to determine enum type
-                if (primitiveTypeBase.GetType().IsGenericType &&
-                    primitiveTypeBase.GetType().GetGenericTypeDefinition() == typeof(VLTEnumType<>))
-                {
-                    primitiveInfoAttribute = new PrimitiveInfoAttribute(primitiveTypeBase.GetType().GetGenericArguments()[0]);
-                }
-                else
-                {
-                    throw new InvalidDataException("Cannot determine primitive type");
-                }
-            }
-
-            if (primitiveInfoAttribute.PrimitiveType.IsEnum)
-            {
-                if (str.StartsWith("0x") &&
-                    uint.TryParse(str.Substring(2), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out uint val))
-                {
-                    primitiveTypeBase.SetValue((IConvertible)Enum.Parse(primitiveInfoAttribute.PrimitiveType, val.ToString()));
-                }
-                else
-                {
-                    primitiveTypeBase.SetValue((IConvertible)Enum.Parse(primitiveInfoAttribute.PrimitiveType, str));
-                }
-            }
-            else
-            {
-                primitiveTypeBase.SetValue(
-                    (IConvertible)Convert.ChangeType(str, primitiveInfoAttribute.PrimitiveType, CultureInfo.InvariantCulture));
-            }
-
-            return primitiveTypeBase;
-        }
-
-        private static object DoPrimitiveConversion(object value, string str)
-        {
-            if (value == null)
-            {
-                // we don't know the type, just assume we need a string
-                return str;
-            }
-
-            Type type = value.GetType();
-
-            if (type == typeof(uint))
-            {
-                if (str.StartsWith("0x"))
-                    return uint.Parse(str.Substring(2), NumberStyles.AllowHexSpecifier);
-                if (!uint.TryParse(str, out _))
-                    return VLT32Hasher.Hash(str);
-            }
-            else if (type == typeof(int))
-            {
-                if (str.StartsWith("0x"))
-                    return int.Parse(str.Substring(2), NumberStyles.AllowHexSpecifier);
-                if (!uint.TryParse(str, out _))
-                    return unchecked((int)VLT32Hasher.Hash(str));
-            }
-
-            if (type.IsEnum)
-            {
-                return Enum.Parse(type, str);
-            }
-
-            return Convert.ChangeType(str, type, CultureInfo.InvariantCulture);
         }
     }
 }

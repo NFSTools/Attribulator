@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
+using VaultLib.Core.DB;
 
-namespace YAMLDatabase.ModScript
+namespace YAMLDatabase.ModScript.Commands
 {
     public class GameModScriptCommand : BaseModScriptCommand
     {
@@ -9,6 +10,11 @@ namespace YAMLDatabase.ModScript
         public override void Parse(List<string> parts)
         {
             this.Game = parts[1];
+        }
+
+        public override void Execute(Database database)
+        {
+            //
         }
     }
 }

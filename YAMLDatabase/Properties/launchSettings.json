@@ -8,9 +8,17 @@
       "commandName": "Project",
       "commandLineArgs": "-p CARBON -m Pack -i \"D:\\Games\\NFS\\Need for Speed - Carbon\\vlt-export\" -o \"D:\\Games\\NFS\\Need for Speed - Carbon\\vlt-export\\bin\""
     },
+    "Apply NFSCO script": {
+      "commandName": "Project",
+      "commandLineArgs": "-p CARBON -m ApplyModScript -i \"D:\\Games\\NFS\\Need for Speed - Carbon\\vlt-export\" -o \"D:\\Games\\NFS\\Need for Speed - Carbon\\vlt-export\\bin\" -s \"C:\\Users\\coder\\Downloads\\main_log.nfsms\""
+    },
+    "Unpack - IMPMOD": {
+      "commandName": "Project",
+      "commandLineArgs": "-p CARBON -m Unpack -i \"C:\\Users\\coder\\Downloads\\NFSC_-_IMPGMODV2_-_GLOBAL\" -o \"C:\\Users\\coder\\Downloads\\NFSC_-_IMPGMODV2_-_GLOBAL\\export\""
+    },
     "Apply IMPMOD script": {
       "commandName": "Project",
-      "commandLineArgs": "-p CARBON -m ApplyModScript -i \"D:\\Games\\NFS\\Need for Speed - Carbon\\vlt-export\" -o \"D:\\Games\\NFS\\Need for Speed - Carbon\\vlt-export\\bin\" -s \"C:\\Users\\coder\\Downloads\\NFSC_-_IMPGMODV2_-_GLOBAL\\Main.nfsms\""
+      "commandLineArgs": "-p CARBON -m ApplyModScript -i \"C:\\Users\\coder\\Downloads\\NFSC_-_IMPGMODV2_-_GLOBAL\\export\" -o \"C:\\Users\\coder\\Downloads\\NFSC_-_IMPGMODV2_-_GLOBAL\\bin\" -s \"C:\\Users\\coder\\Downloads\\NFSC_-_IMPGMODV2_-_GLOBAL\\Main.nfsms\""
     }
   }
 }

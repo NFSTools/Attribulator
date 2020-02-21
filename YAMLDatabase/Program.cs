@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using VaultLib.Core.DB;
 using VaultLib.Core.Hashing;
+using VaultLib.Core.Utils;
 using YAMLDatabase.ModScript;
 using YAMLDatabase.Profiles;
 
@@ -106,12 +107,40 @@ namespace YAMLDatabase
             Debug.WriteLine("Loaded database from {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
                 stopwatch.ElapsedMilliseconds / 1000f, args.InputDirectory);
 
+            stopwatch.Restart();
+
             var modScriptParser = new ModScriptParser(args.ModScriptPath);
 
             foreach (var command in modScriptParser.Parse())
             {
-                //Debug.WriteLine(command);
+                command.Execute(database);
             }
+            Debug.WriteLine("Applied script from {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
+                stopwatch.ElapsedMilliseconds / 1000f, args.ModScriptPath);
+            stopwatch.Stop();
+
+            foreach (var collection in database.RowManager.GetFlattenedCollections())
+            {
+                foreach (var dataPair in collection.GetData())
+                {
+                    if (dataPair.Value is IReferencesStrings stringReferencer)
+                    {
+                        foreach (var s in stringReferencer.GetStrings())
+                        {
+                            if (s == null)
+                                throw new Exception(
+                                    $"collection {collection.ShortPath} field {dataPair.Key} has a null string!");
+                        }
+                    }
+                }
+            }
+
+            stopwatch.Restart();
+            deserializer.GenerateFiles(profile, args.OutputDirectory);
+            stopwatch.Stop();
+
+            Debug.WriteLine("Exported VLT files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
+                stopwatch.ElapsedMilliseconds / 1000f, args.OutputDirectory);
         }
 
         private static void RunUnpack(ProgramArgs args, BaseProfile profile)

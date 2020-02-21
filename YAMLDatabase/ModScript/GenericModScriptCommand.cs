@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using VaultLib.Core.DB;
 
 namespace YAMLDatabase.ModScript
 {
@@ -14,6 +15,11 @@ namespace YAMLDatabase.ModScript
         public override void Parse(List<string> parts)
         {
             //
+        }
+
+        public override void Execute(Database database)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }
