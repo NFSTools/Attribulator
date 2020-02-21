@@ -88,6 +88,8 @@ namespace YAMLDatabase
 
             foreach (var file in loadedDatabase.Files)
             {
+                file.LoadedVaults = new List<Vault>();
+
                 var baseDirectory = Path.Combine(_inputDirectory, file.Group, file.Name);
                 vaultsToSaveDictionary[file.Name] = new List<Vault>();
                 foreach (var vault in file.Vaults)
@@ -169,6 +171,8 @@ namespace YAMLDatabase
 
                     vaultsToSaveDictionary[file.Name].Add(newVault);
                     _database.Vaults.Add(newVault);
+
+                    file.LoadedVaults.Add(newVault);
                 }
             }
 

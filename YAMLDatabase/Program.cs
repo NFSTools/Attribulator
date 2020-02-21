@@ -101,7 +101,7 @@ namespace YAMLDatabase
             var deserializer = new DatabaseDeserializer(database, args.InputDirectory);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
-            deserializer.Deserialize();
+            var loadedDatabase = deserializer.Deserialize();
             stopwatch.Stop();
 
             Debug.WriteLine("Loaded database from {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
@@ -115,25 +115,22 @@ namespace YAMLDatabase
             {
                 command.Execute(database);
             }
+            stopwatch.Stop();
             Debug.WriteLine("Applied script from {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
                 stopwatch.ElapsedMilliseconds / 1000f, args.ModScriptPath);
+
+            stopwatch.Restart();
+
+            Debug.WriteLine("Making backup");
+            DirectoryCopy(args.InputDirectory, $"{args.InputDirectory.TrimEnd('/', '\\')}_{DateTimeOffset.Now.ToUnixTimeSeconds()}", true);
+
+            new DatabaseSerializer(database, args.InputDirectory).Serialize(loadedDatabase.Files);
+
+            //deserializer.GenerateFiles(profile, args.OutputDirectory);
             stopwatch.Stop();
 
-            foreach (var collection in database.RowManager.GetFlattenedCollections())
-            {
-                foreach (var dataPair in collection.GetData())
-                {
-                    if (dataPair.Value is IReferencesStrings stringReferencer)
-                    {
-                        foreach (var s in stringReferencer.GetStrings())
-                        {
-                            if (s == null)
-                                throw new Exception(
-                                    $"collection {collection.ShortPath} field {dataPair.Key} has a null string!");
-                        }
-                    }
-                }
-            }
+            Debug.WriteLine("Exported YML files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
+                stopwatch.ElapsedMilliseconds / 1000f, args.InputDirectory);
 
             stopwatch.Restart();
             deserializer.GenerateFiles(profile, args.OutputDirectory);
@@ -141,6 +138,44 @@ namespace YAMLDatabase
 
             Debug.WriteLine("Exported VLT files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
                 stopwatch.ElapsedMilliseconds / 1000f, args.OutputDirectory);
+        }
+
+        private static void DirectoryCopy(string sourceDirName, string destDirName, bool copySubDirs)
+        {
+            // Get the subdirectories for the specified directory.
+            DirectoryInfo dir = new DirectoryInfo(sourceDirName);
+
+            if (!dir.Exists)
+            {
+                throw new DirectoryNotFoundException(
+                    "Source directory does not exist or could not be found: "
+                    + sourceDirName);
+            }
+
+            DirectoryInfo[] dirs = dir.GetDirectories();
+            // If the destination directory doesn't exist, create it.
+            if (!Directory.Exists(destDirName))
+            {
+                Directory.CreateDirectory(destDirName);
+            }
+
+            // Get the files in the directory and copy them to the new location.
+            FileInfo[] files = dir.GetFiles();
+            foreach (FileInfo file in files)
+            {
+                string temppath = Path.Combine(destDirName, file.Name);
+                file.CopyTo(temppath, false);
+            }
+
+            // If copying subdirectories, copy them and their contents to new location.
+            if (copySubDirs)
+            {
+                foreach (DirectoryInfo subdir in dirs)
+                {
+                    string temppath = Path.Combine(destDirName, subdir.Name);
+                    DirectoryCopy(subdir.FullName, temppath, copySubDirs);
+                }
+            }
         }
 
         private static void RunUnpack(ProgramArgs args, BaseProfile profile)
