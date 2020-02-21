@@ -46,7 +46,7 @@ namespace YAMLDatabase.Profiles
                 Directory.CreateDirectory(Path.Combine(directory, file.Group));
                 var outPath = Path.Combine(directory, file.Group, file.Name + ".bin");
                 Debug.WriteLine("Saving file '{0}' to '{1}' ({2} vaults)", file.Name, outPath, vaultsToSave.Count);
-                using var bw = new BinaryWriter(File.OpenWrite(outPath));
+                using var bw = new BinaryWriter(File.Open(outPath, FileMode.Create, FileAccess.ReadWrite));
                 vaultPack.Save(bw, vaultsToSave, new PackSavingOptions());
                 bw.Close();
 
