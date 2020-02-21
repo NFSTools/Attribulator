@@ -62,6 +62,11 @@ namespace YAMLDatabase.ModScript.Commands
             VltCollection newCollection = new VltCollection(collection.Vault, collection.Class, DestinationCollectionName);
             CopyCollection(database, collection, newCollection);
 
+            if (newCollection.Class.HasField("CollectionName"))
+            {
+                newCollection.SetDataValue("CollectionName", DestinationCollectionName);
+            }
+
             if (parentCollection == null)
                 database.RowManager.AddCollection(newCollection);
             else
