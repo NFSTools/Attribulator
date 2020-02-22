@@ -63,8 +63,7 @@ namespace YAMLDatabase
             List<BaseProfile> profiles = new List<BaseProfile>
             {
                 new CarbonProfile(),
-
-                // TODO: add more profiles
+                new MostWantedProfile(),
             };
 
             BaseProfile profile = profiles.Find(p => p.GetName() == args.ProfileName);
