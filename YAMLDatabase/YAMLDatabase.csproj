@@ -18,8 +18,9 @@
 
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.7.82" />
-    <PackageReference Include="VaultLib.Core" Version="1.0.32" />
-    <PackageReference Include="VaultLib.Support.Carbon" Version="1.0.19" />
+    <PackageReference Include="VaultLib.Core" Version="1.1.0" />
+    <PackageReference Include="VaultLib.Support.Carbon" Version="1.1.0" />
+    <PackageReference Include="VaultLib.Support.MostWanted" Version="1.1.0" />
     <PackageReference Include="YamlDotNet" Version="8.1.0" />
   </ItemGroup>
 

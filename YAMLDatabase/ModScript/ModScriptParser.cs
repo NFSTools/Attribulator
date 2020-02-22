@@ -96,6 +96,7 @@ namespace YAMLDatabase.ModScript
                         break;
                 }
 
+                command.Line = line;
                 command.Parse(parts);
 
                 yield return command;

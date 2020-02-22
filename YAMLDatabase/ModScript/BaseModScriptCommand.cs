@@ -12,6 +12,8 @@ namespace YAMLDatabase.ModScript
 
         public abstract void Execute(Database database);
 
+        public string Line { get; set; }
+
         protected VltCollection GetCollection(Database database, string className, string collectionName, bool throwOnMissing = true)
         {
             VltCollection collection = database.RowManager.FindCollectionByName(className, collectionName);

@@ -9,6 +9,7 @@ using System.Runtime.Serialization;
 using VaultLib.Core;
 using VaultLib.Core.Data;
 using VaultLib.Core.DB;
+using VaultLib.Core.Hashing;
 using VaultLib.Core.Types;
 using VaultLib.Core.Types.Attrib.Types;
 using VaultLib.Core.Types.EA.Reflection;
@@ -94,7 +95,7 @@ namespace YAMLDatabase.ModScript.Commands
             }
             else
             {
-                // TODO: change Matrix to be multiple floats instead of 1 array
+                // TODO for VaultLib: change Matrix to be multiple floats instead of 1 array
                 if (itemToEdit is Matrix matrix && PropertyPath.Count == 1)
                 {
                     string matrixPath =
