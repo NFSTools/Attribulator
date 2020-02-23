@@ -11,6 +11,7 @@ using VaultLib.Core.Data;
 using VaultLib.Core.DB;
 using VaultLib.Core.Hashing;
 using VaultLib.Core.Types;
+using VaultLib.Core.Types.Attrib;
 using VaultLib.Core.Types.EA.Reflection;
 using YAMLDatabase.ModScript.Utils;
 using YAMLDatabase.Profiles;
@@ -233,10 +234,24 @@ namespace YAMLDatabase
         private VLTBaseType DoValueConversion(string gameId, VltClass vltClass, VltClassField field, VltCollection vltCollection,
             object serializedValue, object instance)
         {
-            if (serializedValue is string str &&
-                instance is PrimitiveTypeBase primitiveTypeBase)
+            if (serializedValue is string str)
             {
-                return ValueConversionUtils.DoPrimitiveConversion(primitiveTypeBase, str);
+                if (instance is PrimitiveTypeBase primitiveTypeBase)
+                    return ValueConversionUtils.DoPrimitiveConversion(primitiveTypeBase, str);
+                if (instance is BaseBlob blob )
+                {
+                    if (!string.IsNullOrWhiteSpace(str))
+                    {
+                        if (!File.Exists(str))
+                        {
+                            throw new InvalidDataException($"Could not locate blob data file for {vltCollection.ShortPath}[{field.Name}]");
+                        }
+
+                        blob.Data = File.ReadAllBytes(str);
+                    }
+                    
+                    return blob;
+                }
             }
 
             if (serializedValue is Dictionary<object, object> dictionary)

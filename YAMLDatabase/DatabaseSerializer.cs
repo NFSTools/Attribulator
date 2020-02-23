@@ -7,6 +7,7 @@ using System.Reflection;
 using VaultLib.Core.Data;
 using VaultLib.Core.DB;
 using VaultLib.Core.Types;
+using VaultLib.Core.Types.Attrib;
 using VaultLib.Core.Types.EA.Reflection;
 using YamlDotNet.Serialization;
 
@@ -73,7 +74,7 @@ namespace YAMLDatabase
                         MaxCount = field.MaxCount,
                         Size = field.Size,
                         Offset = field.Offset,
-                        StaticValue = ConvertDataValueToSerializedValue(field.StaticValue)
+                        StaticValue = ConvertDataValueToSerializedValue(_outputDirectory, null, field, field.StaticValue)
                     }));
 
                 loadedDatabase.Classes.Add(loadedDatabaseClass);
@@ -102,7 +103,7 @@ namespace YAMLDatabase
                         .GroupBy(v => v.Class.Name))
                     {
                         var loadedCollections = new List<LoadedCollection>();
-                        AddLoadedCollections(loadedCollections, collectionGroup);
+                        AddLoadedCollections(vaultDirectory, loadedCollections, collectionGroup);
 
                         using var vw = new StreamWriter(Path.Combine(vaultDirectory, collectionGroup.Key + ".yml"));
                         serializer.Serialize(vw, loadedCollections);
@@ -111,7 +112,7 @@ namespace YAMLDatabase
             }
         }
 
-        private void AddLoadedCollections(ICollection<LoadedCollection> loadedVaultCollections, IEnumerable<VltCollection> vltCollections)
+        private void AddLoadedCollections(string directory, ICollection<LoadedCollection> loadedVaultCollections, IEnumerable<VltCollection> vltCollections)
         {
             foreach (var vltCollection in vltCollections)
             {
@@ -124,19 +125,21 @@ namespace YAMLDatabase
 
                 foreach (var (key, value) in vltCollection.GetData())
                 {
-                    loadedCollection.Data[key] = ConvertDataValueToSerializedValue(value);
+                    loadedCollection.Data[key] = ConvertDataValueToSerializedValue(directory, vltCollection, vltCollection.Class[key], value);
                 }
 
                 loadedVaultCollections.Add(loadedCollection);
             }
         }
 
-        private object ConvertDataValueToSerializedValue(VLTBaseType dataPairValue)
+        private object ConvertDataValueToSerializedValue(string directory, VltCollection collection, VltClassField field, VLTBaseType dataPairValue)
         {
             switch (dataPairValue)
             {
                 case PrimitiveTypeBase ptb:
                     return ptb.GetValue();
+                case BaseBlob blob:
+                    return ProcessBlob(directory, collection, field, blob);
                 case VLTArrayType array:
                     {
                         var listType = typeof(List<>);
@@ -147,7 +150,7 @@ namespace YAMLDatabase
                         foreach (var arrayItem in array.Items)
                         {
                             instance.Add(listGenericType.IsPrimitive || listGenericType.IsEnum || listGenericType == typeof(string)
-                                ? ConvertDataValueToSerializedValue(arrayItem)
+                                ? ConvertDataValueToSerializedValue(directory, collection, field, arrayItem)
                                 : arrayItem);
                         }
 
@@ -160,6 +163,23 @@ namespace YAMLDatabase
                 default:
                     return dataPairValue;
             }
+        }
+
+        private object ProcessBlob(string directory, VltCollection collection, VltClassField field, BaseBlob blob)
+        {
+            if (blob.Data != null && blob.Data.Length > 0)
+            {
+                var blobDir = Path.Combine(directory, "_blobs");
+                Directory.CreateDirectory(blobDir);
+                var blobPath = Path.Combine(blobDir,
+                    $"{collection.ShortPath.TrimEnd('/', '\\').Replace('/', '_').Replace('\\', '_')}_{field.Name}.bin");
+
+                File.WriteAllBytes(blobPath, blob.Data);
+
+                return blobPath;
+            }
+
+            return "";
         }
 
         private static Type ResolveType(Type type)
