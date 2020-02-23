@@ -2,13 +2,15 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using CoreLibraries.GameUtilities;
 using VaultLib.Core;
 using VaultLib.Core.DB;
 using VaultLib.Core.Pack;
+using YAMLDatabase.Profiles.World;
 
 namespace YAMLDatabase.Profiles
 {
-    public class MostWantedProfile : BaseProfile
+    public class WorldProfile : BaseProfile
     {
         public override IList<LoadedDatabaseFile> LoadFiles(Database database, string directory)
         {
@@ -16,14 +18,24 @@ namespace YAMLDatabase.Profiles
             foreach (var file in GetFilesToLoad(directory))
             {
                 var path = Path.Combine(directory, file);
-                var standardVaultPack = new StandardVaultPack();
+                //var standardVaultPack = new StandardVaultPack();
                 using var br = new BinaryReader(File.OpenRead(path));
-                var vaults = standardVaultPack.Load(br, database, new PackLoadingOptions());
+
+                IVaultPack vaultPack = new StandardVaultPack();
+                string group = "main";
+
+                if (file.Contains("gc.vaults"))
+                {
+                    vaultPack = new GameplayVault(null);
+                    group = "gameplay";
+                }
+
+                var vaults = vaultPack.Load(br, database, new PackLoadingOptions());
 
                 var loadedDatabaseFile = new LoadedDatabaseFile
                 {
                     Name = Path.GetFileNameWithoutExtension(file),
-                    Group = "main",
+                    Group = group,
                     Vaults = vaults.Select(v => v.Name).ToList(),
                     LoadedVaults = new List<Vault>(vaults)
                 };
@@ -42,6 +54,9 @@ namespace YAMLDatabase.Profiles
 
                 IVaultPack vaultPack = new StandardVaultPack();
 
+                if (file.Group == "gameplay")
+                    vaultPack = new GameplayVault(file.Name);
+
                 //var standardVaultPack = new StandardVaultPack();
                 Directory.CreateDirectory(Path.Combine(directory, file.Group));
                 var outPath = Path.Combine(directory, file.Group, file.Name + ".bin");
@@ -49,33 +64,17 @@ namespace YAMLDatabase.Profiles
                 using var bw = new BinaryWriter(File.Open(outPath, FileMode.Create, FileAccess.ReadWrite));
                 vaultPack.Save(bw, vaultsToSave, new PackSavingOptions());
                 bw.Close();
-
-                if (file.Name == "gameplay")
-                {
-                    using (FileStream outStream = new FileStream(Path.ChangeExtension(outPath, "lzc"), FileMode.Create, FileAccess.Write))
-                    using (FileStream inStream = new FileStream(outPath, FileMode.Open, FileAccess.Read))
-                    using (BinaryWriter outWriter = new BinaryWriter(outStream))
-                    {
-                        outWriter.Write(0x57574152); // RAWW
-                        outWriter.Write((byte)0x01);
-                        outWriter.Write((byte)0x10);
-                        outWriter.Write((ushort)0);
-                        outWriter.Write((int)inStream.Length);
-                        outWriter.Write((int)(inStream.Length + 16));
-                        inStream.CopyTo(outStream);
-                    }
-                }
             }
         }
 
         public override string GetName()
         {
-            return "MOST_WANTED";
+            return GameIdHelper.ID_WORLD;
         }
 
         public override string GetGame()
         {
-            return "MOST_WANTED";
+            return GameIdHelper.ID_WORLD;
         }
 
         public override DatabaseType GetDatabaseType()
@@ -85,7 +84,14 @@ namespace YAMLDatabase.Profiles
 
         public override IEnumerable<string> GetFilesToLoad(string directory)
         {
-            return new[] {"attributes.bin", "fe_attrib.bin", "gameplay.bin"};
+            yield return "attributes.bin";
+            yield return "commerce.bin";
+            yield return "fe_attrib.bin";
+
+            foreach (var file in Directory.GetFiles(Path.Combine(directory, "gc.vaults"), "*.bin", SearchOption.TopDirectoryOnly))
+            {
+                yield return file.Substring(directory.Length);
+            }
         }
     }
 }

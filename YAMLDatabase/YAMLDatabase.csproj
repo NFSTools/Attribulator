@@ -1,9 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <Authors>heyitsleo/NFSTools</Authors>
+    <Company>NFSTools</Company>
+    <Description>Allows the user to edit VLT databases through text (.yml) files</Description>
     <OutputType>Exe</OutputType>
+    <Platforms>x86</Platforms>
+    <Product>YAMLDatabase</Product>
     <TargetFramework>netcoreapp3.0</TargetFramework>
-    <Platforms>AnyCPU;x86</Platforms>
+    <Version>1.0.3</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,6 +26,9 @@
     <PackageReference Include="VaultLib.Core" Version="1.1.1" />
     <PackageReference Include="VaultLib.Support.Carbon" Version="1.1.1" />
     <PackageReference Include="VaultLib.Support.MostWanted" Version="1.1.1" />
+    <PackageReference Include="VaultLib.Support.ProStreet" Version="1.1.1" />
+    <PackageReference Include="VaultLib.Support.Undercover" Version="1.1.1" />
+    <PackageReference Include="VaultLib.Support.World" Version="1.1.1" />
     <PackageReference Include="YamlDotNet" Version="8.1.0" />
   </ItemGroup>
 

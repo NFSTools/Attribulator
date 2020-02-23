@@ -62,15 +62,25 @@ namespace YAMLDatabase
 
             List<BaseProfile> profiles = new List<BaseProfile>
             {
-                new CarbonProfile(),
                 new MostWantedProfile(),
+                new CarbonProfile(),
+                new ProStreetProfile(),
+                new UndercoverProfile(),
+                new WorldProfile()
             };
 
             BaseProfile profile = profiles.Find(p => p.GetName() == args.ProfileName);
 
             if (profile == null)
             {
-                throw new Exception("Unknown profile: " + args.ProfileName);
+                Console.WriteLine("ERROR: Unknown profile {0}", args.ProfileName);
+                Console.WriteLine("AVAILABLE PROFILES:");
+                foreach (var baseProfile in profiles)
+                {
+                    Console.WriteLine("\tNAME: {0}", baseProfile.GetName());
+                }
+
+                return;
             }
 
             switch (args.Mode)

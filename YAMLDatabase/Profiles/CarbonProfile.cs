@@ -13,7 +13,7 @@ namespace YAMLDatabase.Profiles
         public override IList<LoadedDatabaseFile> LoadFiles(Database database, string directory)
         {
             List<LoadedDatabaseFile> files = new List<LoadedDatabaseFile>();
-            foreach (var file in GetFilesToLoad())
+            foreach (var file in GetFilesToLoad(directory))
             {
                 var path = Path.Combine(directory, file);
                 var standardVaultPack = new StandardVaultPack();
@@ -83,7 +83,7 @@ namespace YAMLDatabase.Profiles
             return DatabaseType.X86Database;
         }
 
-        public override string[] GetFilesToLoad()
+        public override IEnumerable<string> GetFilesToLoad(string directory)
         {
             return new[] {"attributes.bin", "fe_attrib.bin", "gameplay.bin"};
         }

@@ -176,7 +176,7 @@ namespace YAMLDatabase
 
                 File.WriteAllBytes(blobPath, blob.Data);
 
-                return blobPath;
+                return blobPath.Substring(directory.Length + 1);
             }
 
             return "";

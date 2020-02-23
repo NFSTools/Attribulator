@@ -6,7 +6,7 @@
     },
     "Pack - clean": {
       "commandName": "Project",
-      "commandLineArgs": "-p CARBON -m Pack -i \"D:\\Games\\NFS\\Need for Speed - Carbon\\vlt-export\" -o \"D:\\Games\\NFS\\Need for Speed - Carbon\\vlt-export\\bin\""
+      "commandLineArgs": "-p CARBON -m Pack -i \"D:\\Games\\NFS\\Need for Speed - Carbon\\vlt-export\\yml\" -o \"D:\\Games\\NFS\\Need for Speed - Carbon\\vlt-export\\bin\""
     },
     "Apply NFSCO script": {
       "commandName": "Project",

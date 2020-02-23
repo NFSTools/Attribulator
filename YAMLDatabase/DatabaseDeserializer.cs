@@ -68,7 +68,7 @@ namespace YAMLDatabase
                     // Handle static value
                     if (loadedDatabaseClassField.StaticValue != null)
                     {
-                        field.StaticValue = ConvertSerializedValueToDataValue(_database.Options.GameId, vltClass, field, null,
+                        field.StaticValue = ConvertSerializedValueToDataValue(_database.Options.GameId, _inputDirectory, vltClass, field, null,
                             loadedDatabaseClassField.StaticValue);
                     }
 
@@ -147,7 +147,7 @@ namespace YAMLDatabase
                                     foreach (var (key, value) in loadedCollection.Data)
                                     {
                                         newVltCollection.SetRawValue(key,
-                                            ConvertSerializedValueToDataValue(_database.Options.GameId, vltClass, vltClass[key],
+                                            ConvertSerializedValueToDataValue(_database.Options.GameId, vaultDirectory, vltClass, vltClass[key],
                                                 newVltCollection, value));
                                     }
 
@@ -208,7 +208,7 @@ namespace YAMLDatabase
             profile.SaveFiles(_database, outputDirectory, _loadedDatabase.Files);
         }
 
-        private VLTBaseType ConvertSerializedValueToDataValue(string gameId, VltClass vltClass, VltClassField field,
+        private VLTBaseType ConvertSerializedValueToDataValue(string gameId, string dir, VltClass vltClass, VltClassField field,
            VltCollection vltCollection, object serializedValue, bool createInstance = true)
         {
             //    0. Is it null? Bail out right away.
@@ -228,10 +228,10 @@ namespace YAMLDatabase
                 : TypeRegistry.ConstructInstance(TypeRegistry.ResolveType(gameId, field.TypeName), vltClass, field,
                     vltCollection);
 
-            return DoValueConversion(gameId, vltClass, field, vltCollection, serializedValue, instance);
+            return DoValueConversion(gameId, dir, vltClass, field, vltCollection, serializedValue, instance);
         }
 
-        private VLTBaseType DoValueConversion(string gameId, VltClass vltClass, VltClassField field, VltCollection vltCollection,
+        private VLTBaseType DoValueConversion(string gameId, string dir, VltClass vltClass, VltClassField field, VltCollection vltCollection,
             object serializedValue, object instance)
         {
             if (serializedValue is string str)
@@ -242,6 +242,7 @@ namespace YAMLDatabase
                 {
                     if (!string.IsNullOrWhiteSpace(str))
                     {
+                        str = Path.Combine(dir, str);
                         if (!File.Exists(str))
                         {
                             throw new InvalidDataException($"Could not locate blob data file for {vltCollection.ShortPath}[{field.Name}]");
@@ -257,14 +258,14 @@ namespace YAMLDatabase
             if (serializedValue is Dictionary<object, object> dictionary)
             {
                 return (VLTBaseType)(instance is VLTArrayType array
-                    ? DoArrayConversion(gameId, vltClass, field, vltCollection, array, dictionary)
-                    : DoDictionaryConversion(gameId, vltClass, field, vltCollection, instance, dictionary));
+                    ? DoArrayConversion(gameId, dir, vltClass, field, vltCollection, array, dictionary)
+                    : DoDictionaryConversion(gameId, dir, vltClass, field, vltCollection, instance, dictionary));
             }
 
             throw new InvalidDataException("Could not convert serialized value of type: " + serializedValue.GetType());
         }
 
-        private VLTArrayType DoArrayConversion(string gameId, VltClass vltClass, VltClassField field,
+        private VLTArrayType DoArrayConversion(string gameId, string dir, VltClass vltClass, VltClassField field,
             VltCollection vltCollection, VLTArrayType array, Dictionary<object, object> dictionary)
         {
             var capacity = ushort.Parse(dictionary["Capacity"].ToString());
@@ -277,7 +278,7 @@ namespace YAMLDatabase
 
             foreach (var o in rawItemList)
             {
-                var newArrayItem = ConvertSerializedValueToDataValue(gameId, vltClass, field, vltCollection, o, false);
+                var newArrayItem = ConvertSerializedValueToDataValue(gameId, dir, vltClass, field, vltCollection, o, false);
 
                 array.Items.Add(newArrayItem);
             }
@@ -285,7 +286,7 @@ namespace YAMLDatabase
             return array;
         }
 
-        private object DoDictionaryConversion(string gameId, VltClass vltClass, VltClassField field,
+        private object DoDictionaryConversion(string gameId, string dir, VltClass vltClass, VltClassField field,
             VltCollection vltCollection, object instance, Dictionary<object, object> dictionary)
         {
             foreach (var pair in dictionary)
@@ -311,7 +312,8 @@ namespace YAMLDatabase
                 }
                 else if (propType.IsPrimitive || propType == typeof(string))
                 {
-                    propertyInfo.SetValue(instance, Convert.ChangeType(pair.Value, propType, CultureInfo.InvariantCulture));
+                    var newValue = FixUpValueForComplexObject(pair.Value);
+                    propertyInfo.SetValue(instance, Convert.ChangeType(newValue, propType, CultureInfo.InvariantCulture));
                 }
                 else if (pair.Value is List<object> objects)
                 {
@@ -326,7 +328,7 @@ namespace YAMLDatabase
                         }
                         else
                         {
-                            newList[index] = Convert.ChangeType(objects[index].ToString(), elemType, CultureInfo.InvariantCulture);
+                            newList[index] = Convert.ChangeType(FixUpValueForComplexObject(objects[index]), elemType, CultureInfo.InvariantCulture);
                         }
                     }
 
@@ -339,7 +341,7 @@ namespace YAMLDatabase
                         : Activator.CreateInstance(propType);
 
                     propertyInfo.SetValue(instance,
-                        DoDictionaryConversion(gameId, vltClass, field, vltCollection, propInstance, objectDictionary));
+                        DoDictionaryConversion(gameId, dir, vltClass, field, vltCollection, propInstance, objectDictionary));
                 }
                 else if (pair.Value != null)
                 {
@@ -348,6 +350,17 @@ namespace YAMLDatabase
             }
 
             return instance;
+        }
+
+        private static object FixUpValueForComplexObject(object value)
+        {
+            object newValue = value;
+            string valueToStr = value.ToString();
+
+            if (valueToStr.StartsWith("0x"))
+                newValue = uint.Parse(valueToStr.Substring(2), NumberStyles.AllowHexSpecifier,
+                    CultureInfo.InvariantCulture);
+            return newValue;
         }
     }
 }

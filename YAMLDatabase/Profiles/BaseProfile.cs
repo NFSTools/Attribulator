@@ -13,6 +13,6 @@ namespace YAMLDatabase.Profiles
         public abstract string GetName();
         public abstract string GetGame();
         public abstract DatabaseType GetDatabaseType();
-        public abstract string[] GetFilesToLoad();
+        public abstract IEnumerable<string> GetFilesToLoad(string directory);
     }
 }

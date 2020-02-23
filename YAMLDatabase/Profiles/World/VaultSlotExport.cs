@@ -2,7 +2,7 @@
 using VaultLib.Core;
 using VaultLib.Core.Exports;
 
-namespace YAMLDatabase
+namespace YAMLDatabase.Profiles.World
 {
     public class VaultSlotExport : BaseExport
     {

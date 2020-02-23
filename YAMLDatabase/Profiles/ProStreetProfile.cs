@@ -2,13 +2,14 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using CoreLibraries.GameUtilities;
 using VaultLib.Core;
 using VaultLib.Core.DB;
 using VaultLib.Core.Pack;
 
 namespace YAMLDatabase.Profiles
 {
-    public class MostWantedProfile : BaseProfile
+    public class ProStreetProfile : BaseProfile
     {
         public override IList<LoadedDatabaseFile> LoadFiles(Database database, string directory)
         {
@@ -70,12 +71,12 @@ namespace YAMLDatabase.Profiles
 
         public override string GetName()
         {
-            return "MOST_WANTED";
+            return GameIdHelper.ID_PROSTREET;
         }
 
         public override string GetGame()
         {
-            return "MOST_WANTED";
+            return GameIdHelper.ID_PROSTREET;
         }
 
         public override DatabaseType GetDatabaseType()
@@ -85,7 +86,7 @@ namespace YAMLDatabase.Profiles
 
         public override IEnumerable<string> GetFilesToLoad(string directory)
         {
-            return new[] {"attributes.bin", "fe_attrib.bin", "gameplay.bin"};
+            return new[] { "attributes.bin", "cars_vault.bin", "fe_attrib.bin", "gameplay.bin" };
         }
     }
 }
