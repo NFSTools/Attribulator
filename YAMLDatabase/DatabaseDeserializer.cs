@@ -312,7 +312,7 @@ namespace YAMLDatabase
                 }
                 else if (propType.IsPrimitive || propType == typeof(string))
                 {
-                    var newValue = FixUpValueForComplexObject(pair.Value);
+                    var newValue = FixUpValueForComplexObject(pair.Value, propType);
                     propertyInfo.SetValue(instance, Convert.ChangeType(newValue, propType, CultureInfo.InvariantCulture));
                 }
                 else if (pair.Value is List<object> objects)
@@ -328,7 +328,17 @@ namespace YAMLDatabase
                         }
                         else
                         {
-                            newList[index] = Convert.ChangeType(FixUpValueForComplexObject(objects[index]), elemType, CultureInfo.InvariantCulture);
+                            if (elemType == typeof(string))
+                                newList[index] = objects[index];
+                            else
+                            {
+                                var fixedValue = FixUpValueForComplexObject(objects[index], elemType);
+                                var convertedValue = Convert.ChangeType(fixedValue, elemType, CultureInfo.InvariantCulture);
+
+                                newList[index] = convertedValue;
+                            }
+                            //newList[index] = FixUpValueForComplexObject(objects[index]);
+                            //newList[index] = Convert.ChangeType(objects[index].ToString(), elemType, CultureInfo.InvariantCulture);
                         }
                     }
 
@@ -352,15 +362,17 @@ namespace YAMLDatabase
             return instance;
         }
 
-        private static object FixUpValueForComplexObject(object value)
+        private static object FixUpValueForComplexObject(object value, Type elemType)
         {
-            object newValue = value;
-            string valueToStr = value.ToString();
+            if (value is string s)
+            {
+                if (s.StartsWith("0x") && elemType == typeof(uint))
+                {
+                    return uint.Parse(s.Substring(2), NumberStyles.AllowHexSpecifier);
+                }
+            }
 
-            if (valueToStr.StartsWith("0x"))
-                newValue = uint.Parse(valueToStr.Substring(2), NumberStyles.AllowHexSpecifier,
-                    CultureInfo.InvariantCulture);
-            return newValue;
+            return value;
         }
     }
 }

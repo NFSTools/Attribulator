@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.IO;
 using VaultLib.Core.DB;
 using VaultLib.Core.Hashing;
-using VaultLib.Core.Utils;
 using YAMLDatabase.ModScript;
 using YAMLDatabase.Profiles;
 
@@ -220,15 +219,25 @@ namespace YAMLDatabase
             deserializer.Deserialize();
             stopwatch.Stop();
 
+#if DEBUG
             Debug.WriteLine("Loaded database from {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
                 stopwatch.ElapsedMilliseconds / 1000f, args.InputDirectory);
+#else
+            Console.WriteLine("Loaded database from {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
+                stopwatch.ElapsedMilliseconds / 1000f, args.InputDirectory);
+#endif
 
             stopwatch.Restart();
             deserializer.GenerateFiles(profile, args.OutputDirectory);
             stopwatch.Stop();
 
+#if DEBUG
             Debug.WriteLine("Exported VLT files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
                 stopwatch.ElapsedMilliseconds / 1000f, args.OutputDirectory);
+#else
+            Console.WriteLine("Exported VLT files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
+                stopwatch.ElapsedMilliseconds / 1000f, args.OutputDirectory);
+#endif
         }
     }
 }

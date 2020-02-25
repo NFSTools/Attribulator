@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
@@ -10,19 +11,27 @@ namespace YAMLDatabase.ModScript.Utils
 {
     public static class ValueConversionUtils
     {
+        private static Dictionary<Type, Type> _typeCache = new Dictionary<Type, Type>();
+
         public static VLTBaseType DoPrimitiveConversion(PrimitiveTypeBase primitiveTypeBase, string str)
         {
+            var type = primitiveTypeBase.GetType();
+            if (_typeCache.TryGetValue(type, out var conversionType))
+            {
+                return DoPrimitiveConversion(primitiveTypeBase, str, conversionType);
+            }
+
             // Do primitive conversion
             var primitiveInfoAttribute =
-                primitiveTypeBase.GetType().GetCustomAttribute<PrimitiveInfoAttribute>();
+                type.GetCustomAttribute<PrimitiveInfoAttribute>();
 
             if (primitiveInfoAttribute == null)
             {
                 // Try to determine enum type
-                if (primitiveTypeBase.GetType().IsGenericType &&
-                    primitiveTypeBase.GetType().GetGenericTypeDefinition() == typeof(VLTEnumType<>))
+                if (type.IsGenericType &&
+                    type.GetGenericTypeDefinition() == typeof(VLTEnumType<>))
                 {
-                    primitiveInfoAttribute = new PrimitiveInfoAttribute(primitiveTypeBase.GetType().GetGenericArguments()[0]);
+                    primitiveInfoAttribute = new PrimitiveInfoAttribute(type.GetGenericArguments()[0]);
                 }
                 else
                 {
@@ -30,16 +39,23 @@ namespace YAMLDatabase.ModScript.Utils
                 }
             }
 
-            if (primitiveInfoAttribute.PrimitiveType.IsEnum)
+            var primitiveType = primitiveInfoAttribute.PrimitiveType;
+            _typeCache[type] = primitiveType;
+            return DoPrimitiveConversion(primitiveTypeBase, str, primitiveType);
+        }
+
+        private static VLTBaseType DoPrimitiveConversion(PrimitiveTypeBase primitiveTypeBase, string str, Type conversionType)
+        {
+            if (conversionType.IsEnum)
             {
                 if (str.StartsWith("0x") &&
                     uint.TryParse(str.Substring(2), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out uint val))
                 {
-                    primitiveTypeBase.SetValue((IConvertible)Enum.Parse(primitiveInfoAttribute.PrimitiveType, val.ToString()));
+                    primitiveTypeBase.SetValue((IConvertible) Enum.Parse(conversionType, val.ToString()));
                 }
                 else
                 {
-                    primitiveTypeBase.SetValue((IConvertible)Enum.Parse(primitiveInfoAttribute.PrimitiveType, str));
+                    primitiveTypeBase.SetValue((IConvertible) Enum.Parse(conversionType, str));
                 }
             }
             else
@@ -47,12 +63,12 @@ namespace YAMLDatabase.ModScript.Utils
                 if (str.StartsWith("0x") && uint.TryParse(str.Substring(2), NumberStyles.AllowHexSpecifier,
                     CultureInfo.InvariantCulture, out uint val))
                 {
-                    primitiveTypeBase.SetValue((IConvertible)Convert.ChangeType(val, primitiveInfoAttribute.PrimitiveType));
+                    primitiveTypeBase.SetValue((IConvertible) Convert.ChangeType(val, conversionType));
                 }
                 else
                 {
                     primitiveTypeBase.SetValue(
-                        (IConvertible)Convert.ChangeType(str, primitiveInfoAttribute.PrimitiveType, CultureInfo.InvariantCulture));
+                        (IConvertible) Convert.ChangeType(str, conversionType, CultureInfo.InvariantCulture));
                 }
             }
 
