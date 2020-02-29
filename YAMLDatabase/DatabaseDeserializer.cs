@@ -99,6 +99,7 @@ namespace YAMLDatabase
                     var newVault = new Vault(vault) { Database = _database, IsPrimaryVault = vault == "db" };
                     if (Directory.Exists(vaultDirectory))
                     {
+                        HashSet<string> trackedCollections = new HashSet<string>();
 
                         foreach (var dataFile in Directory.GetFiles(vaultDirectory, "*.yml"))
                         {
@@ -159,8 +160,22 @@ namespace YAMLDatabase
 
                             AddCollectionsToList(newCollections, collections);
 
+
                             foreach (var newCollection in newCollections)
                             {
+                                // TODO: put this behind a "safe mode" flag
+                                //var existingCollection = _database.RowManager.FindCollectionByName(newCollection.Class.Name,
+                                //    newCollection.Name);
+                                //if (existingCollection != null)
+                                //{
+                                //    throw new SerializedDatabaseLoaderException($"Duplicate collection found! Multiple collections at '{existingCollection.ShortPath}' have been defined in your YML files.");
+                                //}
+
+                                if (!trackedCollections.Add(newCollection.ShortPath))
+                                {
+                                    throw new SerializedDatabaseLoaderException($"Duplicate collection found! Multiple collections at '{newCollection.ShortPath}' have been defined in your YML files.");
+                                }
+
                                 _database.RowManager.AddCollection(newCollection);
                             }
                         }

@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using VaultLib.Core.DB;
 using VaultLib.Core.Hashing;
+using VaultLib.Frameworks.Speed;
 using YAMLDatabase.ModScript;
 using YAMLDatabase.Profiles;
 
@@ -198,7 +199,6 @@ namespace YAMLDatabase
             var database = new Database(new DatabaseOptions(profile.GetGame(), profile.GetDatabaseType()));
             var files = profile.LoadFiles(database, args.InputDirectory);
             database.CompleteLoad();
-
             var stopwatch = Stopwatch.StartNew();
 
             var serializer = new DatabaseSerializer(database, args.OutputDirectory);

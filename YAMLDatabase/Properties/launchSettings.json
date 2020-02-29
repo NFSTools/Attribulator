@@ -2,7 +2,7 @@
   "profiles": {
     "Unpack - clean": {
       "commandName": "Project",
-      "commandLineArgs": "-p CARBON -m Unpack -i \"D:\\Games\\NFS\\Need for Speed - Carbon\\GLOBAL\" -o \"D:\\Games\\NFS\\Need for Speed - Carbon\\vlt-export\""
+      "commandLineArgs": "-p CARBON -m Unpack -i \"D:\\Games\\NFS\\Need for Speed - Carbon\\GLOBAL\" -o \"D:\\Games\\NFS\\Need for Speed - Carbon\\vlt-export\\yml\""
     },
     "Pack - clean": {
       "commandName": "Project",
@@ -19,6 +19,10 @@
     "MW test": {
       "commandName": "Project",
       "commandLineArgs": "-m Pack -p MOST_WANTED -i \"D:\\Games\\NFS\\Need for Speed - Most Wanted\\vlt-dump\\yml\" -o \"D:\\Games\\NFS\\Need for Speed - Most Wanted\\vlt-dump\\bin\""
+    },
+    "Unpack - ECL_2 broken": {
+      "commandName": "Project",
+      "commandLineArgs": "-p CARBON -m Unpack -i \"C:\\Users\\coder\\Downloads\\ECL_2 (1)\" -o \"C:\\Users\\coder\\Downloads\\ECL_2 (1)\\yml\""
     }
   }
 }
