@@ -17,9 +17,8 @@ namespace YAMLDatabase.Profiles
             List<LoadedDatabaseFile> files = new List<LoadedDatabaseFile>();
             foreach (var file in GetFilesToLoad(directory))
             {
-                var path = Path.Combine(directory, file);
                 //var standardVaultPack = new StandardVaultPack();
-                using var br = new BinaryReader(File.OpenRead(path));
+                using var br = new BinaryReader(File.OpenRead(file));
 
                 IVaultPack vaultPack = new StandardVaultPack();
                 string group = "main";
@@ -84,13 +83,13 @@ namespace YAMLDatabase.Profiles
 
         public override IEnumerable<string> GetFilesToLoad(string directory)
         {
-            yield return "attributes.bin";
-            yield return "commerce.bin";
-            yield return "fe_attrib.bin";
+            yield return Path.Combine(directory, "attributes.bin");
+            yield return Path.Combine(directory, "commerce.bin");
+            yield return Path.Combine(directory, "fe_attrib.bin");
 
             foreach (var file in Directory.GetFiles(Path.Combine(directory, "gc.vaults"), "*.bin", SearchOption.TopDirectoryOnly))
             {
-                yield return file.Substring(directory.Length);
+                yield return file;
             }
         }
     }

@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Serialization;
 using VaultLib.Core;
 using VaultLib.Core.Data;
 using VaultLib.Core.DB;
-using VaultLib.Core.Hashing;
 using VaultLib.Core.Types;
 using VaultLib.Core.Types.Attrib.Types;
 using VaultLib.Core.Types.EA.Reflection;
