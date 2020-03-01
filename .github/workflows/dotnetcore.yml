@@ -20,7 +20,7 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v1
       with:
-        name: release_unix.zip
+        name: release_unix
         path: YAMLDatabase/bin/x86/Release/netcoreapp3.0/publish
   build-windows:
     runs-on: windows-latest
@@ -37,7 +37,7 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v1
       with:
-        name: release_windows.zip
+        name: release_windows
         path: YAMLDatabase/bin/x86/Release/netcoreapp3.0/publish
   upload-release:
     needs: [build-unix, build-windows]
@@ -46,13 +46,17 @@ jobs:
       - uses: actions/download-artifact@v1
         name: Download Unix artifact
         with:
-          name: release_unix.zip
-          path: release_unix.zip
+          name: release_unix
+          path: release_unix
       - uses: actions/download-artifact@v1
         name: Download Windows artifact
         with:
-          name: release_windows.zip
-          path: release_windows.zip
+          name: release_windows
+          path: release_windows
+      - name: Make zip archives
+        run: |
+          zip -r release_unix.zip release_unix
+          zip -r release_windows.zip release_windows
       - name: Create Release
         id: create_release
         uses: actions/create-release@latest
