@@ -17,17 +17,11 @@ jobs:
       run: dotnet publish -c Release
     - name: Add NativeLibrary.dll
       run: wget -O YAMLDatabase/bin/x86/Release/netcoreapp3.0/publish/NativeLibrary.dll https://s.heyitsleo.io/NFSTools/NativeLibrary.dll
-    - name: Build zip file
-      run: |
-        CURRENT_DIR=`pwd`
-        cd YAMLDatabase/bin/x86/Release/netcoreapp3.0/publish
-        zip -r "$CURRENT_DIR/Release.zip" .
-        cd $CURRENT_DIR
-    - name: Upload zip as artifact
+    - name: Upload artifact
       uses: actions/upload-artifact@v1
       with:
         name: release_unix.zip
-        path: Release.zip
+        path: YAMLDatabase/bin/x86/Release/netcoreapp3.0/publish
   build-windows:
     runs-on: windows-latest
     steps:
@@ -43,7 +37,7 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v1
       with:
-        name: release_windows
+        name: release_windows.zip
         path: YAMLDatabase/bin/x86/Release/netcoreapp3.0/publish
   upload-release:
     needs: [build-unix, build-windows]
@@ -57,7 +51,7 @@ jobs:
       - uses: actions/download-artifact@v1
         name: Download Windows artifact
         with:
-          name: release_windows
+          name: release_windows.zip
           path: release_windows.zip
       - name: Create Release
         id: create_release
