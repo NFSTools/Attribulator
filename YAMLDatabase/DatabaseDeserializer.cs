@@ -13,6 +13,7 @@ using VaultLib.Core.Hashing;
 using VaultLib.Core.Types;
 using VaultLib.Core.Types.Attrib;
 using VaultLib.Core.Types.EA.Reflection;
+using VaultLib.Core.Utils;
 using YAMLDatabase.ModScript.Utils;
 using YAMLDatabase.Profiles;
 using YamlDotNet.Serialization;
@@ -249,32 +250,37 @@ namespace YAMLDatabase
         private VLTBaseType DoValueConversion(string gameId, string dir, VltClass vltClass, VltClassField field, VltCollection vltCollection,
             object serializedValue, object instance)
         {
-            if (serializedValue is string str)
+            switch (serializedValue)
             {
-                if (instance is PrimitiveTypeBase primitiveTypeBase)
-                    return ValueConversionUtils.DoPrimitiveConversion(primitiveTypeBase, str);
-                if (instance is BaseBlob blob )
-                {
-                    if (!string.IsNullOrWhiteSpace(str))
+                case string str:
+                    switch (instance)
                     {
-                        str = Path.Combine(dir, str);
-                        if (!File.Exists(str))
+                        case IStringValue stringValue:
+                            stringValue.SetString(str);
+                            return (VLTBaseType) instance;
+                        case PrimitiveTypeBase primitiveTypeBase:
+                            return ValueConversionUtils.DoPrimitiveConversion(primitiveTypeBase, str);
+                        case BaseBlob blob:
                         {
-                            throw new InvalidDataException($"Could not locate blob data file for {vltCollection.ShortPath}[{field.Name}]");
+                            if (string.IsNullOrWhiteSpace(str)) return blob;
+                        
+                            str = Path.Combine(dir, str);
+                            if (!File.Exists(str))
+                            {
+                                throw new InvalidDataException($"Could not locate blob data file for {vltCollection.ShortPath}[{field.Name}]");
+                            }
+
+                            blob.Data = File.ReadAllBytes(str);
+
+                            return blob;
                         }
-
-                        blob.Data = File.ReadAllBytes(str);
                     }
-                    
-                    return blob;
-                }
-            }
 
-            if (serializedValue is Dictionary<object, object> dictionary)
-            {
-                return (VLTBaseType)(instance is VLTArrayType array
-                    ? DoArrayConversion(gameId, dir, vltClass, field, vltCollection, array, dictionary)
-                    : DoDictionaryConversion(gameId, dir, vltClass, field, vltCollection, instance, dictionary));
+                    break;
+                case Dictionary<object, object> dictionary:
+                    return (VLTBaseType)(instance is VLTArrayType array
+                        ? DoArrayConversion(gameId, dir, vltClass, field, vltCollection, array, dictionary)
+                        : DoDictionaryConversion(gameId, dir, vltClass, field, vltCollection, instance, dictionary));
             }
 
             throw new InvalidDataException("Could not convert serialized value of type: " + serializedValue.GetType());

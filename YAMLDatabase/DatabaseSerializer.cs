@@ -9,6 +9,7 @@ using VaultLib.Core.DB;
 using VaultLib.Core.Types;
 using VaultLib.Core.Types.Attrib;
 using VaultLib.Core.Types.EA.Reflection;
+using VaultLib.Core.Utils;
 using YamlDotNet.Serialization;
 
 namespace YAMLDatabase
@@ -136,6 +137,8 @@ namespace YAMLDatabase
         {
             switch (dataPairValue)
             {
+                case IStringValue stringValue:
+                    return stringValue.GetString();
                 case PrimitiveTypeBase ptb:
                     return ptb.GetValue();
                 case BaseBlob blob:
