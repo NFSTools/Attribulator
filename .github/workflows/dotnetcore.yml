@@ -49,6 +49,14 @@ jobs:
     needs: [build-unix, build-windows]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/download-artifact@v1
+        with:
+          name: release_unix.zip
+          path: release_unix.zip
+      - uses: actions/download-artifact@v1
+        with:
+          name: release_windows
+          path: release_windows.zip
       - name: Create Release
         id: create_release
         uses: actions/create-release@latest
@@ -71,13 +79,13 @@ jobs:
           asset_name: release_unix.zip
           asset_content_type: application/zip
 
-#       - name: Upload Windows Asset
-#         id: upload-windows-asset 
-#         uses: actions/upload-release-asset@v1
-#         env:
-#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#         with:
-#           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-#           asset_path: ./release_windows
-#           asset_name: release_windows.zip
-#           asset_content_type: application/zip
+      - name: Upload Windows Asset
+        id: upload-windows-asset 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ./release_windows.zip
+          asset_name: release_windows.zip
+          asset_content_type: application/zip
