@@ -50,10 +50,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v1
+        name: Download Unix artifact
         with:
           name: release_unix.zip
           path: release_unix.zip
       - uses: actions/download-artifact@v1
+        name: Download Windows artifact
         with:
           name: release_windows
           path: release_windows.zip
