@@ -8,8 +8,10 @@ using VaultLib.Core;
 using VaultLib.Core.Data;
 using VaultLib.Core.DB;
 using VaultLib.Core.Types;
+using VaultLib.Core.Types.Abstractions;
 using VaultLib.Core.Types.Attrib.Types;
 using VaultLib.Core.Types.EA.Reflection;
+using VaultLib.Core.Utils;
 using YAMLDatabase.ModScript.Utils;
 
 namespace YAMLDatabase.ModScript.Commands
@@ -80,14 +82,20 @@ namespace YAMLDatabase.ModScript.Commands
 
             if (PropertyPath.Count == 0)
             {
-                // update_field class collection field value
-                if (itemToEdit is PrimitiveTypeBase primitiveTypeBase)
+                switch (itemToEdit)
                 {
-                    ValueConversionUtils.DoPrimitiveConversion(primitiveTypeBase, Value);
-                }
-                else
-                {
-                    throw new ModScriptCommandExecutionException($"cannot handle update for {collection.Class.Name}[{field.Name}]");
+                    case PrimitiveTypeBase primitiveTypeBase:
+                        ValueConversionUtils.DoPrimitiveConversion(primitiveTypeBase, Value);
+                        break;
+                    case IStringValue stringValue:
+                        stringValue.SetString(Value);
+                        break;
+                    case BaseRefSpec refSpec:
+                        // NOTE: This is a compatibility feature for certain types, such as GCollectionKey, which are technically a RefSpec.
+                        refSpec.CollectionKey = Value;
+                        break;
+                    default:
+                        throw new ModScriptCommandExecutionException($"cannot handle update for {collection.Class.Name}[{field.Name}]");
                 }
             }
             else
