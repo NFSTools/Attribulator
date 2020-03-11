@@ -14,6 +14,7 @@ using VaultLib.Core.Types;
 using VaultLib.Core.Types.Attrib;
 using VaultLib.Core.Types.EA.Reflection;
 using VaultLib.Core.Utils;
+using YAMLDatabase.Algorithm;
 using YAMLDatabase.ModScript.Utils;
 using YAMLDatabase.Profiles;
 using YamlDotNet.Serialization;
@@ -84,9 +85,10 @@ namespace YAMLDatabase
                 _database.Types.Add(new DatabaseTypeInfo { Name = loadedDatabaseType.Name, Size = loadedDatabaseType.Size });
             }
 
-            var collectionParentDictionary = new Dictionary<VltCollection, string>();
+            var collectionParentDictionary = new Dictionary<string, string>();
             var collectionDictionary = new Dictionary<string, VltCollection>();
             var vaultsToSaveDictionary = new Dictionary<string, List<Vault>>();
+            var collectionsToBeAdded = new List<VltCollection>();
 
             foreach (var file in loadedDatabase.Files)
             {
@@ -153,7 +155,7 @@ namespace YAMLDatabase
                                                 newVltCollection, value));
                                     }
 
-                                    collectionParentDictionary[newVltCollection] = loadedCollection.ParentName;
+                                    collectionParentDictionary[newVltCollection.ShortPath] = loadedCollection.ParentName;
                                     collectionList.Add(newVltCollection);
                                     collectionDictionary[newVltCollection.ShortPath] = newVltCollection;
                                 }
@@ -164,20 +166,12 @@ namespace YAMLDatabase
 
                             foreach (var newCollection in newCollections)
                             {
-                                // TODO: put this behind a "safe mode" flag
-                                //var existingCollection = _database.RowManager.FindCollectionByName(newCollection.Class.Name,
-                                //    newCollection.Name);
-                                //if (existingCollection != null)
-                                //{
-                                //    throw new SerializedDatabaseLoaderException($"Duplicate collection found! Multiple collections at '{existingCollection.ShortPath}' have been defined in your YML files.");
-                                //}
-
                                 if (!trackedCollections.Add(newCollection.ShortPath))
                                 {
                                     throw new SerializedDatabaseLoaderException($"Duplicate collection found! Multiple collections at '{newCollection.ShortPath}' have been defined in your YML files.");
                                 }
 
-                                _database.RowManager.AddCollection(newCollection);
+                                collectionsToBeAdded.Add(newCollection);
                             }
                         }
                     }
@@ -193,19 +187,61 @@ namespace YAMLDatabase
                 }
             }
 
-            // Resolve hierarchy
-            var rowManagerRows = _database.RowManager.Rows;
+            // dependency resolution
+            var resolved = new List<VaultDependencyNode>();
+            var unresolved = new List<VaultDependencyNode>();
 
-            for (int i = rowManagerRows.Count - 1; i >= 0; i--)
+            foreach (var vault in _database.Vaults)
             {
-                VltCollection collection = rowManagerRows[i];
-                string parentName = collectionParentDictionary[collection];
+                var vaultCollections = collectionsToBeAdded.Where(c => c.Vault.Name == vault.Name).ToList();
+                VaultDependencyNode node = new VaultDependencyNode(vault);
 
-                if (parentName != null)
+                foreach (var vaultCollection in vaultCollections)
                 {
-                    VltCollection parentCollection = collectionDictionary[$"{collection.Class.Name}/{parentName}"];
-                    parentCollection.AddChild(collection);
-                    rowManagerRows.RemoveAt(i);
+                    string parentKey = collectionParentDictionary[vaultCollection.ShortPath];
+
+                    if (!string.IsNullOrEmpty(parentKey))
+                    {
+                        var parentCollection = collectionDictionary[$"{vaultCollection.Class.Name}/{parentKey}"];
+                        if (parentCollection.Vault.Name != vault.Name)
+                            node.AddEdge(new VaultDependencyNode(parentCollection.Vault));
+                    }
+                }
+
+                ResolveDependencies(node, resolved, unresolved);
+
+                Debug.WriteLine("Vault {0}: {1} collections", vault.Name, vaultCollections.Count);
+            }
+
+            resolved = resolved.Distinct(VaultDependencyNode.VaultComparer).ToList();
+            unresolved = unresolved.Distinct(VaultDependencyNode.VaultComparer).ToList();
+
+            if (unresolved.Count != 0)
+            {
+                throw new SerializedDatabaseLoaderException("Cannot continue loading - unresolved vault dependencies");
+            }
+
+            foreach (var node in resolved)
+            {
+                var vault = node.Vault;
+                var vaultCollections = collectionsToBeAdded.Where(c => c.Vault.Name == vault.Name).ToList();
+
+                Debug.WriteLine("Loading collections for vault {0} ({1})", vault.Name, vaultCollections.Count);
+
+                foreach (var collection in vaultCollections)
+                {
+                    string parentKey = collectionParentDictionary[collection.ShortPath];
+
+                    if (string.IsNullOrEmpty(parentKey))
+                    {
+                        // Add collection directly
+                        _database.RowManager.AddCollection(collection);
+                    }
+                    else
+                    {
+                        var parentCollection = collectionDictionary[$"{collection.Class.Name}/{parentKey}"];
+                        parentCollection.AddChild(collection);
+                    }
                 }
             }
 
@@ -222,6 +258,28 @@ namespace YAMLDatabase
         public void GenerateFiles(BaseProfile profile, string outputDirectory)
         {
             profile.SaveFiles(_database, outputDirectory, _loadedDatabase.Files);
+        }
+
+        private void ResolveDependencies(VaultDependencyNode node, List<VaultDependencyNode> resolved,
+            List<VaultDependencyNode> unresolved)
+        {
+            unresolved.Add(node);
+
+            foreach (var edge in node.Edges)
+            {
+                if (!resolved.Contains(edge))
+                {
+                    if (unresolved.Contains(edge))
+                    {
+                        throw new SerializedDatabaseLoaderException("circular vault dependency!");
+                    }
+
+                    ResolveDependencies(edge, resolved, unresolved);
+                }
+            }
+
+            resolved.Add(node);
+            unresolved.Remove(node);
         }
 
         private VLTBaseType ConvertSerializedValueToDataValue(string gameId, string dir, VltClass vltClass, VltClassField field,
@@ -257,23 +315,23 @@ namespace YAMLDatabase
                     {
                         case IStringValue stringValue:
                             stringValue.SetString(str);
-                            return (VLTBaseType) instance;
+                            return (VLTBaseType)instance;
                         case PrimitiveTypeBase primitiveTypeBase:
                             return ValueConversionUtils.DoPrimitiveConversion(primitiveTypeBase, str);
                         case BaseBlob blob:
-                        {
-                            if (string.IsNullOrWhiteSpace(str)) return blob;
-                        
-                            str = Path.Combine(dir, str);
-                            if (!File.Exists(str))
                             {
-                                throw new InvalidDataException($"Could not locate blob data file for {vltCollection.ShortPath}[{field.Name}]");
+                                if (string.IsNullOrWhiteSpace(str)) return blob;
+
+                                str = Path.Combine(dir, str);
+                                if (!File.Exists(str))
+                                {
+                                    throw new InvalidDataException($"Could not locate blob data file for {vltCollection.ShortPath}[{field.Name}]");
+                                }
+
+                                blob.Data = File.ReadAllBytes(str);
+
+                                return blob;
                             }
-
-                            blob.Data = File.ReadAllBytes(str);
-
-                            return blob;
-                        }
                     }
 
                     break;
