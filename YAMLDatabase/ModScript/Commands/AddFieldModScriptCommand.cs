@@ -33,7 +33,7 @@ namespace YAMLDatabase.ModScript.Commands
             }
         }
 
-        public override void Execute(Database database)
+        public override void Execute(ModScriptDatabaseHelper database)
         {
             VltCollection collection = GetCollection(database, ClassName, CollectionName);
             VltClassField field = collection.Class[FieldName];
@@ -48,7 +48,7 @@ namespace YAMLDatabase.ModScript.Commands
                 throw new InvalidDataException($"add_field failed because collection '{collection.ShortPath}' already has field '{field.Name}'");
             }
 
-            var vltBaseType = TypeRegistry.CreateInstance(database.Options.GameId, collection.Class, field, collection);
+            var vltBaseType = TypeRegistry.CreateInstance(database.Database.Options.GameId, collection.Class, field, collection);
 
             if (ArrayCapacity != 0)
             {

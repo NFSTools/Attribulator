@@ -10,13 +10,13 @@ namespace YAMLDatabase.ModScript
     {
         public abstract void Parse(List<string> parts);
 
-        public abstract void Execute(Database database);
+        public abstract void Execute(ModScriptDatabaseHelper database);
 
         public string Line { get; set; }
 
-        protected VltCollection GetCollection(Database database, string className, string collectionName, bool throwOnMissing = true)
+        protected VltCollection GetCollection(ModScriptDatabaseHelper database, string className, string collectionName, bool throwOnMissing = true)
         {
-            VltCollection collection = database.RowManager.FindCollectionByName(className, collectionName);
+            VltCollection collection = database.FindCollectionByName(className, collectionName);
 
             if (collection == null && throwOnMissing)
             {

@@ -26,7 +26,7 @@ namespace YAMLDatabase.ModScript.Commands
             VaultName = CleanHashString(parts[3]);
         }
 
-        public override void Execute(Database database)
+        public override void Execute(ModScriptDatabaseHelper database)
         {
             VltCollection collection = GetCollection(database, ClassName, CollectionName);
             //Vault vault = database.FindVault(VaultName);
@@ -34,7 +34,7 @@ namespace YAMLDatabase.ModScript.Commands
 
             try
             {
-                vault = database.FindVault(VaultName);
+                vault = database.Database.FindVault(VaultName);
             }
             catch (InvalidOperationException e)
             {

@@ -34,8 +34,10 @@ namespace YAMLDatabase.ModScript.Utils
             {
                 case PrimitiveTypeBase primitiveTypeBase:
                     var convertible = primitiveTypeBase.GetValue();
-                    if (convertible == null) throw new Exception();
-                    ((PrimitiveTypeBase)newValue).SetValue(convertible);
+                    if (convertible != null)
+                    {
+                        ((PrimitiveTypeBase)newValue).SetValue(convertible);
+                    }
                     return newValue;
                 default:
                     return CloneObjectWithReflection(originalValue, newValue, vltClass, vltClassField, vltCollection);

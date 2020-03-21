@@ -32,7 +32,7 @@ namespace YAMLDatabase.ModScript.Commands
             NewCapacity = newCapacity;
         }
 
-        public override void Execute(Database database)
+        public override void Execute(ModScriptDatabaseHelper database)
         {
             VltCollection collection = GetCollection(database, ClassName, CollectionName);
             VltClassField field = GetField(collection.Class, FieldName);

@@ -45,7 +45,7 @@ namespace YAMLDatabase.ModScript.Commands
                 Options |= CopyOptions.OverwriteOptional;
         }
 
-        public override void Execute(Database database)
+        public override void Execute(ModScriptDatabaseHelper database)
         {
             VltCollection srcCollection = GetCollection(database, ClassName, SourceCollectionName);
             VltCollection dstCollection = GetCollection(database, ClassName, DestinationCollectionName);
@@ -56,7 +56,7 @@ namespace YAMLDatabase.ModScript.Commands
                 foreach (var baseField in srcCollection.Class.BaseFields)
                 {
                     values.Add(baseField,
-                        ValueCloningUtils.CloneValue(database, srcCollection.GetRawValue(baseField.Name), srcCollection.Class,
+                        ValueCloningUtils.CloneValue(database.Database, srcCollection.GetRawValue(baseField.Name), srcCollection.Class,
                             baseField, dstCollection));
                 }
             }
@@ -69,7 +69,7 @@ namespace YAMLDatabase.ModScript.Commands
 
                     if (!field.IsInLayout)
                     {
-                        values.Add(field, ValueCloningUtils.CloneValue(database, value, srcCollection.Class, field, dstCollection));
+                        values.Add(field, ValueCloningUtils.CloneValue(database.Database, value, srcCollection.Class, field, dstCollection));
                     }
                 }
             }

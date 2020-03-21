@@ -58,7 +58,7 @@ namespace YAMLDatabase.ModScript.Commands
             }
         }
 
-        public override void Execute(Database database)
+        public override void Execute(ModScriptDatabaseHelper database)
         {
             VltCollection collection = GetCollection(database, ClassName, CollectionName);
             VltClassField field = GetField(collection.Class, FieldName);
@@ -123,8 +123,19 @@ namespace YAMLDatabase.ModScript.Commands
                     PropertyInfo propertyInfo = null;
                     for (int i = 0; i < PropertyPath.Count; i++)
                     {
+                        if (valueToEdit is BaseRefSpec)
+                        {
+                            PropertyPath[i] = PropertyPath[i] switch
+                            {
+                                "Collection" => "CollectionKey",
+                                "Class" => "ClassKey",
+                                _ => PropertyPath[i]
+                            };
+                        }
+
                         propertyInfo = valueToEdit.GetType()
                             .GetProperty(PropertyPath[i], BindingFlags.Instance | BindingFlags.Public);
+
                         if (propertyInfo == null)
                         {
                             throw new InvalidDataException($"{itemToEdit.GetType()}[{PropertyPath[i]}] does not exist");

@@ -66,7 +66,7 @@ namespace YAMLDatabase
                 new CarbonProfile(),
                 new ProStreetProfile(),
                 new UndercoverProfile(),
-                new WorldProfile()
+                new WorldProfile(),
             };
 
             BaseProfile profile = profiles.Find(p => p.GetName() == args.ProfileName);
@@ -113,18 +113,22 @@ namespace YAMLDatabase
             var loadedDatabase = deserializer.Deserialize();
             stopwatch.Stop();
 
-            Debug.WriteLine("Loaded database from {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
+            Console.WriteLine("Loaded database from {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
                 stopwatch.ElapsedMilliseconds / 1000f, args.InputDirectory);
 
             stopwatch.Restart();
 
             var modScriptParser = new ModScriptParser(args.ModScriptPath);
+            var cmdStopwatch = Stopwatch.StartNew();
+            var modScriptDatabase = new ModScriptDatabaseHelper(database);
 
             foreach (var command in modScriptParser.Parse())
             {
                 try
                 {
-                    command.Execute(database);
+                    cmdStopwatch.Restart();
+                    command.Execute(modScriptDatabase);
+                    Console.WriteLine("Executed command in {1}ms: {0}", command.Line, cmdStopwatch.ElapsedMilliseconds);
                 }
                 catch (Exception e)
                 {
@@ -132,27 +136,31 @@ namespace YAMLDatabase
                 }
             }
             stopwatch.Stop();
-            Debug.WriteLine("Applied script from {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
+            Console.WriteLine("Applied script from {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
                 stopwatch.ElapsedMilliseconds / 1000f, args.ModScriptPath);
 
             stopwatch.Restart();
+            Console.WriteLine("Making backup");
+            Directory.Move(args.InputDirectory, $"{args.InputDirectory.TrimEnd('/', '\\')}_{DateTimeOffset.Now.ToUnixTimeSeconds()}");
+            Directory.CreateDirectory(args.InputDirectory);
+            stopwatch.Stop();
+            Console.WriteLine("Made backup in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
+                stopwatch.ElapsedMilliseconds / 1000f);
 
-            Debug.WriteLine("Making backup");
-            DirectoryCopy(args.InputDirectory, $"{args.InputDirectory.TrimEnd('/', '\\')}_{DateTimeOffset.Now.ToUnixTimeSeconds()}", true);
-
+            stopwatch.Restart();
             new DatabaseSerializer(database, args.InputDirectory).Serialize(loadedDatabase.Files);
 
             //deserializer.GenerateFiles(profile, args.OutputDirectory);
             stopwatch.Stop();
 
-            Debug.WriteLine("Exported YML files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
+            Console.WriteLine("Exported YML files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
                 stopwatch.ElapsedMilliseconds / 1000f, args.InputDirectory);
 
             stopwatch.Restart();
             deserializer.GenerateFiles(profile, args.OutputDirectory);
             stopwatch.Stop();
 
-            Debug.WriteLine("Exported VLT files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
+            Console.WriteLine("Exported VLT files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
                 stopwatch.ElapsedMilliseconds / 1000f, args.OutputDirectory);
         }
 
@@ -206,7 +214,7 @@ namespace YAMLDatabase
 
             stopwatch.Stop();
 
-            Debug.WriteLine("Exported database to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
+            Console.WriteLine("Exported database to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
                 stopwatch.ElapsedMilliseconds / 1000f, args.OutputDirectory);
         }
 
@@ -219,25 +227,14 @@ namespace YAMLDatabase
             deserializer.Deserialize();
             stopwatch.Stop();
 
-#if DEBUG
-            Debug.WriteLine("Loaded database from {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
-                stopwatch.ElapsedMilliseconds / 1000f, args.InputDirectory);
-#else
             Console.WriteLine("Loaded database from {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
                 stopwatch.ElapsedMilliseconds / 1000f, args.InputDirectory);
-#endif
 
             stopwatch.Restart();
             deserializer.GenerateFiles(profile, args.OutputDirectory);
             stopwatch.Stop();
-
-#if DEBUG
-            Debug.WriteLine("Exported VLT files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
-                stopwatch.ElapsedMilliseconds / 1000f, args.OutputDirectory);
-#else
             Console.WriteLine("Exported VLT files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
                 stopwatch.ElapsedMilliseconds / 1000f, args.OutputDirectory);
-#endif
         }
     }
 }

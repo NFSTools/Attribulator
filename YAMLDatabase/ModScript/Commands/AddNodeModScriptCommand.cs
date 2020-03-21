@@ -26,7 +26,7 @@ namespace YAMLDatabase.ModScript.Commands
             CollectionName = CleanHashString(parts[^1]);
         }
 
-        public override void Execute(Database database)
+        public override void Execute(ModScriptDatabaseHelper database)
         {
             VltCollection parentCollection = null;
             if (!string.IsNullOrEmpty(ParentCollectionName))
@@ -51,7 +51,7 @@ namespace YAMLDatabase.ModScript.Commands
             else
             {
                 addToVault = database.Vaults.FirstOrDefault(vault =>
-                    database.RowManager.GetCollectionsInVault(vault)
+                    database.GetCollectionsInVault(vault)
                         .Any(collection => collection.Class.Name == ClassName));
             }
 
@@ -60,12 +60,12 @@ namespace YAMLDatabase.ModScript.Commands
                 throw new InvalidDataException("failed to determine vault to insert new collection into");
             }
 
-            var newNode = database.RowManager.AddCollection(addToVault, ClassName, CollectionName, parentCollection);
+            var newNode = database.AddCollection(addToVault, ClassName, CollectionName, parentCollection);
 
             foreach (var baseField in newNode.Class.BaseFields)
             {
                 newNode.SetRawValue(baseField.Name,
-                    TypeRegistry.CreateInstance(database.Options.GameId, newNode.Class, newNode.Class[baseField.Key],
+                    TypeRegistry.CreateInstance(database.Database.Options.GameId, newNode.Class, newNode.Class[baseField.Key],
                         newNode));
             }
 

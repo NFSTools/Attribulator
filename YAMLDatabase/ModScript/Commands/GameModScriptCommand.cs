@@ -12,7 +12,7 @@ namespace YAMLDatabase.ModScript.Commands
             this.Game = parts[1];
         }
 
-        public override void Execute(Database database)
+        public override void Execute(ModScriptDatabaseHelper database)
         {
             //
         }

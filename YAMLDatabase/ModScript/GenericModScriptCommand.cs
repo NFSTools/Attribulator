@@ -17,7 +17,7 @@ namespace YAMLDatabase.ModScript
             //
         }
 
-        public override void Execute(Database database)
+        public override void Execute(ModScriptDatabaseHelper database)
         {
             throw new System.NotImplementedException();
         }

@@ -51,6 +51,7 @@ namespace YAMLDatabase
 
             using var dbs = new StreamReader(Path.Combine(_inputDirectory, "info.yml"));
             var loadedDatabase = deserializer.Deserialize<LoadedDatabase>(dbs);
+            var isX86 = _database.Options.Type == DatabaseType.X86Database;
 
             foreach (var loadedDatabaseClass in loadedDatabase.Classes)
             {
@@ -59,7 +60,7 @@ namespace YAMLDatabase
                 foreach (var loadedDatabaseClassField in loadedDatabaseClass.Fields)
                 {
                     var field = new VltClassField(
-                        VLT32Hasher.Hash(loadedDatabaseClassField.Name),
+                        isX86 ? VLT32Hasher.Hash(loadedDatabaseClassField.Name) : VLT64Hasher.Hash(loadedDatabaseClassField.Name),
                         loadedDatabaseClassField.Name,
                         loadedDatabaseClassField.TypeName,
                         loadedDatabaseClassField.Flags,

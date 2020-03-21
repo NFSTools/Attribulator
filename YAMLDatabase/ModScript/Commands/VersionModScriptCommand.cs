@@ -17,7 +17,7 @@ namespace YAMLDatabase.ModScript.Commands
             }
         }
 
-        public override void Execute(Database database)
+        public override void Execute(ModScriptDatabaseHelper database)
         {
             //
         }

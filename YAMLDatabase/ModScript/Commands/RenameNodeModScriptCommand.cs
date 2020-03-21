@@ -25,7 +25,7 @@ namespace YAMLDatabase.ModScript.Commands
             NewName = parts[3];
         }
 
-        public override void Execute(Database database)
+        public override void Execute(ModScriptDatabaseHelper database)
         {
             VltCollection collection = GetCollection(database, ClassName, CollectionName);
 
