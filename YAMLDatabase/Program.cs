@@ -128,7 +128,7 @@ namespace YAMLDatabase
                 {
                     cmdStopwatch.Restart();
                     command.Execute(modScriptDatabase);
-                    Console.WriteLine("Executed command in {1}ms: {0}", command.Line, cmdStopwatch.ElapsedMilliseconds);
+                    //Console.WriteLine("Executed command in {1}ms: {0}", command.Line, cmdStopwatch.ElapsedMilliseconds);
                 }
                 catch (Exception e)
                 {
