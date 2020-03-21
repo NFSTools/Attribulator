@@ -32,14 +32,7 @@ namespace YAMLDatabase.ModScript.Commands
                 collection.RemoveChild(vltCollection);
             }
 
-            if (collection.Parent != null)
-            {
-                collection.Parent.RemoveChild(collection);
-            }
-            else
-            {
-                database.RemoveCollection(collection);
-            }
+            database.RemoveCollection(collection);
         }
     }
 }

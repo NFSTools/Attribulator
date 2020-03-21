@@ -66,8 +66,18 @@ namespace YAMLDatabase.ModScript
 
         public void RemoveCollection(VltCollection collection)
         {
+            bool hasParent = collection.Parent != null;
+            collection.Parent?.RemoveChild(collection);
             Collections.Remove(collection.ShortPath);
-            Database.RowManager.RemoveCollection(collection);
+            if (!hasParent)
+                Database.RowManager.RemoveCollection(collection);
+        }
+
+        public void RenameCollection(VltCollection collection, string newName)
+        {
+            Collections.Remove(collection.ShortPath);
+            collection.SetName(newName);
+            Collections.Add(collection.ShortPath, collection);
         }
     }
 }

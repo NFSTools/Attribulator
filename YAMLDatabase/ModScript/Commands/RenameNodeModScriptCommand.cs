@@ -36,7 +36,7 @@ namespace YAMLDatabase.ModScript.Commands
 
             //Debug.WriteLine("renaming {0} to {1}", CollectionName, NewName);
 
-            collection.SetName(NewName);
+            database.RenameCollection(collection, NewName);
         }
     }
 }
