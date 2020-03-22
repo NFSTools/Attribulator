@@ -148,6 +148,13 @@ namespace YAMLDatabase
                 stopwatch.ElapsedMilliseconds / 1000f);
 
             stopwatch.Restart();
+            deserializer.GenerateFiles(profile, args.OutputDirectory);
+            stopwatch.Stop();
+
+            Console.WriteLine("Exported VLT files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
+                stopwatch.ElapsedMilliseconds / 1000f, args.OutputDirectory);
+
+            stopwatch.Restart();
             new DatabaseSerializer(database, args.InputDirectory).Serialize(loadedDatabase.Files);
 
             //deserializer.GenerateFiles(profile, args.OutputDirectory);
@@ -155,13 +162,6 @@ namespace YAMLDatabase
 
             Console.WriteLine("Exported YML files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
                 stopwatch.ElapsedMilliseconds / 1000f, args.InputDirectory);
-
-            stopwatch.Restart();
-            deserializer.GenerateFiles(profile, args.OutputDirectory);
-            stopwatch.Stop();
-
-            Console.WriteLine("Exported VLT files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
-                stopwatch.ElapsedMilliseconds / 1000f, args.OutputDirectory);
         }
 
         private static void DirectoryCopy(string sourceDirName, string destDirName, bool copySubDirs)
