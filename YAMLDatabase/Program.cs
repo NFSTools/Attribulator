@@ -58,7 +58,7 @@ namespace YAMLDatabase
             }
 
             new ModuleLoader("VaultLib.Support.*.dll").Load();
-            HashManager.LoadDictionary("hashes.txt");
+            HashManager.LoadDictionary(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "hashes.txt"));
 
             List<BaseProfile> profiles = new List<BaseProfile>
             {
