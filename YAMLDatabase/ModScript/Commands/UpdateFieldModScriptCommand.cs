@@ -71,7 +71,7 @@ namespace YAMLDatabase.ModScript.Commands
             {
                 if (ArrayIndex == -1)
                     ArrayIndex = array.Items.Count - 1;
-                if (ArrayIndex < array.Items.Count)
+                if (ArrayIndex >= 0 && ArrayIndex < array.Items.Count)
                 {
                     itemToEdit = array.Items[ArrayIndex];
                 }
