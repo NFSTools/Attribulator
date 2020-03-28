@@ -54,6 +54,9 @@ namespace YAMLDatabase.ModScript
 
                 switch (parts[0])
                 {
+                    case "append_array":
+                        command = new AppendArrayModScriptCommand();
+                        break;
                     case "version":
                         command = new VersionModScriptCommand();
                         break;
