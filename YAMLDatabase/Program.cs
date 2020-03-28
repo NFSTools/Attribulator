@@ -124,16 +124,21 @@ namespace YAMLDatabase
 
             foreach (var command in modScriptParser.Parse())
             {
+#if !DEBUG
                 try
                 {
+#endif
                     cmdStopwatch.Restart();
                     command.Execute(modScriptDatabase);
                     //Console.WriteLine("Executed command in {1}ms: {0}", command.Line, cmdStopwatch.ElapsedMilliseconds);
-                }
+#if !DEBUG
+
+            }
                 catch (Exception e)
                 {
                     throw new ModScriptCommandExecutionException($"Failed to execute command: {command.Line}", e);
                 }
+#endif
             }
             stopwatch.Stop();
             Console.WriteLine("Applied script from {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
