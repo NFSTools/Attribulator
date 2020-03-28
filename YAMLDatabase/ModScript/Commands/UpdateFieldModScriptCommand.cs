@@ -6,7 +6,6 @@ using System.Linq;
 using System.Reflection;
 using VaultLib.Core;
 using VaultLib.Core.Data;
-using VaultLib.Core.DB;
 using VaultLib.Core.Types;
 using VaultLib.Core.Types.Abstractions;
 using VaultLib.Core.Types.Attrib.Types;
@@ -68,15 +67,26 @@ namespace YAMLDatabase.ModScript.Commands
             if (data is VLTArrayType array)
             {
                 if (ArrayIndex < array.Items.Count)
+                {
                     itemToEdit = array.Items[ArrayIndex];
+                }
                 else if (ArrayIndex == array.Items.Count)
                 {
                     array.Items.Add(TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field, collection));
                     itemToEdit = array.Items[ArrayIndex];
                 }
+                else if (ArrayIndex < array.Capacity)
+                {
+                    while (ArrayIndex >= array.Items.Count)
+                    {
+                        array.Items.Add(TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field, collection));
+                    }
+
+                    itemToEdit = array.Items[ArrayIndex];
+                }
                 else
                 {
-                    throw new ModScriptCommandExecutionException($"update_field command is out of bounds. If you resized the array, make sure your updates are sorted by index.");
+                    throw new ModScriptCommandExecutionException($"update_field command is out of bounds. Checked: 0 <= {ArrayIndex} < {array.Capacity}");
                 }
             }
 
