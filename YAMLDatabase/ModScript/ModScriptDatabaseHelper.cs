@@ -77,6 +77,10 @@ namespace YAMLDatabase.ModScript
         {
             Collections.Remove(collection.ShortPath);
             collection.SetName(newName);
+            if (collection.Class.HasField("CollectionName"))
+            {
+                collection.SetDataValue("CollectionName", newName);
+            }
             Collections.Add(collection.ShortPath, collection);
         }
     }
