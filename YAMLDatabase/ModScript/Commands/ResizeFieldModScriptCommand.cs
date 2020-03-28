@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
+using VaultLib.Core;
 using VaultLib.Core.Data;
 using VaultLib.Core.DB;
 using VaultLib.Core.Types;
@@ -42,6 +43,12 @@ namespace YAMLDatabase.ModScript.Commands
                 throw new ModScriptCommandExecutionException($"Field {ClassName}[{FieldName}] is not an array!");
             }
 
+            if (field.MaxCount < NewCapacity)
+            {
+                throw new ModScriptCommandExecutionException(
+                    $"Cannot resize field {ClassName}[{FieldName}] beyond maximum count (requested {NewCapacity} but limit is {field.MaxCount})");
+            }
+
             if (!collection.HasEntry(FieldName))
             {
                 throw new ModScriptCommandExecutionException($"Collection {collection.ShortPath} does not have an entry for {FieldName}.");
@@ -49,9 +56,19 @@ namespace YAMLDatabase.ModScript.Commands
 
             VLTArrayType array = collection.GetRawValue<VLTArrayType>(FieldName);
 
-            while (NewCapacity < array.Items.Count)
+            if (NewCapacity < array.Items.Count)
             {
-                array.Items.RemoveAt(array.Items.Count - 1);
+                while (NewCapacity < array.Items.Count)
+                {
+                    array.Items.RemoveAt(array.Items.Count - 1);
+                }
+            }
+            else if (NewCapacity > array.Items.Count)
+            {
+                while (NewCapacity >= array.Items.Count)
+                {
+                    array.Items.Add(TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field, collection));
+                }
             }
 
             if (!field.IsInLayout)

@@ -40,7 +40,10 @@ namespace YAMLDatabase.ModScript.Commands
             if (FieldName.Contains('['))
             {
                 var split = FieldName.Split(new[] { '[', ']' }, StringSplitOptions.RemoveEmptyEntries);
-                ArrayIndex = int.Parse(split[1]);
+                if (split[1] == "^")
+                    ArrayIndex = -1;
+                else
+                    ArrayIndex = int.Parse(split[1]);
                 FieldName = split[0];
             }
 
@@ -66,24 +69,26 @@ namespace YAMLDatabase.ModScript.Commands
 
             if (data is VLTArrayType array)
             {
+                if (ArrayIndex == -1)
+                    ArrayIndex = array.Items.Count - 1;
                 if (ArrayIndex < array.Items.Count)
                 {
                     itemToEdit = array.Items[ArrayIndex];
                 }
-                else if (ArrayIndex == array.Items.Count)
-                {
-                    array.Items.Add(TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field, collection));
-                    itemToEdit = array.Items[ArrayIndex];
-                }
-                else if (ArrayIndex < array.Capacity)
-                {
-                    while (ArrayIndex >= array.Items.Count)
-                    {
-                        array.Items.Add(TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field, collection));
-                    }
+                //else if (ArrayIndex == array.Items.Count)
+                //{
+                //    array.Items.Add(TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field, collection));
+                //    itemToEdit = array.Items[ArrayIndex];
+                //}
+                //else if (ArrayIndex < array.Capacity)
+                //{
+                //    while (ArrayIndex >= array.Items.Count)
+                //    {
+                //        array.Items.Add(TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field, collection));
+                //    }
 
-                    itemToEdit = array.Items[ArrayIndex];
-                }
+                //    itemToEdit = array.Items[ArrayIndex];
+                //}
                 else
                 {
                     throw new ModScriptCommandExecutionException($"update_field command is out of bounds. Checked: 0 <= {ArrayIndex} < {array.Capacity}");
