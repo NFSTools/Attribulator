@@ -178,7 +178,7 @@ namespace YAMLDatabase
                     }
                     else
                     {
-                        Debug.WriteLine("WARN: vault {0} has no folder", new object[] { vault });
+                        Console.WriteLine("WARN: vault {0} has no folder; looked for {1}", vault, vaultDirectory);
                     }
 
                     vaultsToSaveDictionary[file.Name].Add(newVault);
