@@ -143,8 +143,8 @@ namespace YAMLDatabase
             }
             stopwatch.Stop();
             float commandsPerSecond = commandCount / (stopwatch.ElapsedMilliseconds / 1000.0f);
-            Console.WriteLine("Applied script from {2} in {0}ms ({1:f2}s) (~{3:f2} commands/sec)", stopwatch.ElapsedMilliseconds,
-                stopwatch.ElapsedMilliseconds / 1000f, args.ModScriptPath, commandsPerSecond);
+            Console.WriteLine("Applied script from {2} in {0}ms ({1:f2}s) ({4} commands @ ~{3:f2} commands/sec)", stopwatch.ElapsedMilliseconds,
+                stopwatch.ElapsedMilliseconds / 1000f, args.ModScriptPath, commandsPerSecond, commandCount);
             stopwatch.Restart();
             Console.WriteLine("Making backup");
             Directory.Move(args.InputDirectory, $"{args.InputDirectory.TrimEnd('/', '\\')}_{DateTimeOffset.Now.ToUnixTimeSeconds()}");
