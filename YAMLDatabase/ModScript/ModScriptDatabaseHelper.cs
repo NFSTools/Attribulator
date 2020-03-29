@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using VaultLib.Core;
@@ -62,15 +63,6 @@ namespace YAMLDatabase.ModScript
             return collection;
         }
 
-        public void RemoveCollection(VltCollection collection)
-        {
-            bool hasParent = collection.Parent != null;
-            collection.Parent?.RemoveChild(collection);
-            Collections.Remove(collection.ShortPath);
-            if (!hasParent)
-                Database.RowManager.RemoveCollection(collection);
-        }
-
         public void RenameCollection(VltCollection collection, string newName)
         {
             Collections.Remove(collection.ShortPath);
@@ -80,6 +72,24 @@ namespace YAMLDatabase.ModScript
                 collection.SetDataValue("CollectionName", newName);
             }
             Collections.Add(collection.ShortPath, collection);
+        }
+
+        public void RemoveCollection(VltCollection collection)
+        {
+            // Disassociate children
+            bool hasParent = collection.Parent != null;
+            collection.Parent?.RemoveChild(collection);
+            Collections.Remove(collection.ShortPath);
+
+            foreach (var collectionChild in collection.Children.ToList())
+            {
+                RemoveCollection(collectionChild);
+            }
+
+            if (!hasParent)
+            {
+                Database.RowManager.RemoveCollection(collection);
+            }
         }
     }
 }
