@@ -120,6 +120,7 @@ namespace YAMLDatabase
             var modScriptParser = new ModScriptParser(args.ModScriptPath);
             var cmdStopwatch = Stopwatch.StartNew();
             var modScriptDatabase = new ModScriptDatabaseHelper(database);
+            int commandCount = 0;
 
             foreach (var command in modScriptParser.Parse())
             {
@@ -129,6 +130,7 @@ namespace YAMLDatabase
 #endif
                     cmdStopwatch.Restart();
                     command.Execute(modScriptDatabase);
+                    commandCount++;
                     //Console.WriteLine("Executed command in {1}ms: {0}", command.Line, cmdStopwatch.ElapsedMilliseconds);
 #if !DEBUG
 
@@ -140,8 +142,9 @@ namespace YAMLDatabase
 #endif
             }
             stopwatch.Stop();
-            Console.WriteLine("Applied script from {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
-                stopwatch.ElapsedMilliseconds / 1000f, args.ModScriptPath);
+            float commandsPerSecond = commandCount / (stopwatch.ElapsedMilliseconds / 1000.0f);
+            Console.WriteLine("Applied script from {2} in {0}ms ({1:f2}s) (~{3:f2} commands/sec)", stopwatch.ElapsedMilliseconds,
+                stopwatch.ElapsedMilliseconds / 1000f, args.ModScriptPath, commandsPerSecond);
             stopwatch.Restart();
             Console.WriteLine("Making backup");
             Directory.Move(args.InputDirectory, $"{args.InputDirectory.TrimEnd('/', '\\')}_{DateTimeOffset.Now.ToUnixTimeSeconds()}");
