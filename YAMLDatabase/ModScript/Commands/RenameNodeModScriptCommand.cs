@@ -32,8 +32,6 @@ namespace YAMLDatabase.ModScript.Commands
                 throw new InvalidDataException($"rename_node failed because there is already a collection called '{NewName}'");
             }
 
-            //Debug.WriteLine("renaming {0} to {1}", CollectionName, NewName);
-
             database.RenameCollection(collection, NewName);
         }
     }

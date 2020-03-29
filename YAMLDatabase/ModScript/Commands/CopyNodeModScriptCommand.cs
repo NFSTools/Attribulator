@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using VaultLib.Core.Data;
 using VaultLib.Core.DB;
@@ -63,17 +62,10 @@ namespace YAMLDatabase.ModScript.Commands
             }
 
             database.AddCollection(newCollection, parentCollection);
-
-            //if (parentCollection == null)
-            //    database.AddCollection(newCollection);
-            //else
-            //    parentCollection.AddChild(newCollection);
         }
 
         private void CopyCollection(Database database, VltCollection from, VltCollection to)
         {
-            if (from.Class.Name == "ecar" && (from.Name == "240sx" && to.Name == "sciontc"))
-                Debugger.Break(); 
             foreach (var dataPair in from.GetData())
             {
                 VltClassField field = from.Class[dataPair.Key];
