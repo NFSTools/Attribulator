@@ -24,13 +24,21 @@ namespace YAMLDatabase.ModScript.Commands
         {
             VltCollection collection = GetCollection(database, ClassName, CollectionName);
 
+            bool hasParent = collection.Parent != null;
+
+            if (hasParent)
+            {
+                collection.Parent.RemoveChild(collection);
+            }
+
             // Disassociate children
             foreach (var vltCollection in collection.Children.ToList())
             {
                 collection.RemoveChild(vltCollection);
             }
 
-            database.RemoveCollection(collection);
+            if (!hasParent)
+                database.RemoveCollection(collection);
         }
     }
 }
