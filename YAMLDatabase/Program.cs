@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.IO;
 using VaultLib.Core.DB;
 using VaultLib.Core.Hashing;
-using VaultLib.Frameworks.Speed;
 using YAMLDatabase.ModScript;
 using YAMLDatabase.Profiles;
 
@@ -143,7 +142,6 @@ namespace YAMLDatabase
             stopwatch.Stop();
             Console.WriteLine("Applied script from {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
                 stopwatch.ElapsedMilliseconds / 1000f, args.ModScriptPath);
-
             stopwatch.Restart();
             Console.WriteLine("Making backup");
             Directory.Move(args.InputDirectory, $"{args.InputDirectory.TrimEnd('/', '\\')}_{DateTimeOffset.Now.ToUnixTimeSeconds()}");

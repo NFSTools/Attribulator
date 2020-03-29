@@ -63,7 +63,7 @@ namespace YAMLDatabase.ModScript.Commands
             }
             else if (NewCapacity > array.Items.Count)
             {
-                while (NewCapacity >= array.Items.Count)
+                while (NewCapacity > array.Items.Count)
                 {
                     array.Items.Add(TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field, collection));
                 }
