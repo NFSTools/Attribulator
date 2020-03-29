@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using VaultLib.Core;
 using VaultLib.Core.Data;
+using VaultLib.Core.Types;
 
 namespace YAMLDatabase.ModScript.Commands
 {
@@ -63,9 +64,24 @@ namespace YAMLDatabase.ModScript.Commands
 
             foreach (var baseField in newNode.Class.BaseFields)
             {
+                var vltBaseType = TypeRegistry.CreateInstance(database.Database.Options.GameId, newNode.Class, newNode.Class[baseField.Key],
+                    newNode);
+
+                if (vltBaseType is VLTArrayType array)
+                {
+                    array.Capacity = baseField.MaxCount;
+                    array.ItemAlignment = baseField.Alignment;
+                    array.FieldSize = baseField.Size;
+                    array.Items = new List<VLTBaseType>();
+
+                    for (var i = 0; i < array.Capacity; i++)
+                    {
+                        array.Items.Add(TypeRegistry.ConstructInstance(array.ItemType, newNode.Class, baseField, newNode));
+                    }
+                }
+
                 newNode.SetRawValue(baseField.Name,
-                    TypeRegistry.CreateInstance(database.Database.Options.GameId, newNode.Class, newNode.Class[baseField.Key],
-                        newNode));
+                    vltBaseType);
             }
 
             if (newNode.Class.HasField("CollectionName"))
