@@ -4,7 +4,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using VaultLib.Core;
 using VaultLib.Core.Data;
 using VaultLib.Core.Types;
 using VaultLib.Core.Types.Abstractions;
@@ -75,23 +74,9 @@ namespace YAMLDatabase.ModScript.Commands
                 {
                     itemToEdit = array.Items[ArrayIndex];
                 }
-                //else if (ArrayIndex == array.Items.Count)
-                //{
-                //    array.Items.Add(TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field, collection));
-                //    itemToEdit = array.Items[ArrayIndex];
-                //}
-                //else if (ArrayIndex < array.Capacity)
-                //{
-                //    while (ArrayIndex >= array.Items.Count)
-                //    {
-                //        array.Items.Add(TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field, collection));
-                //    }
-
-                //    itemToEdit = array.Items[ArrayIndex];
-                //}
                 else
                 {
-                    throw new ModScriptCommandExecutionException($"update_field command is out of bounds. Checked: 0 <= {ArrayIndex} < {array.Capacity}");
+                    throw new ModScriptCommandExecutionException($"update_field command is out of bounds. Checked: 0 <= {ArrayIndex} < {array.Items.Count}");
                 }
             }
 

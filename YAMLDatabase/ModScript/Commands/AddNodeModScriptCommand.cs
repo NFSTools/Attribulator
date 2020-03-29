@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using VaultLib.Core;
 using VaultLib.Core.Data;
-using VaultLib.Core.DB;
 
 namespace YAMLDatabase.ModScript.Commands
 {

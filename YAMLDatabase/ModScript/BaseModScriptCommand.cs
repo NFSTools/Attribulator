@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Globalization;
 using VaultLib.Core.Data;
-using VaultLib.Core.DB;
 using VaultLib.Core.Hashing;
 
 namespace YAMLDatabase.ModScript

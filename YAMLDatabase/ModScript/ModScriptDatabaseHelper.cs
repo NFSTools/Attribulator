@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using Microsoft.VisualBasic;
 using VaultLib.Core;
 using VaultLib.Core.Data;
 using VaultLib.Core.DB;

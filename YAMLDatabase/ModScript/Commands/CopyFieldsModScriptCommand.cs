@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using VaultLib.Core.Data;
-using VaultLib.Core.DB;
 using VaultLib.Core.Types;
 using YAMLDatabase.ModScript.Utils;
 

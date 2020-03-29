@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using VaultLib.Core;
 using VaultLib.Core.DB;
 
 namespace YAMLDatabase.Profiles

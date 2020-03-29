@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using VaultLib.Core.Data;
-using VaultLib.Core.DB;
 
 namespace YAMLDatabase.ModScript.Commands
 {

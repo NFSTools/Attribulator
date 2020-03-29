@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using VaultLib.Core;
 using VaultLib.Core.Data;
-using VaultLib.Core.DB;
 
 namespace YAMLDatabase.ModScript.Commands
 {
@@ -18,7 +16,7 @@ namespace YAMLDatabase.ModScript.Commands
         {
             if (parts.Count != 4)
             {
-                throw new ModScriptParserException($"Expected 4 tokens, got {parts.Count}");
+                throw new ModScriptParserException($"Expected 4 tokens, got {parts.Count} ({string.Join(' ', parts)})");
             }
 
             ClassName = CleanHashString(parts[1]);

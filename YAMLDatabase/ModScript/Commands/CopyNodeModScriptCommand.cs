@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Reflection;
-using VaultLib.Core;
 using VaultLib.Core.Data;
 using VaultLib.Core.DB;
-using VaultLib.Core.Types;
-using VaultLib.Core.Types.EA.Reflection;
 using YAMLDatabase.ModScript.Utils;
 
 namespace YAMLDatabase.ModScript.Commands
@@ -77,6 +72,8 @@ namespace YAMLDatabase.ModScript.Commands
 
         private void CopyCollection(Database database, VltCollection from, VltCollection to)
         {
+            if (from.Class.Name == "ecar" && (from.Name == "240sx" && to.Name == "sciontc"))
+                Debugger.Break(); 
             foreach (var dataPair in from.GetData())
             {
                 VltClassField field = from.Class[dataPair.Key];

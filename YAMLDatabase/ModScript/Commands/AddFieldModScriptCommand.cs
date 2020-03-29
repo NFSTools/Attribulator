@@ -2,8 +2,6 @@
 using System.IO;
 using VaultLib.Core;
 using VaultLib.Core.Data;
-using VaultLib.Core.DB;
-using VaultLib.Core.Hashing;
 using VaultLib.Core.Types;
 
 namespace YAMLDatabase.ModScript.Commands
@@ -50,7 +48,7 @@ namespace YAMLDatabase.ModScript.Commands
 
             var vltBaseType = TypeRegistry.CreateInstance(database.Database.Options.GameId, collection.Class, field, collection);
 
-            if (ArrayCapacity != 0)
+            //if (ArrayCapacity != 0)
             {
                 if (vltBaseType is VLTArrayType array)
                 {
@@ -70,10 +68,10 @@ namespace YAMLDatabase.ModScript.Commands
                         array.Items.Add(TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field, collection));
                     }
                 }
-                else
-                {
-                    throw new InvalidDataException($"field '{field.Name}' is not an array, therefore capacity cannot be specified");
-                }
+                //else
+                //{
+                //    throw new InvalidDataException($"field '{field.Name}' is not an array, therefore capacity cannot be specified");
+                //}
             }
 
             collection.SetRawValue(field.Name, vltBaseType);

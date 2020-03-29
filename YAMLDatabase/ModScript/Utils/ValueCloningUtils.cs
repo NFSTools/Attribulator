@@ -14,6 +14,7 @@ namespace YAMLDatabase.ModScript.Utils
         public static VLTBaseType CloneValue(Database database, VLTBaseType originalValue, VltClass vltClass, VltClassField vltClassField,
             VltCollection vltCollection)
         {
+
             var newValue = (originalValue is VLTArrayType)
                 ? TypeRegistry.CreateInstance(database.Options.GameId, vltClass, vltClassField, vltCollection)
                 : TypeRegistry.ConstructInstance(TypeRegistry.ResolveType(database.Options.GameId, vltClassField.TypeName), vltClass,
