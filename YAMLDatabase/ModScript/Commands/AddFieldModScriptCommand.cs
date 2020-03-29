@@ -48,30 +48,23 @@ namespace YAMLDatabase.ModScript.Commands
 
             var vltBaseType = TypeRegistry.CreateInstance(database.Database.Options.GameId, collection.Class, field, collection);
 
-            //if (ArrayCapacity != 0)
+            if (vltBaseType is VLTArrayType array)
             {
-                if (vltBaseType is VLTArrayType array)
+                if (ArrayCapacity > field.MaxCount)
                 {
-                    if (ArrayCapacity > field.MaxCount)
-                    {
-                        throw new ModScriptCommandExecutionException(
-                            $"Cannot add field {ClassName}[{FieldName}] with capacity beyond maximum (requested {ArrayCapacity} but limit is {field.MaxCount})");
-                    }
-
-                    array.Capacity = ArrayCapacity;
-                    array.ItemAlignment = field.Alignment;
-                    array.FieldSize = field.Size;
-                    array.Items = new List<VLTBaseType>();
-
-                    for (var i = 0; i < ArrayCapacity; i++)
-                    {
-                        array.Items.Add(TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field, collection));
-                    }
+                    throw new ModScriptCommandExecutionException(
+                        $"Cannot add field {ClassName}[{FieldName}] with capacity beyond maximum (requested {ArrayCapacity} but limit is {field.MaxCount})");
                 }
-                //else
-                //{
-                //    throw new InvalidDataException($"field '{field.Name}' is not an array, therefore capacity cannot be specified");
-                //}
+
+                array.Capacity = ArrayCapacity;
+                array.ItemAlignment = field.Alignment;
+                array.FieldSize = field.Size;
+                array.Items = new List<VLTBaseType>();
+
+                for (var i = 0; i < ArrayCapacity; i++)
+                {
+                    array.Items.Add(TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field, collection));
+                }
             }
 
             collection.SetRawValue(field.Name, vltBaseType);

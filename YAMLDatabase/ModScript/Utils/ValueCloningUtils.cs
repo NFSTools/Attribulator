@@ -48,7 +48,6 @@ namespace YAMLDatabase.ModScript.Utils
         private static VLTBaseType CloneObjectWithReflection(VLTBaseType originalValue, VLTBaseType newValue, VltClass vltClass, VltClassField vltClassField,
             VltCollection vltCollection)
         {
-            // Clone via reflection because oof
             PropertyInfo[] properties = originalValue.GetType()
                 .GetProperties(BindingFlags.Public | BindingFlags.Instance)
                 .Where(p => p.SetMethod?.IsPublic ?? false)
@@ -56,8 +55,6 @@ namespace YAMLDatabase.ModScript.Utils
 
             foreach (var propertyInfo in properties)
             {
-                //Debug.WriteLine("cloning {0} of {1}", propertyInfo.Name, originalValue.GetType());
-
                 if (propertyInfo.PropertyType.IsSubclassOf(typeof(VLTBaseType)))
                 {
                     propertyInfo.SetValue(newValue, CloneObjectWithReflection(
@@ -78,8 +75,6 @@ namespace YAMLDatabase.ModScript.Utils
                 {
                     propertyInfo.SetValue(newValue, ((Array)propertyInfo.GetValue(originalValue)).Clone());
                 }
-
-                //if (propertyInfo.GetValue(newValue) == null) throw new Exception();
             }
 
             return newValue;

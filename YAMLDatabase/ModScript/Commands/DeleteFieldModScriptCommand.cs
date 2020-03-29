@@ -26,7 +26,6 @@ namespace YAMLDatabase.ModScript.Commands
         public override void Execute(ModScriptDatabaseHelper database)
         {
             VltCollection collection = GetCollection(database, ClassName, CollectionName);
-            //collection.RemoveValue(FieldName);
             if (collection.HasEntry(FieldName))
             {
                 collection.RemoveValue(FieldName);

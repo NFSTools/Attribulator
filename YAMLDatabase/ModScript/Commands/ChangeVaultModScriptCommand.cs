@@ -27,7 +27,6 @@ namespace YAMLDatabase.ModScript.Commands
         public override void Execute(ModScriptDatabaseHelper database)
         {
             VltCollection collection = GetCollection(database, ClassName, CollectionName);
-            //Vault vault = database.FindVault(VaultName);
             Vault vault;
 
             try
