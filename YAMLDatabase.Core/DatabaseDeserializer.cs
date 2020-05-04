@@ -15,7 +15,7 @@ using VaultLib.Core.Types.Attrib;
 using VaultLib.Core.Types.EA.Reflection;
 using VaultLib.Core.Utils;
 using YAMLDatabase.Algorithm;
-using YAMLDatabase.ModScript.Utils;
+using YAMLDatabase.Core.Utils;
 using YAMLDatabase.Profiles;
 using YamlDotNet.Serialization;
 
@@ -151,8 +151,12 @@ namespace YAMLDatabase
 
                                     foreach (var (key, value) in loadedCollection.Data)
                                     {
+                                        if (!vltClass.TryGetField(key, out var field))
+                                        {
+                                            throw new SerializedDatabaseLoaderException($"Cannot find field: {vltClass.Name}/{key}");
+                                        }
                                         newVltCollection.SetRawValue(key,
-                                            ConvertSerializedValueToDataValue(_database.Options.GameId, vaultDirectory, vltClass, vltClass[key],
+                                            ConvertSerializedValueToDataValue(_database.Options.GameId, vaultDirectory, vltClass, field,
                                                 newVltCollection, value));
                                     }
 

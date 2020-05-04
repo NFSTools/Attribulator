@@ -2,7 +2,7 @@
 using VaultLib.Core;
 using YamlDotNet.Serialization;
 
-namespace YAMLDatabase
+namespace YAMLDatabase.Core
 {
     public class LoadedDatabaseFile
     {

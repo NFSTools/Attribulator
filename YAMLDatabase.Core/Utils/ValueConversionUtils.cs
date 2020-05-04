@@ -7,7 +7,7 @@ using VaultLib.Core.Hashing;
 using VaultLib.Core.Types;
 using VaultLib.Core.Types.EA.Reflection;
 
-namespace YAMLDatabase.ModScript.Utils
+namespace YAMLDatabase.Core.Utils
 {
     public static class ValueConversionUtils
     {
@@ -67,8 +67,15 @@ namespace YAMLDatabase.ModScript.Utils
                 }
                 else
                 {
-                    primitiveTypeBase.SetValue(
-                        (IConvertible) Convert.ChangeType(str, conversionType, CultureInfo.InvariantCulture));
+                    try
+                    {
+                        primitiveTypeBase.SetValue(
+                            (IConvertible)Convert.ChangeType(str, conversionType, CultureInfo.InvariantCulture));
+                    }
+                    catch (Exception e)
+                    {
+                        throw new SerializedDatabaseLoaderException($"Failed to parse value [{str}] as type {conversionType}", e);
+                    }
                 }
             }
 

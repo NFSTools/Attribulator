@@ -6,6 +6,7 @@ using CoreLibraries.GameUtilities;
 using VaultLib.Core;
 using VaultLib.Core.DB;
 using VaultLib.Core.Pack;
+using YAMLDatabase.Core;
 
 namespace YAMLDatabase.Profiles
 {

@@ -28,4 +28,8 @@
     <PackageReference Include="YamlDotNet" Version="8.1.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\YAMLDatabase.Core\YAMLDatabase.Core.csproj" />
+  </ItemGroup>
+
 </Project>

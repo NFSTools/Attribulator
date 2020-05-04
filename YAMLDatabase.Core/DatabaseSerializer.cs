@@ -10,6 +10,7 @@ using VaultLib.Core.Types;
 using VaultLib.Core.Types.Attrib;
 using VaultLib.Core.Types.EA.Reflection;
 using VaultLib.Core.Utils;
+using YAMLDatabase.Core;
 using YamlDotNet.Serialization;
 
 namespace YAMLDatabase
