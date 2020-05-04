@@ -5,7 +5,9 @@ VisualStudioVersion = 16.0.29728.190
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YAMLDatabase", "YAMLDatabase\YAMLDatabase.csproj", "{D6E79A48-C05E-4881-8536-97260CAEF4D4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YAMLDatabase.Core", "YAMLDatabase.Core\YAMLDatabase.Core.csproj", "{AC8A742D-39E4-4795-B9A4-5A23081B3FD1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YAMLDatabase.Core", "YAMLDatabase.Core\YAMLDatabase.Core.csproj", "{AC8A742D-39E4-4795-B9A4-5A23081B3FD1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YAMLDatabase.CodeGenCli", "YAMLDatabase.CodeGenCli\YAMLDatabase.CodeGenCli.csproj", "{FF74AA26-6C36-48FD-9008-07DDA500D479}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,12 @@ Global
 		{AC8A742D-39E4-4795-B9A4-5A23081B3FD1}.Release|Any CPU.ActiveCfg = Release|x86
 		{AC8A742D-39E4-4795-B9A4-5A23081B3FD1}.Release|x86.ActiveCfg = Release|x86
 		{AC8A742D-39E4-4795-B9A4-5A23081B3FD1}.Release|x86.Build.0 = Release|x86
+		{FF74AA26-6C36-48FD-9008-07DDA500D479}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{FF74AA26-6C36-48FD-9008-07DDA500D479}.Debug|x86.ActiveCfg = Debug|x86
+		{FF74AA26-6C36-48FD-9008-07DDA500D479}.Debug|x86.Build.0 = Debug|x86
+		{FF74AA26-6C36-48FD-9008-07DDA500D479}.Release|Any CPU.ActiveCfg = Release|x86
+		{FF74AA26-6C36-48FD-9008-07DDA500D479}.Release|x86.ActiveCfg = Release|x86
+		{FF74AA26-6C36-48FD-9008-07DDA500D479}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

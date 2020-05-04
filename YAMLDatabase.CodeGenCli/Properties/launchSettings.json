@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "YAMLDatabase.CodeGenCli": {
+      "commandName": "Project",
+      "commandLineArgs": "-i D:\\Development\\WorldUnited.gg\\ClientMods\\vlt\\yml -o D:\\Development\\WorldUnited.gg\\vlt-code -l CPP"
+    }
+  }
+}
