@@ -48,9 +48,14 @@ namespace YAMLDatabase.CodeGenCli
 
             foreach (var loadedDatabaseClass in loadedDatabase.Classes)
             {
+                //if (loadedDatabaseClass.Name != "ecar") continue;
+
+                var contents = generator.GenerateClassLayout(loadedDatabaseClass);
+                //Debug.WriteLine("generated {0}", new object[] { loadedDatabaseClass.Name });
+                //Debug.WriteLine(contents);
                 File.WriteAllText(
                     Path.Combine(args.OutputDirectory, loadedDatabaseClass.Name + generator.GetExtension()),
-                    generator.GenerateClassLayout(loadedDatabaseClass));
+                    contents);
             }
         }
     }
