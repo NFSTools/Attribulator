@@ -1,6 +1,6 @@
 ﻿using VaultLib.Core.Data;
 
-namespace YAMLDatabase
+namespace YAMLDatabase.Core
 {
     public class LoadedDatabaseClassField
     {

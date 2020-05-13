@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using VaultLib.Core;
 
-namespace YAMLDatabase.Algorithm
+namespace YAMLDatabase.Core.Algorithm
 {
     public class VaultDependencyNode
     {

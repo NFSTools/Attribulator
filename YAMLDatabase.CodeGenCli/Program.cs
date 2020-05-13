@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using CommandLine;
 using YAMLDatabase.CodeGenCli.Generators;
+using YAMLDatabase.Core;
 using YamlDotNet.Serialization;
 
 namespace YAMLDatabase.CodeGenCli

@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using VaultLib.Core.DB;
 using VaultLib.Core.Hashing;
+using YAMLDatabase.Core;
 using YAMLDatabase.ModScript;
 using YAMLDatabase.Profiles;
 

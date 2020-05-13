@@ -1,4 +1,6 @@
-﻿namespace YAMLDatabase.CodeGenCli
+﻿using YAMLDatabase.Core;
+
+namespace YAMLDatabase.CodeGenCli
 {
     public interface ICodeGenerator
     {

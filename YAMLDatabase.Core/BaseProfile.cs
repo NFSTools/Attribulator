@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
 using VaultLib.Core.DB;
-using YAMLDatabase.Core;
 
-namespace YAMLDatabase.Profiles
+namespace YAMLDatabase.Core
 {
     public abstract class BaseProfile
     {

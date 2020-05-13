@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace YAMLDatabase
+namespace YAMLDatabase.Core
 {
     public class LoadedCollection
     {

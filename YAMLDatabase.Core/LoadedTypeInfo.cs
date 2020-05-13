@@ -1,4 +1,4 @@
-﻿namespace YAMLDatabase
+﻿namespace YAMLDatabase.Core
 {
     public class LoadedTypeInfo
     {

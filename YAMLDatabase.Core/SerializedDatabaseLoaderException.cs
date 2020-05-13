@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace YAMLDatabase
+namespace YAMLDatabase.Core
 {
     [Serializable]
     public class SerializedDatabaseLoaderException : Exception

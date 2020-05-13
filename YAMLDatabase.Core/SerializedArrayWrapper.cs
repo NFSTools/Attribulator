@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 
-namespace YAMLDatabase
+namespace YAMLDatabase.Core
 {
     public class SerializedArrayWrapper
     {

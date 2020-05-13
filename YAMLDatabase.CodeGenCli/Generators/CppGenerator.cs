@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using VaultLib.Core.Data;
+using YAMLDatabase.Core;
 
 namespace YAMLDatabase.CodeGenCli.Generators
 {

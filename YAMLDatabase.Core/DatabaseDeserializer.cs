@@ -14,12 +14,11 @@ using VaultLib.Core.Types;
 using VaultLib.Core.Types.Attrib;
 using VaultLib.Core.Types.EA.Reflection;
 using VaultLib.Core.Utils;
-using YAMLDatabase.Algorithm;
+using YAMLDatabase.Core.Algorithm;
 using YAMLDatabase.Core.Utils;
-using YAMLDatabase.Profiles;
 using YamlDotNet.Serialization;
 
-namespace YAMLDatabase
+namespace YAMLDatabase.Core
 {
     /// <summary>
     /// Deserializes YAML files to a <see cref="VaultLib.Core.DB.Database"/> 
