@@ -12,98 +12,117 @@ using YAMLDatabase.Profiles;
 
 namespace YAMLDatabase
 {
-    enum OperationMode
+    internal static class Program
     {
-        Unpack,
-        Pack,
-        ApplyModScript
-    }
-
-    class ProgramArgs
-    {
-        [Option('i', HelpText = "Directory to read files (.yml or .bin) from", Required = true)]
-        public string InputDirectory { get; set; }
-
-        [Option('o', HelpText = "Directory to write files (.yml or .bin) to", Required = true)]
-        public string OutputDirectory { get; set; }
-
-        [Option('m', HelpText = "Mode to run the program in", Required = true)]
-        public OperationMode Mode { get; set; }
-
-        [Option('p', HelpText = "The profile to use", Required = true)]
-        public string ProfileName { get; set; }
-
-        [Option('s', HelpText = "The path to the .nfsms file")]
-        public string ModScriptPath { get; set; }
-    }
-
-    class Program
-    {
-        static void Main(string[] args)
+        private static readonly List<BaseProfile> Profiles = new List<BaseProfile>
         {
-            Parser.Default.ParseArguments<ProgramArgs>(args)
-                .WithParsed(RunProgram);
+            new MostWantedProfile(),
+            new CarbonProfile(),
+            new ProStreetProfile(),
+            new UndercoverProfile(),
+            new WorldProfile(),
+        };
+
+        static int Main(string[] args)
+        {
+            return Parser.Default.ParseArguments<UnpackOptions, PackOptions, ApplyScriptOptions>(args)
+                .MapResult(
+                    (UnpackOptions opts) => RunUnpack(opts), 
+                    (PackOptions opts) => RunPack(opts), 
+                    (ApplyScriptOptions opts) => RunApplyModScript(opts), 
+                    errs => 1);
         }
 
-        private static void RunProgram(ProgramArgs args)
+        private static BaseProfile ResolveProfile(string name)
         {
-            if (!Directory.Exists(args.InputDirectory))
-            {
-                throw new Exception($"Non-existent input directory: {args.InputDirectory}");
-            }
+            return Profiles.Find(p => p.GetName() == name);
+        }
 
-            if (!Directory.Exists(args.OutputDirectory))
-            {
-                Directory.CreateDirectory(args.OutputDirectory);
-            }
-
-            new ModuleLoader("VaultLib.Support.*.dll").Load();
-            HashManager.LoadDictionary(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "hashes.txt"));
-
-            List<BaseProfile> profiles = new List<BaseProfile>
-            {
-                new MostWantedProfile(),
-                new CarbonProfile(),
-                new ProStreetProfile(),
-                new UndercoverProfile(),
-                new WorldProfile(),
-            };
-
-            BaseProfile profile = profiles.Find(p => p.GetName() == args.ProfileName);
+        private static int RunUnpack(UnpackOptions args)
+        {
+            var profile = ResolveProfile(args.ProfileName);
 
             if (profile == null)
             {
                 Console.WriteLine("ERROR: Unknown profile {0}", args.ProfileName);
                 Console.WriteLine("AVAILABLE PROFILES:");
-                foreach (var baseProfile in profiles)
+                foreach (var baseProfile in Profiles)
                 {
                     Console.WriteLine("\tNAME: {0}", baseProfile.GetName());
                 }
 
-                return;
+                return 1;
             }
 
-            switch (args.Mode)
-            {
-                case OperationMode.Pack:
-                    RunPack(args, profile);
-                    break;
-                case OperationMode.Unpack:
-                    RunUnpack(args, profile);
-                    break;
-                case OperationMode.ApplyModScript:
-                    RunApplyModScript(args, profile);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+            var database = new Database(new DatabaseOptions(profile.GetGame(), profile.GetDatabaseType()));
+            var files = profile.LoadFiles(database, args.InputDirectory);
+            database.CompleteLoad();
+            var stopwatch = Stopwatch.StartNew();
+
+            var serializer = new DatabaseSerializer(database, args.OutputDirectory);
+            serializer.Serialize(files);
+
+            stopwatch.Stop();
+
+            Console.WriteLine("Exported database to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
+                stopwatch.ElapsedMilliseconds / 1000f, args.OutputDirectory);
+
+            return 0;
         }
 
-        private static void RunApplyModScript(ProgramArgs args, BaseProfile profile)
+        private static int RunPack(PackOptions args)
+        {
+            var profile = ResolveProfile(args.ProfileName);
+
+            if (profile == null)
+            {
+                Console.WriteLine("ERROR: Unknown profile {0}", args.ProfileName);
+                Console.WriteLine("AVAILABLE PROFILES:");
+                foreach (var baseProfile in Profiles)
+                {
+                    Console.WriteLine("\tNAME: {0}", baseProfile.GetName());
+                }
+
+                return 1;
+            }
+
+            var database = new Database(new DatabaseOptions(profile.GetGame(), profile.GetDatabaseType()));
+            var deserializer = new DatabaseDeserializer(database, args.InputDirectory);
+
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            deserializer.Deserialize();
+            stopwatch.Stop();
+
+            Console.WriteLine("Loaded database from {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
+                stopwatch.ElapsedMilliseconds / 1000f, args.InputDirectory);
+
+            stopwatch.Restart();
+            deserializer.GenerateFiles(profile, args.OutputDirectory);
+            stopwatch.Stop();
+            Console.WriteLine("Exported VLT files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
+                stopwatch.ElapsedMilliseconds / 1000f, args.OutputDirectory);
+            return 0;
+        }
+
+        private static int RunApplyModScript(ApplyScriptOptions args)
         {
             if (string.IsNullOrEmpty(args.ModScriptPath))
             {
                 throw new Exception("Missing modscript path!");
+            }
+            
+            var profile = ResolveProfile(args.ProfileName);
+
+            if (profile == null)
+            {
+                Console.WriteLine("ERROR: Unknown profile {0}", args.ProfileName);
+                Console.WriteLine("AVAILABLE PROFILES:");
+                foreach (var baseProfile in Profiles)
+                {
+                    Console.WriteLine("\tNAME: {0}", baseProfile.GetName());
+                }
+
+                return 1;
             }
 
             var database = new Database(new DatabaseOptions(profile.GetGame(), profile.GetDatabaseType()));
@@ -129,12 +148,11 @@ namespace YAMLDatabase
                 try
                 {
 #endif
-                    cmdStopwatch.Restart();
-                    command.Execute(modScriptDatabase);
-                    commandCount++;
-                    //Console.WriteLine("Executed command in {1}ms: {0}", command.Line, cmdStopwatch.ElapsedMilliseconds);
+                cmdStopwatch.Restart();
+                command.Execute(modScriptDatabase);
+                commandCount++;
+                //Console.WriteLine("Executed command in {1}ms: {0}", command.Line, cmdStopwatch.ElapsedMilliseconds);
 #if !DEBUG
-
                 }
                 catch (Exception e)
                 {
@@ -142,13 +160,16 @@ namespace YAMLDatabase
                 }
 #endif
             }
+
             stopwatch.Stop();
             float commandsPerSecond = commandCount / (stopwatch.ElapsedMilliseconds / 1000.0f);
-            Console.WriteLine("Applied script from {2} in {0}ms ({1:f2}s) ({4} commands @ ~{3:f2} commands/sec)", stopwatch.ElapsedMilliseconds,
+            Console.WriteLine("Applied script from {2} in {0}ms ({1:f2}s) ({4} commands @ ~{3:f2} commands/sec)",
+                stopwatch.ElapsedMilliseconds,
                 stopwatch.ElapsedMilliseconds / 1000f, args.ModScriptPath, commandsPerSecond, commandCount);
             stopwatch.Restart();
             Console.WriteLine("Making backup");
-            Directory.Move(args.InputDirectory, $"{args.InputDirectory.TrimEnd('/', '\\')}_{DateTimeOffset.Now.ToUnixTimeSeconds()}");
+            Directory.Move(args.InputDirectory,
+                $"{args.InputDirectory.TrimEnd('/', '\\')}_{DateTimeOffset.Now.ToUnixTimeSeconds()}");
             Directory.CreateDirectory(args.InputDirectory);
             stopwatch.Stop();
             Console.WriteLine("Made backup in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
@@ -168,6 +189,8 @@ namespace YAMLDatabase
 
             Console.WriteLine("Exported VLT files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
                 stopwatch.ElapsedMilliseconds / 1000f, args.OutputDirectory);
+
+            return 0;
         }
 
         private static void DirectoryCopy(string sourceDirName, string destDirName, bool copySubDirs)
@@ -206,41 +229,6 @@ namespace YAMLDatabase
                     DirectoryCopy(subdir.FullName, temppath, copySubDirs);
                 }
             }
-        }
-
-        private static void RunUnpack(ProgramArgs args, BaseProfile profile)
-        {
-            var database = new Database(new DatabaseOptions(profile.GetGame(), profile.GetDatabaseType()));
-            var files = profile.LoadFiles(database, args.InputDirectory);
-            database.CompleteLoad();
-            var stopwatch = Stopwatch.StartNew();
-
-            var serializer = new DatabaseSerializer(database, args.OutputDirectory);
-            serializer.Serialize(files);
-
-            stopwatch.Stop();
-
-            Console.WriteLine("Exported database to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
-                stopwatch.ElapsedMilliseconds / 1000f, args.OutputDirectory);
-        }
-
-        private static void RunPack(ProgramArgs args, BaseProfile profile)
-        {
-            var database = new Database(new DatabaseOptions(profile.GetGame(), profile.GetDatabaseType()));
-            var deserializer = new DatabaseDeserializer(database, args.InputDirectory);
-
-            Stopwatch stopwatch = Stopwatch.StartNew();
-            deserializer.Deserialize();
-            stopwatch.Stop();
-
-            Console.WriteLine("Loaded database from {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
-                stopwatch.ElapsedMilliseconds / 1000f, args.InputDirectory);
-
-            stopwatch.Restart();
-            deserializer.GenerateFiles(profile, args.OutputDirectory);
-            stopwatch.Stop();
-            Console.WriteLine("Exported VLT files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
-                stopwatch.ElapsedMilliseconds / 1000f, args.OutputDirectory);
         }
     }
 }
