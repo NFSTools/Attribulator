@@ -25,6 +25,9 @@ namespace YAMLDatabase
 
         static int Main(string[] args)
         {
+            new ModuleLoader("VaultLib.Support.*.dll").Load();
+            HashManager.LoadDictionary(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "hashes.txt"));
+            
             return Parser.Default.ParseArguments<UnpackOptions, PackOptions, ApplyScriptOptions>(args)
                 .MapResult(
                     (UnpackOptions opts) => RunUnpack(opts), 
@@ -40,6 +43,16 @@ namespace YAMLDatabase
 
         private static int RunUnpack(UnpackOptions args)
         {
+            if (!Directory.Exists(args.InputDirectory))
+            {
+                throw new Exception($"Non-existent input directory: {args.InputDirectory}");
+            }
+
+            if (!Directory.Exists(args.OutputDirectory))
+            {
+                Directory.CreateDirectory(args.OutputDirectory);
+            }
+            
             var profile = ResolveProfile(args.ProfileName);
 
             if (profile == null)
@@ -72,6 +85,16 @@ namespace YAMLDatabase
 
         private static int RunPack(PackOptions args)
         {
+            if (!Directory.Exists(args.InputDirectory))
+            {
+                throw new Exception($"Non-existent input directory: {args.InputDirectory}");
+            }
+
+            if (!Directory.Exists(args.OutputDirectory))
+            {
+                Directory.CreateDirectory(args.OutputDirectory);
+            }
+            
             var profile = ResolveProfile(args.ProfileName);
 
             if (profile == null)
@@ -106,6 +129,16 @@ namespace YAMLDatabase
 
         private static int RunApplyModScript(ApplyScriptOptions args)
         {
+            if (!Directory.Exists(args.InputDirectory))
+            {
+                throw new Exception($"Non-existent input directory: {args.InputDirectory}");
+            }
+
+            if (!Directory.Exists(args.OutputDirectory))
+            {
+                Directory.CreateDirectory(args.OutputDirectory);
+            }
+            
             if (string.IsNullOrEmpty(args.ModScriptPath))
             {
                 throw new Exception("Missing modscript path!");
