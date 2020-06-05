@@ -112,7 +112,7 @@ namespace YAMLDatabase
             var database = new Database(new DatabaseOptions(profile.GetGame(), profile.GetDatabaseType()));
             var deserializer = new DatabaseDeserializer(database, args.InputDirectory);
 
-            Stopwatch stopwatch = Stopwatch.StartNew();
+            var stopwatch = Stopwatch.StartNew();
             deserializer.Deserialize();
             stopwatch.Stop();
 
@@ -161,7 +161,7 @@ namespace YAMLDatabase
             var database = new Database(new DatabaseOptions(profile.GetGame(), profile.GetDatabaseType()));
             var deserializer = new DatabaseDeserializer(database, opts.InputDirectory);
 
-            Stopwatch stopwatch = Stopwatch.StartNew();
+            var stopwatch = Stopwatch.StartNew();
             var loadedDatabase = deserializer.Deserialize();
             stopwatch.Stop();
 
@@ -173,7 +173,7 @@ namespace YAMLDatabase
             var modScriptParser = new ModScriptParser(opts.ModScriptPath);
             var cmdStopwatch = Stopwatch.StartNew();
             var modScriptDatabase = new ModScriptDatabaseHelper(database);
-            int commandCount = 0;
+            var commandCount = 0;
 
             foreach (var command in modScriptParser.Parse())
             {
@@ -195,7 +195,7 @@ namespace YAMLDatabase
             }
 
             stopwatch.Stop();
-            float commandsPerSecond = commandCount / (stopwatch.ElapsedMilliseconds / 1000.0f);
+            var commandsPerSecond = commandCount / (stopwatch.ElapsedMilliseconds / 1000.0f);
             Console.WriteLine("Applied script from {2} in {0}ms ({1:f2}s) ({4} commands @ ~{3:f2} commands/sec)",
                 stopwatch.ElapsedMilliseconds,
                 stopwatch.ElapsedMilliseconds / 1000f, opts.ModScriptPath, commandsPerSecond, commandCount);
