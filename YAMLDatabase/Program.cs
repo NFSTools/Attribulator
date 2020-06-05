@@ -27,12 +27,12 @@ namespace YAMLDatabase
         {
             new ModuleLoader("VaultLib.Support.*.dll").Load();
             HashManager.LoadDictionary(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "hashes.txt"));
-            
+
             return Parser.Default.ParseArguments<UnpackOptions, PackOptions, ApplyScriptOptions>(args)
                 .MapResult(
-                    (UnpackOptions opts) => RunUnpack(opts), 
-                    (PackOptions opts) => RunPack(opts), 
-                    (ApplyScriptOptions opts) => RunApplyModScript(opts), 
+                    (UnpackOptions opts) => RunUnpack(opts),
+                    (PackOptions opts) => RunPack(opts),
+                    (ApplyScriptOptions opts) => RunApplyModScript(opts),
                     errs => 1);
         }
 
@@ -52,7 +52,7 @@ namespace YAMLDatabase
             {
                 Directory.CreateDirectory(args.OutputDirectory);
             }
-            
+
             var profile = ResolveProfile(args.ProfileName);
 
             if (profile == null)
@@ -94,7 +94,7 @@ namespace YAMLDatabase
             {
                 Directory.CreateDirectory(args.OutputDirectory);
             }
-            
+
             var profile = ResolveProfile(args.ProfileName);
 
             if (profile == null)
@@ -127,28 +127,28 @@ namespace YAMLDatabase
             return 0;
         }
 
-        private static int RunApplyModScript(ApplyScriptOptions args)
+        private static int RunApplyModScript(ApplyScriptOptions opts)
         {
-            if (!Directory.Exists(args.InputDirectory))
+            if (!Directory.Exists(opts.InputDirectory))
             {
-                throw new Exception($"Non-existent input directory: {args.InputDirectory}");
+                throw new Exception($"Non-existent input directory: {opts.InputDirectory}");
             }
 
-            if (!Directory.Exists(args.OutputDirectory))
+            if (!Directory.Exists(opts.OutputDirectory))
             {
-                Directory.CreateDirectory(args.OutputDirectory);
+                Directory.CreateDirectory(opts.OutputDirectory);
             }
-            
-            if (string.IsNullOrEmpty(args.ModScriptPath))
+
+            if (string.IsNullOrEmpty(opts.ModScriptPath))
             {
                 throw new Exception("Missing modscript path!");
             }
-            
-            var profile = ResolveProfile(args.ProfileName);
+
+            var profile = ResolveProfile(opts.ProfileName);
 
             if (profile == null)
             {
-                Console.WriteLine("ERROR: Unknown profile {0}", args.ProfileName);
+                Console.WriteLine("ERROR: Unknown profile {0}", opts.ProfileName);
                 Console.WriteLine("AVAILABLE PROFILES:");
                 foreach (var baseProfile in Profiles)
                 {
@@ -159,18 +159,18 @@ namespace YAMLDatabase
             }
 
             var database = new Database(new DatabaseOptions(profile.GetGame(), profile.GetDatabaseType()));
-            var deserializer = new DatabaseDeserializer(database, args.InputDirectory);
+            var deserializer = new DatabaseDeserializer(database, opts.InputDirectory);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             var loadedDatabase = deserializer.Deserialize();
             stopwatch.Stop();
 
             Console.WriteLine("Loaded database from {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
-                stopwatch.ElapsedMilliseconds / 1000f, args.InputDirectory);
+                stopwatch.ElapsedMilliseconds / 1000f, opts.InputDirectory);
 
             stopwatch.Restart();
 
-            var modScriptParser = new ModScriptParser(args.ModScriptPath);
+            var modScriptParser = new ModScriptParser(opts.ModScriptPath);
             var cmdStopwatch = Stopwatch.StartNew();
             var modScriptDatabase = new ModScriptDatabaseHelper(database);
             int commandCount = 0;
@@ -198,70 +198,39 @@ namespace YAMLDatabase
             float commandsPerSecond = commandCount / (stopwatch.ElapsedMilliseconds / 1000.0f);
             Console.WriteLine("Applied script from {2} in {0}ms ({1:f2}s) ({4} commands @ ~{3:f2} commands/sec)",
                 stopwatch.ElapsedMilliseconds,
-                stopwatch.ElapsedMilliseconds / 1000f, args.ModScriptPath, commandsPerSecond, commandCount);
-            stopwatch.Restart();
-            Console.WriteLine("Making backup");
-            Directory.Move(args.InputDirectory,
-                $"{args.InputDirectory.TrimEnd('/', '\\')}_{DateTimeOffset.Now.ToUnixTimeSeconds()}");
-            Directory.CreateDirectory(args.InputDirectory);
-            stopwatch.Stop();
-            Console.WriteLine("Made backup in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
-                stopwatch.ElapsedMilliseconds / 1000f);
+                stopwatch.ElapsedMilliseconds / 1000f, opts.ModScriptPath, commandsPerSecond, commandCount);
+            if (opts.MakeBackup)
+            {
+                stopwatch.Restart();
+                Console.WriteLine("Making backup");
+                Directory.Move(opts.InputDirectory,
+                    $"{opts.InputDirectory.TrimEnd('/', '\\')}_{DateTimeOffset.Now.ToUnixTimeSeconds()}");
+                Directory.CreateDirectory(opts.InputDirectory);
+                stopwatch.Stop();
+                Console.WriteLine("Made backup in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
+                    stopwatch.ElapsedMilliseconds / 1000f);
+            }
 
             stopwatch.Restart();
-            new DatabaseSerializer(database, args.InputDirectory).Serialize(loadedDatabase.Files);
+            new DatabaseSerializer(database, opts.InputDirectory).Serialize(loadedDatabase.Files);
 
             //deserializer.GenerateFiles(profile, args.OutputDirectory);
             stopwatch.Stop();
 
             Console.WriteLine("Exported YML files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
-                stopwatch.ElapsedMilliseconds / 1000f, args.InputDirectory);
-            stopwatch.Restart();
-            deserializer.GenerateFiles(profile, args.OutputDirectory);
-            stopwatch.Stop();
+                stopwatch.ElapsedMilliseconds / 1000f, opts.InputDirectory);
 
-            Console.WriteLine("Exported VLT files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
-                stopwatch.ElapsedMilliseconds / 1000f, args.OutputDirectory);
+            if (opts.GenerateBins)
+            {
+                stopwatch.Restart();
+                deserializer.GenerateFiles(profile, opts.OutputDirectory);
+                stopwatch.Stop();
+
+                Console.WriteLine("Exported VLT files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
+                    stopwatch.ElapsedMilliseconds / 1000f, opts.OutputDirectory);
+            }
 
             return 0;
-        }
-
-        private static void DirectoryCopy(string sourceDirName, string destDirName, bool copySubDirs)
-        {
-            // Get the subdirectories for the specified directory.
-            DirectoryInfo dir = new DirectoryInfo(sourceDirName);
-
-            if (!dir.Exists)
-            {
-                throw new DirectoryNotFoundException(
-                    "Source directory does not exist or could not be found: "
-                    + sourceDirName);
-            }
-
-            DirectoryInfo[] dirs = dir.GetDirectories();
-            // If the destination directory doesn't exist, create it.
-            if (!Directory.Exists(destDirName))
-            {
-                Directory.CreateDirectory(destDirName);
-            }
-
-            // Get the files in the directory and copy them to the new location.
-            FileInfo[] files = dir.GetFiles();
-            foreach (FileInfo file in files)
-            {
-                string temppath = Path.Combine(destDirName, file.Name);
-                file.CopyTo(temppath, false);
-            }
-
-            // If copying subdirectories, copy them and their contents to new location.
-            if (copySubDirs)
-            {
-                foreach (DirectoryInfo subdir in dirs)
-                {
-                    string temppath = Path.Combine(destDirName, subdir.Name);
-                    DirectoryCopy(subdir.FullName, temppath, copySubDirs);
-                }
-            }
         }
     }
 }
