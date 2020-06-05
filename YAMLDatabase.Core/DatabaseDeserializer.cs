@@ -59,7 +59,9 @@ namespace YAMLDatabase.Core
                 foreach (var loadedDatabaseClassField in loadedDatabaseClass.Fields)
                 {
                     var field = new VltClassField(
-                        isX86 ? VLT32Hasher.Hash(loadedDatabaseClassField.Name) : VLT64Hasher.Hash(loadedDatabaseClassField.Name),
+                        isX86
+                            ? VLT32Hasher.Hash(loadedDatabaseClassField.Name)
+                            : VLT64Hasher.Hash(loadedDatabaseClassField.Name),
                         loadedDatabaseClassField.Name,
                         loadedDatabaseClassField.TypeName,
                         loadedDatabaseClassField.Flags,
@@ -70,7 +72,8 @@ namespace YAMLDatabase.Core
                     // Handle static value
                     if (loadedDatabaseClassField.StaticValue != null)
                     {
-                        field.StaticValue = ConvertSerializedValueToDataValue(_database.Options.GameId, _inputDirectory, vltClass, field, null,
+                        field.StaticValue = ConvertSerializedValueToDataValue(_database.Options.GameId, _inputDirectory,
+                            vltClass, field, null,
                             loadedDatabaseClassField.StaticValue);
                     }
 
@@ -82,7 +85,8 @@ namespace YAMLDatabase.Core
 
             foreach (var loadedDatabaseType in loadedDatabase.Types)
             {
-                _database.Types.Add(new DatabaseTypeInfo { Name = loadedDatabaseType.Name, Size = loadedDatabaseType.Size });
+                _database.Types.Add(new DatabaseTypeInfo
+                    {Name = loadedDatabaseType.Name, Size = loadedDatabaseType.Size});
             }
 
             var collectionParentDictionary = new Dictionary<string, string>();
@@ -99,7 +103,7 @@ namespace YAMLDatabase.Core
                 foreach (var vault in file.Vaults)
                 {
                     var vaultDirectory = Path.Combine(baseDirectory, vault).Trim();
-                    var newVault = new Vault(vault) { Database = _database, IsPrimaryVault = vault == "db" };
+                    var newVault = new Vault(vault) {Database = _database, IsPrimaryVault = vault == "db"};
                     if (Directory.Exists(vaultDirectory))
                     {
                         HashSet<string> trackedCollections = new HashSet<string>();
@@ -129,7 +133,8 @@ namespace YAMLDatabase.Core
                                 if (loadedCollection.Name == null)
                                     loadedCollection.Name = "null";
 
-                                foreach (var k in loadedCollection.Data.Keys.ToList().Where(k => loadedCollection.Data[k] == null))
+                                foreach (var k in loadedCollection.Data.Keys.ToList()
+                                    .Where(k => loadedCollection.Data[k] == null))
                                 {
                                     loadedCollection.Data[k] = "null";
                                 }
@@ -152,14 +157,18 @@ namespace YAMLDatabase.Core
                                     {
                                         if (!vltClass.TryGetField(key, out var field))
                                         {
-                                            throw new SerializedDatabaseLoaderException($"Cannot find field: {vltClass.Name}/{key}");
+                                            throw new SerializedDatabaseLoaderException(
+                                                $"Cannot find field: {vltClass.Name}/{key}");
                                         }
+
                                         newVltCollection.SetRawValue(key,
-                                            ConvertSerializedValueToDataValue(_database.Options.GameId, vaultDirectory, vltClass, field,
+                                            ConvertSerializedValueToDataValue(_database.Options.GameId, vaultDirectory,
+                                                vltClass, field,
                                                 newVltCollection, value));
                                     }
 
-                                    collectionParentDictionary[newVltCollection.ShortPath] = loadedCollection.ParentName;
+                                    collectionParentDictionary[newVltCollection.ShortPath] =
+                                        loadedCollection.ParentName;
                                     collectionList.Add(newVltCollection);
                                     collectionDictionary[newVltCollection.ShortPath] = newVltCollection;
                                 }
@@ -172,7 +181,8 @@ namespace YAMLDatabase.Core
                             {
                                 if (!trackedCollections.Add(newCollection.ShortPath))
                                 {
-                                    throw new SerializedDatabaseLoaderException($"Duplicate collection found! Multiple collections at '{newCollection.ShortPath}' have been defined in your YML files.");
+                                    throw new SerializedDatabaseLoaderException(
+                                        $"Duplicate collection found! Multiple collections at '{newCollection.ShortPath}' have been defined in your YML files.");
                                 }
 
                                 collectionsToBeAdded.Add(newCollection);
@@ -259,9 +269,15 @@ namespace YAMLDatabase.Core
         /// </summary>
         /// <param name="profile"></param>
         /// <param name="outputDirectory"></param>
-        public void GenerateFiles(BaseProfile profile, string outputDirectory)
+        /// <param name="filesToSave"></param>
+        public void GenerateFiles(BaseProfile profile, string outputDirectory, IEnumerable<string> filesToSave = null)
         {
-            profile.SaveFiles(_database, outputDirectory, _loadedDatabase.Files);
+            List<string> fileList = filesToSave == null ? new List<string>() : filesToSave.ToList();
+
+            profile.SaveFiles(_database, outputDirectory,
+                fileList.Count > 0
+                    ? _loadedDatabase.Files.Where(f => fileList.Contains(f.Name))
+                    : _loadedDatabase.Files);
         }
 
         private void ResolveDependencies(VaultDependencyNode node, List<VaultDependencyNode> resolved,
@@ -286,8 +302,9 @@ namespace YAMLDatabase.Core
             unresolved.Remove(node);
         }
 
-        private VLTBaseType ConvertSerializedValueToDataValue(string gameId, string dir, VltClass vltClass, VltClassField field,
-           VltCollection vltCollection, object serializedValue, bool createInstance = true)
+        private VLTBaseType ConvertSerializedValueToDataValue(string gameId, string dir, VltClass vltClass,
+            VltClassField field,
+            VltCollection vltCollection, object serializedValue, bool createInstance = true)
         {
             //    0. Is it null? Bail out right away.
             //    1. Is it a string? Determine underlying primitive type, and then convert.
@@ -309,7 +326,8 @@ namespace YAMLDatabase.Core
             return DoValueConversion(gameId, dir, vltClass, field, vltCollection, serializedValue, instance);
         }
 
-        private VLTBaseType DoValueConversion(string gameId, string dir, VltClass vltClass, VltClassField field, VltCollection vltCollection,
+        private VLTBaseType DoValueConversion(string gameId, string dir, VltClass vltClass, VltClassField field,
+            VltCollection vltCollection,
             object serializedValue, object instance)
         {
             switch (serializedValue)
@@ -319,28 +337,29 @@ namespace YAMLDatabase.Core
                     {
                         case IStringValue stringValue:
                             stringValue.SetString(str);
-                            return (VLTBaseType)instance;
+                            return (VLTBaseType) instance;
                         case PrimitiveTypeBase primitiveTypeBase:
                             return ValueConversionUtils.DoPrimitiveConversion(primitiveTypeBase, str);
                         case BaseBlob blob:
+                        {
+                            if (string.IsNullOrWhiteSpace(str)) return blob;
+
+                            str = Path.Combine(dir, str);
+                            if (!File.Exists(str))
                             {
-                                if (string.IsNullOrWhiteSpace(str)) return blob;
-
-                                str = Path.Combine(dir, str);
-                                if (!File.Exists(str))
-                                {
-                                    throw new InvalidDataException($"Could not locate blob data file for {vltCollection.ShortPath}[{field.Name}]");
-                                }
-
-                                blob.Data = File.ReadAllBytes(str);
-
-                                return blob;
+                                throw new InvalidDataException(
+                                    $"Could not locate blob data file for {vltCollection.ShortPath}[{field.Name}]");
                             }
+
+                            blob.Data = File.ReadAllBytes(str);
+
+                            return blob;
+                        }
                     }
 
                     break;
                 case Dictionary<object, object> dictionary:
-                    return (VLTBaseType)(instance is VLTArrayType array
+                    return (VLTBaseType) (instance is VLTArrayType array
                         ? DoArrayConversion(gameId, dir, vltClass, field, vltCollection, array, dictionary)
                         : DoDictionaryConversion(gameId, dir, vltClass, field, vltCollection, instance, dictionary));
             }
@@ -352,7 +371,7 @@ namespace YAMLDatabase.Core
             VltCollection vltCollection, VLTArrayType array, Dictionary<object, object> dictionary)
         {
             var capacity = ushort.Parse(dictionary["Capacity"].ToString());
-            var rawItemList = (List<object>)dictionary["Data"];
+            var rawItemList = (List<object>) dictionary["Data"];
 
             array.Capacity = capacity;
             array.Items = new List<VLTBaseType>();
@@ -361,7 +380,8 @@ namespace YAMLDatabase.Core
 
             foreach (var o in rawItemList)
             {
-                var newArrayItem = ConvertSerializedValueToDataValue(gameId, dir, vltClass, field, vltCollection, o, false);
+                var newArrayItem =
+                    ConvertSerializedValueToDataValue(gameId, dir, vltClass, field, vltCollection, o, false);
 
                 array.Items.Add(newArrayItem);
             }
@@ -374,12 +394,14 @@ namespace YAMLDatabase.Core
         {
             foreach (var pair in dictionary)
             {
-                var propName = (string)pair.Key;
-                var propertyInfo = instance.GetType().GetProperty(propName, BindingFlags.Public | BindingFlags.Instance);
+                var propName = (string) pair.Key;
+                var propertyInfo =
+                    instance.GetType().GetProperty(propName, BindingFlags.Public | BindingFlags.Instance);
 
                 if (propertyInfo == null)
                 {
-                    throw new InvalidDataException($"Cannot set unknown property of '{instance.GetType()}': '{propName}'");
+                    throw new InvalidDataException(
+                        $"Cannot set unknown property of '{instance.GetType()}': '{propName}'");
                 }
 
                 if (propertyInfo.SetMethod == null || !propertyInfo.SetMethod.IsPublic)
@@ -396,11 +418,12 @@ namespace YAMLDatabase.Core
                 else if (propType.IsPrimitive || propType == typeof(string))
                 {
                     var newValue = FixUpValueForComplexObject(pair.Value, propType);
-                    propertyInfo.SetValue(instance, Convert.ChangeType(newValue, propType, CultureInfo.InvariantCulture));
+                    propertyInfo.SetValue(instance,
+                        Convert.ChangeType(newValue, propType, CultureInfo.InvariantCulture));
                 }
                 else if (pair.Value is List<object> objects)
                 {
-                    var newList = (IList)Activator.CreateInstance(propType, objects.Count);
+                    var newList = (IList) Activator.CreateInstance(propType, objects.Count);
                     var elemType = propType.GetElementType() ?? throw new Exception();
 
                     for (var index = 0; index < objects.Count; index++)
@@ -416,10 +439,12 @@ namespace YAMLDatabase.Core
                             else
                             {
                                 var fixedValue = FixUpValueForComplexObject(objects[index], elemType);
-                                var convertedValue = Convert.ChangeType(fixedValue, elemType, CultureInfo.InvariantCulture);
+                                var convertedValue =
+                                    Convert.ChangeType(fixedValue, elemType, CultureInfo.InvariantCulture);
 
                                 newList[index] = convertedValue;
                             }
+
                             //newList[index] = FixUpValueForComplexObject(objects[index]);
                             //newList[index] = Convert.ChangeType(objects[index].ToString(), elemType, CultureInfo.InvariantCulture);
                         }
@@ -434,7 +459,8 @@ namespace YAMLDatabase.Core
                         : Activator.CreateInstance(propType);
 
                     propertyInfo.SetValue(instance,
-                        DoDictionaryConversion(gameId, dir, vltClass, field, vltCollection, propInstance, objectDictionary));
+                        DoDictionaryConversion(gameId, dir, vltClass, field, vltCollection, propInstance,
+                            objectDictionary));
                 }
                 else if (pair.Value != null)
                 {

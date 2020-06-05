@@ -7,7 +7,7 @@ namespace YAMLDatabase.Core
     {
         public abstract IList<LoadedDatabaseFile> LoadFiles(Database database, string directory);
 
-        public abstract void SaveFiles(Database database, string directory, IList<LoadedDatabaseFile> files);
+        public abstract void SaveFiles(Database database, string directory, IEnumerable<LoadedDatabaseFile> files);
 
         public abstract string GetName();
         public abstract string GetGame();

@@ -46,7 +46,7 @@ namespace YAMLDatabase.Profiles
             return files;
         }
 
-        public override void SaveFiles(Database database, string directory, IList<LoadedDatabaseFile> files)
+        public override void SaveFiles(Database database, string directory, IEnumerable<LoadedDatabaseFile> files)
         {
             foreach (var file in files)
             {

@@ -120,7 +120,7 @@ namespace YAMLDatabase
                 stopwatch.ElapsedMilliseconds / 1000f, args.InputDirectory);
 
             stopwatch.Restart();
-            deserializer.GenerateFiles(profile, args.OutputDirectory);
+            deserializer.GenerateFiles(profile, args.OutputDirectory, args.Files);
             stopwatch.Stop();
             Console.WriteLine("Exported VLT files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
                 stopwatch.ElapsedMilliseconds / 1000f, args.OutputDirectory);
