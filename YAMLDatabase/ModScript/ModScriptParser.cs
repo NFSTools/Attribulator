@@ -48,54 +48,23 @@ namespace YAMLDatabase.ModScript
                     }
                 }
 
-                BaseModScriptCommand command;
-
-                switch (parts[0])
+                BaseModScriptCommand command = parts[0] switch
                 {
-                    case "append_array":
-                        command = new AppendArrayModScriptCommand();
-                        break;
-                    case "version":
-                        command = new VersionModScriptCommand();
-                        break;
-                    case "game":
-                        command = new GameModScriptCommand();
-                        break;
-                    case "resize_field":
-                        command = new ResizeFieldModScriptCommand();
-                        break;
-                    case "update_field":
-                        command = new UpdateFieldModScriptCommand();
-                        break;
-                    case "copy_node":
-                        command = new CopyNodeModScriptCommand();
-                        break;
-                    case "add_node":
-                        command = new AddNodeModScriptCommand();
-                        break;
-                    case "change_vault":
-                        command = new ChangeVaultModScriptCommand();
-                        break;
-                    case "copy_fields":
-                        command = new CopyFieldsModScriptCommand();
-                        break;
-                    case "delete_node":
-                        command = new DeleteNodeModScriptCommand();
-                        break;
-                    case "add_field":
-                        command = new AddFieldModScriptCommand();
-                        break;
-                    case "delete_field":
-                        command = new DeleteFieldModScriptCommand();
-                        break;
-                    case "rename_node":
-                        command = new RenameNodeModScriptCommand();
-                        break;
-                    default:
-                        //Debug.WriteLine("Unknown verb: {0}", new object[] { parts[0] });
-                        command = new GenericModScriptCommand(line);
-                        break;
-                }
+                    "append_array" => new AppendArrayModScriptCommand(),
+                    "version" => new VersionModScriptCommand(),
+                    "game" => new GameModScriptCommand(),
+                    "resize_field" => new ResizeFieldModScriptCommand(),
+                    "update_field" => new UpdateFieldModScriptCommand(),
+                    "copy_node" => new CopyNodeModScriptCommand(),
+                    "add_node" => new AddNodeModScriptCommand(),
+                    "change_vault" => new ChangeVaultModScriptCommand(),
+                    "copy_fields" => new CopyFieldsModScriptCommand(),
+                    "delete_node" => new DeleteNodeModScriptCommand(),
+                    "add_field" => new AddFieldModScriptCommand(),
+                    "delete_field" => new DeleteFieldModScriptCommand(),
+                    "rename_node" => new RenameNodeModScriptCommand(),
+                    _ => new GenericModScriptCommand(line)
+                };
 
                 command.Line = line;
                 command.Parse(parts);
