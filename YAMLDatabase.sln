@@ -7,7 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YAMLDatabase", "YAMLDatabas
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YAMLDatabase.Core", "YAMLDatabase.Core\YAMLDatabase.Core.csproj", "{AC8A742D-39E4-4795-B9A4-5A23081B3FD1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YAMLDatabase.CodeGenCli", "YAMLDatabase.CodeGenCli\YAMLDatabase.CodeGenCli.csproj", "{FF74AA26-6C36-48FD-9008-07DDA500D479}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YAMLDatabase.Plugins.CoreCommands", "YAMLDatabase.Plugins.CoreCommands\YAMLDatabase.Plugins.CoreCommands.csproj", "{1AF2D4D3-BCCD-479B-A47F-B74B63DA8D95}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YAMLDatabase.Plugins.ModScript", "YAMLDatabase.Plugins.ModScript\YAMLDatabase.Plugins.ModScript.csproj", "{37C10CE0-6137-4DF7-81FE-384F38BCE63F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YAMLDatabase.API", "YAMLDatabase.API\YAMLDatabase.API.csproj", "{4498502A-E599-4E79-BB21-003D1F1858BB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,12 +33,30 @@ Global
 		{AC8A742D-39E4-4795-B9A4-5A23081B3FD1}.Release|Any CPU.ActiveCfg = Release|x86
 		{AC8A742D-39E4-4795-B9A4-5A23081B3FD1}.Release|x86.ActiveCfg = Release|x86
 		{AC8A742D-39E4-4795-B9A4-5A23081B3FD1}.Release|x86.Build.0 = Release|x86
-		{FF74AA26-6C36-48FD-9008-07DDA500D479}.Debug|Any CPU.ActiveCfg = Debug|x86
-		{FF74AA26-6C36-48FD-9008-07DDA500D479}.Debug|x86.ActiveCfg = Debug|x86
-		{FF74AA26-6C36-48FD-9008-07DDA500D479}.Debug|x86.Build.0 = Debug|x86
-		{FF74AA26-6C36-48FD-9008-07DDA500D479}.Release|Any CPU.ActiveCfg = Release|x86
-		{FF74AA26-6C36-48FD-9008-07DDA500D479}.Release|x86.ActiveCfg = Release|x86
-		{FF74AA26-6C36-48FD-9008-07DDA500D479}.Release|x86.Build.0 = Release|x86
+		{1AF2D4D3-BCCD-479B-A47F-B74B63DA8D95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1AF2D4D3-BCCD-479B-A47F-B74B63DA8D95}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1AF2D4D3-BCCD-479B-A47F-B74B63DA8D95}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1AF2D4D3-BCCD-479B-A47F-B74B63DA8D95}.Debug|x86.Build.0 = Debug|Any CPU
+		{1AF2D4D3-BCCD-479B-A47F-B74B63DA8D95}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1AF2D4D3-BCCD-479B-A47F-B74B63DA8D95}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1AF2D4D3-BCCD-479B-A47F-B74B63DA8D95}.Release|x86.ActiveCfg = Release|Any CPU
+		{1AF2D4D3-BCCD-479B-A47F-B74B63DA8D95}.Release|x86.Build.0 = Release|Any CPU
+		{37C10CE0-6137-4DF7-81FE-384F38BCE63F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37C10CE0-6137-4DF7-81FE-384F38BCE63F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37C10CE0-6137-4DF7-81FE-384F38BCE63F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{37C10CE0-6137-4DF7-81FE-384F38BCE63F}.Debug|x86.Build.0 = Debug|Any CPU
+		{37C10CE0-6137-4DF7-81FE-384F38BCE63F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37C10CE0-6137-4DF7-81FE-384F38BCE63F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37C10CE0-6137-4DF7-81FE-384F38BCE63F}.Release|x86.ActiveCfg = Release|Any CPU
+		{37C10CE0-6137-4DF7-81FE-384F38BCE63F}.Release|x86.Build.0 = Release|Any CPU
+		{4498502A-E599-4E79-BB21-003D1F1858BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4498502A-E599-4E79-BB21-003D1F1858BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4498502A-E599-4E79-BB21-003D1F1858BB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4498502A-E599-4E79-BB21-003D1F1858BB}.Debug|x86.Build.0 = Debug|Any CPU
+		{4498502A-E599-4E79-BB21-003D1F1858BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4498502A-E599-4E79-BB21-003D1F1858BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4498502A-E599-4E79-BB21-003D1F1858BB}.Release|x86.ActiveCfg = Release|Any CPU
+		{4498502A-E599-4E79-BB21-003D1F1858BB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
