@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using YAMLDatabase.API;
 using YAMLDatabase.API.Plugin;
 using YAMLDatabase.API.Services;
+using YAMLDatabase.CLI.Commands;
 using YAMLDatabase.CLI.Services;
 
 namespace YAMLDatabase.CLI
@@ -25,13 +26,16 @@ namespace YAMLDatabase.CLI
             services.AddSingleton<ICommandService, CommandServiceImpl>();
             services.AddSingleton<IProfileService, ProfileServiceImpl>();
             services.AddSingleton<IStorageFormatService, StorageFormatServiceImpl>();
-            ConfigureServices(services, loaders);
+            services.AddSingleton<IPluginService, PluginServiceImpl>();
 
+            var plugins = ConfigurePlugins(services, loaders);
             await using var serviceProvider = services.BuildServiceProvider();
 
             // Load commands and profiles from DI container
             LoadCommands(services, serviceProvider);
             LoadProfiles(services, serviceProvider);
+
+            LoadPlugins(plugins, serviceProvider);
 
             // Off to the races!
             return await RunApplication(serviceProvider, args);
@@ -49,12 +53,24 @@ namespace YAMLDatabase.CLI
                 }, errs => Task.FromResult(1));
         }
 
+        private static void LoadPlugins(IEnumerable<IPluginFactory> plugins, IServiceProvider serviceProvider)
+        {
+            var pluginService = serviceProvider.GetRequiredService<IPluginService>();
+
+            foreach (var plugin in plugins) pluginService.RegisterPlugin(plugin);
+        }
+
         private static void LoadCommands(ServiceCollection services, IServiceProvider serviceProvider)
         {
+            var commandService = serviceProvider.GetRequiredService<ICommandService>();
             var commandTypes = (from service in services
                 where typeof(BaseCommand).IsAssignableFrom(service.ImplementationType)
                 select service.ImplementationType).ToList();
-            var commandService = serviceProvider.GetRequiredService<ICommandService>();
+
+            // First register our own commands
+            commandService.RegisterCommand<PluginListCommand>();
+
+            // Then register plugin commands
             foreach (var commandType in commandTypes) commandService.RegisterCommand(commandType);
         }
 
@@ -90,8 +106,11 @@ namespace YAMLDatabase.CLI
                 }, conf => conf.PreferSharedTypes = true)).ToList();
         }
 
-        private static void ConfigureServices(IServiceCollection services, IEnumerable<PluginLoader> loaders)
+        private static List<IPluginFactory> ConfigurePlugins(IServiceCollection services,
+            IEnumerable<PluginLoader> loaders)
         {
+            var list = new List<IPluginFactory>();
+
             // Create an instance of plugin types
             foreach (var loader in loaders)
             foreach (var pluginType in loader
@@ -100,9 +119,16 @@ namespace YAMLDatabase.CLI
                 .Where(t => typeof(IPluginFactory).IsAssignableFrom(t) && !t.IsAbstract))
             {
                 // This assumes the implementation of IPluginFactory has a parameterless constructor
-                var plugin = Activator.CreateInstance(pluginType) as IPluginFactory;
-                plugin?.Configure(services);
+                var plugin = (IPluginFactory) Activator.CreateInstance(pluginType);
+
+                if (plugin == null)
+                    throw new Exception("Activator.CreateInstance returned null while trying to load plugin");
+
+                plugin.Configure(services);
+                list.Add(plugin);
             }
+
+            return list;
         }
     }
 }
