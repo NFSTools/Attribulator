@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using YAMLDatabase.API;
 using YAMLDatabase.API.Services;
 
-namespace YAMLDatabase.Services
+namespace YAMLDatabase.CLI.Services
 {
     public class ProfileServiceImpl : IProfileService
     {

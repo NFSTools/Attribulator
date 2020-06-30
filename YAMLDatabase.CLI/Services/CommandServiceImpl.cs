@@ -6,7 +6,7 @@ using YAMLDatabase.API.Exceptions;
 using YAMLDatabase.API.Plugin;
 using YAMLDatabase.API.Services;
 
-namespace YAMLDatabase.Services
+namespace YAMLDatabase.CLI.Services
 {
     public class CommandServiceImpl : ICommandService
     {

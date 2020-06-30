@@ -1,7 +1,7 @@
 ﻿using CommandLine;
 using JetBrains.Annotations;
 
-namespace YAMLDatabase
+namespace YAMLDatabase.CLI
 {
     public abstract class BaseOptions
     {

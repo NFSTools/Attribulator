@@ -8,9 +8,9 @@ using Microsoft.Extensions.DependencyInjection;
 using YAMLDatabase.API;
 using YAMLDatabase.API.Plugin;
 using YAMLDatabase.API.Services;
-using YAMLDatabase.Services;
+using YAMLDatabase.CLI.Services;
 
-namespace YAMLDatabase
+namespace YAMLDatabase.CLI
 {
     internal static class Program
     {
