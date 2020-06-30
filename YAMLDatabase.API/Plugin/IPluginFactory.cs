@@ -1,22 +1,24 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace YAMLDatabase.API.Plugin
 {
     /// <summary>
-    /// Exposes an interface for a plugin.
+    ///     Exposes an interface for a plugin factory.
     /// </summary>
     public interface IPluginFactory
     {
         /// <summary>
-        /// Configures the dependency injection container.
+        ///     Configures the dependency injection container.
         /// </summary>
         /// <param name="services"></param>
         void Configure(IServiceCollection services);
 
         /// <summary>
-        /// Gets the name of the plugin.
+        ///     Builds the plugin object.
         /// </summary>
-        /// <returns>The name of the plugin.</returns>
-        string GetName();
+        /// <param name="serviceProvider">The DI service provider.</param>
+        /// <returns>The plugin object.</returns>
+        IPlugin CreatePlugin(IServiceProvider serviceProvider);
     }
 }

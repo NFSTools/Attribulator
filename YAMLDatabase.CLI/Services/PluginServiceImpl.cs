@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using YAMLDatabase.API.Plugin;
 using YAMLDatabase.API.Services;
 
@@ -6,16 +7,18 @@ namespace YAMLDatabase.CLI.Services
 {
     public class PluginServiceImpl : IPluginService
     {
-        private readonly List<IPluginFactory> _pluginFactories = new List<IPluginFactory>();
+        private readonly List<IPlugin> _plugins = new List<IPlugin>();
 
-        public void RegisterPlugin(IPluginFactory pluginFactory)
+        public void RegisterPlugin(IPlugin plugin)
         {
-            _pluginFactories.Add(pluginFactory);
+            if (plugin == null) throw new ArgumentNullException(nameof(plugin));
+
+            _plugins.Add(plugin);
         }
 
-        public IEnumerable<IPluginFactory> GetPlugins()
+        public IEnumerable<IPlugin> GetPlugins()
         {
-            return _pluginFactories;
+            return _plugins;
         }
     }
 }

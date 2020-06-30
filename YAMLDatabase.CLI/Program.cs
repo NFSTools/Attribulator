@@ -63,7 +63,8 @@ namespace YAMLDatabase.CLI
         {
             var pluginService = serviceProvider.GetRequiredService<IPluginService>();
 
-            foreach (var plugin in plugins) pluginService.RegisterPlugin(plugin);
+            foreach (var pluginFactory in plugins)
+                pluginService.RegisterPlugin(pluginFactory.CreatePlugin(serviceProvider));
         }
 
         private static void LoadCommands(ServiceCollection services, IServiceProvider serviceProvider)

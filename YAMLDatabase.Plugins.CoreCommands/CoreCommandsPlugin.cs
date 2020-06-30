@@ -1,19 +1,12 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using YAMLDatabase.API.Plugin;
+﻿using YAMLDatabase.API.Plugin;
 
 namespace YAMLDatabase.Plugins.CoreCommands
 {
     /// <summary>
-    ///     Base class for the core commands plugin.
+    ///     Base class for the Core Commands plugin.
     /// </summary>
-    public class CoreCommandsPlugin : IPluginFactory
+    public class CoreCommandsPlugin : IPlugin
     {
-        public void Configure(IServiceCollection services)
-        {
-            services.AddTransient<UnpackCommand>();
-            services.AddTransient<PackCommand>();
-        }
-
         public string GetName()
         {
             return "Core Commands";

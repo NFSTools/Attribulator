@@ -11,13 +11,13 @@ namespace YAMLDatabase.API.Services
         /// <summary>
         ///     Registers a new plugin.
         /// </summary>
-        /// <param name="pluginFactory">The plugin to register.</param>
-        void RegisterPlugin(IPluginFactory pluginFactory);
+        /// <param name="plugin">The plugin to register.</param>
+        void RegisterPlugin(IPlugin plugin);
 
         /// <summary>
         ///     Gets the registered plugins.
         /// </summary>
         /// <returns>The registered plugins.</returns>
-        IEnumerable<IPluginFactory> GetPlugins();
+        IEnumerable<IPlugin> GetPlugins();
     }
 }

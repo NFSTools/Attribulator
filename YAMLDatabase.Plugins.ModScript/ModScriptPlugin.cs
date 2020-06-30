@@ -1,18 +1,12 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using YAMLDatabase.API.Plugin;
+﻿using YAMLDatabase.API.Plugin;
 
 namespace YAMLDatabase.Plugins.ModScript
 {
     /// <summary>
-    /// Base class for the ModScript plugin.
+    ///     Base class for the ModScript plugin.
     /// </summary>
-    public class ModScriptPlugin : IPluginFactory
+    public class ModScriptPlugin : IPlugin
     {
-        public void Configure(IServiceCollection services)
-        {
-            services.AddTransient<ApplyScriptCommand>();
-        }
-
         public string GetName()
         {
             return "ModScript Support";
