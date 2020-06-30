@@ -1,4 +1,5 @@
-﻿using CommandLine;
+﻿using System;
+using CommandLine;
 using JetBrains.Annotations;
 using YAMLDatabase.API.Plugin;
 
@@ -6,7 +7,7 @@ namespace YAMLDatabase.Plugins.ModScript
 {
     [Verb("apply-script", HelpText = "Applies a ModScript to a YML database.")]
     [UsedImplicitly]
-    public class ApplyScriptCommand : ICommand
+    public class ApplyScriptCommand : BaseCommand
     {
         [Option('i', HelpText = "Directory to read YML files from", Required = true)]
         [UsedImplicitly]
@@ -15,14 +16,14 @@ namespace YAMLDatabase.Plugins.ModScript
         [Option('o', HelpText = "Directory to write BIN files to", Required = true)]
         [UsedImplicitly]
         public string OutputDirectory { get; set; }
-        
+
         [Option('p', HelpText = "The ID of the profile to use", Required = true)]
         [UsedImplicitly]
         public string ProfileName { get; set; }
-        
-        public int Execute()
+
+        public override int Execute()
         {
-            throw new System.NotImplementedException();
+            return 0;
         }
     }
 }

@@ -35,18 +35,22 @@ namespace YAMLDatabase.CLI
             return RunApplication(serviceProvider, args);
         }
 
-        private static int RunApplication(IServiceProvider serviceProvider, string[] args)
+        private static int RunApplication(IServiceProvider serviceProvider, IEnumerable<string> args)
         {
             var commandService = serviceProvider.GetRequiredService<ICommandService>();
             var commandTypes = commandService.GetCommandTypes().ToArray();
             return Parser.Default.ParseArguments(args, commandTypes)
-                .MapResult((ICommand cmd) => cmd.Execute(), errs => 1);
+                .MapResult((BaseCommand cmd) =>
+                {
+                    cmd.SetServiceProvider(serviceProvider);
+                    return cmd.Execute();
+                }, errs => 1);
         }
 
         private static void LoadCommands(ServiceCollection services, IServiceProvider serviceProvider)
         {
             var commandTypes = (from service in services
-                where typeof(ICommand).IsAssignableFrom(service.ImplementationType)
+                where typeof(BaseCommand).IsAssignableFrom(service.ImplementationType)
                 select service.ImplementationType).ToList();
             var commandService = serviceProvider.GetRequiredService<ICommandService>();
             foreach (var commandType in commandTypes)
@@ -83,11 +87,11 @@ namespace YAMLDatabase.CLI
                     typeof(IPluginFactory), typeof(IServiceCollection),
 
                     // Application stuff
-                    typeof(ICommand), typeof(IProfile),
-                    
+                    typeof(BaseCommand), typeof(IProfile),
+
                     // CommandLineParser
                     typeof(VerbAttribute)
-                })).ToList();
+                }, conf => conf.PreferSharedTypes = true)).ToList();
         }
 
         private static void ConfigureServices(IServiceCollection services, IEnumerable<PluginLoader> loaders)

@@ -13,7 +13,7 @@ namespace YAMLDatabase.API.Services
         /// Registers a new command type.
         /// </summary>
         /// <typeparam name="TCommand">The command type.</typeparam>
-        void RegisterCommand<TCommand>() where TCommand : ICommand;
+        void RegisterCommand<TCommand>() where TCommand : BaseCommand;
         
         /// <summary>
         /// Registers a new command type.

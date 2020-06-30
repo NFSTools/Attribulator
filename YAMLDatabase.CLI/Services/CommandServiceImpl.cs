@@ -12,14 +12,14 @@ namespace YAMLDatabase.CLI.Services
     {
         private readonly ISet<Type> _commandTypes = new HashSet<Type>();
         
-        public void RegisterCommand<TCommand>() where TCommand : ICommand
+        public void RegisterCommand<TCommand>() where TCommand : BaseCommand
         {
             RegisterCommand(typeof(TCommand));
         }
 
         public void RegisterCommand(Type type)
         {
-            if (!typeof(ICommand).IsAssignableFrom(type))
+            if (!typeof(BaseCommand).IsAssignableFrom(type))
             {
                 throw new CommandServiceException($"Command type [{type}] does not inherit from ICommand.");
             }
