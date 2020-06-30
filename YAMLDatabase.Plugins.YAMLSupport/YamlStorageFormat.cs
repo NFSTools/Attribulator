@@ -28,5 +28,10 @@ namespace YAMLDatabase.Plugins.YAMLSupport
         {
             throw new NotImplementedException();
         }
+
+        public bool CanDeserializeFrom(string sourceDirectory)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -36,5 +36,12 @@ namespace YAMLDatabase.API.Serialization
         /// </summary>
         /// <returns>The format name.</returns>
         string GetFormatName();
+
+        /// <summary>
+        ///     Returns a value indicating whether the storage format can read from the given directory.
+        /// </summary>
+        /// <param name="sourceDirectory">The directory to test.</param>
+        /// <returns><c>true</c> if the storage format can read from the directory; otherwise, <c>false</c>.</returns>
+        bool CanDeserializeFrom(string sourceDirectory);
     }
 }
