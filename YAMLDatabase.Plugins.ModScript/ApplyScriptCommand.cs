@@ -21,6 +21,10 @@ namespace YAMLDatabase.Plugins.ModScript
         [UsedImplicitly]
         public string ProfileName { get; set; }
 
+        [Option('s', HelpText = "The path to the .nfsms file")]
+        [UsedImplicitly]
+        public string ModScriptPath { get; set; }
+
         public override Task<int> Execute()
         {
             return Task.FromResult(0);
