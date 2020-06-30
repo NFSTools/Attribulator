@@ -3,16 +3,15 @@
     <PropertyGroup>
         <Authors>heyitsleo/NFSTools</Authors>
         <Company>NFSTools</Company>
-        <Description>API for YAMLDatabase extensions</Description>
+        <Description>Plugin providing support for the YAML storage format</Description>
         <Platforms>x86</Platforms>
-        <Product>YAMLDatabase API</Product>
+        <Product>YAMLDatabase - YAML Support</Product>
         <TargetFramework>netcoreapp3.1</TargetFramework>
         <Version>1.1.0</Version>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.1.5" />
-      <PackageReference Include="VaultLib.Core" Version="1.1.3" />
+        <ProjectReference Include="..\YAMLDatabase.API\YAMLDatabase.API.csproj"/>
     </ItemGroup>
 
 </Project>

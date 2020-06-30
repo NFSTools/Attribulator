@@ -24,6 +24,7 @@ namespace YAMLDatabase.CLI
             // Register services
             services.AddSingleton<ICommandService, CommandServiceImpl>();
             services.AddSingleton<IProfileService, ProfileServiceImpl>();
+            services.AddSingleton<IStorageFormatService, StorageFormatServiceImpl>();
             ConfigureServices(services, loaders);
 
             await using var serviceProvider = services.BuildServiceProvider();
@@ -54,10 +55,7 @@ namespace YAMLDatabase.CLI
                 where typeof(BaseCommand).IsAssignableFrom(service.ImplementationType)
                 select service.ImplementationType).ToList();
             var commandService = serviceProvider.GetRequiredService<ICommandService>();
-            foreach (var commandType in commandTypes)
-            {
-                commandService.RegisterCommand(commandType);
-            }
+            foreach (var commandType in commandTypes) commandService.RegisterCommand(commandType);
         }
 
         private static void LoadProfiles(ServiceCollection services, IServiceProvider serviceProvider)
@@ -66,10 +64,7 @@ namespace YAMLDatabase.CLI
                 where typeof(IProfile).IsAssignableFrom(service.ImplementationType)
                 select service.ImplementationType).ToList();
             var profileService = serviceProvider.GetRequiredService<IProfileService>();
-            foreach (var profileType in profileTypes)
-            {
-                profileService.RegisterProfile(profileType);
-            }
+            foreach (var profileType in profileTypes) profileService.RegisterProfile(profileType);
         }
 
         private static IEnumerable<PluginLoader> GetPluginLoaders()
@@ -99,16 +94,14 @@ namespace YAMLDatabase.CLI
         {
             // Create an instance of plugin types
             foreach (var loader in loaders)
+            foreach (var pluginType in loader
+                .LoadDefaultAssembly()
+                .GetTypes()
+                .Where(t => typeof(IPluginFactory).IsAssignableFrom(t) && !t.IsAbstract))
             {
-                foreach (var pluginType in loader
-                    .LoadDefaultAssembly()
-                    .GetTypes()
-                    .Where(t => typeof(IPluginFactory).IsAssignableFrom(t) && !t.IsAbstract))
-                {
-                    // This assumes the implementation of IPluginFactory has a parameterless constructor
-                    var plugin = Activator.CreateInstance(pluginType) as IPluginFactory;
-                    plugin?.Configure(services);
-                }
+                // This assumes the implementation of IPluginFactory has a parameterless constructor
+                var plugin = Activator.CreateInstance(pluginType) as IPluginFactory;
+                plugin?.Configure(services);
             }
         }
     }

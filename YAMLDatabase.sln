@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YAMLDatabase.API", "YAMLDat
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YAMLDatabase.Plugins.SpeedProfiles", "YAMLDatabase.Plugins.SpeedProfiles\YAMLDatabase.Plugins.SpeedProfiles.csproj", "{25144B8B-69D6-4AE9-865D-C82035F4D05D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YAMLDatabase.Plugins.YAMLSupport", "YAMLDatabase.Plugins.YAMLSupport\YAMLDatabase.Plugins.YAMLSupport.csproj", "{7BA487BA-D629-4732-A5D2-F1C32BDB5882}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -26,15 +28,23 @@ Global
 		{4498502A-E599-4E79-BB21-003D1F1858BB}.Debug|x86.ActiveCfg = Debug|x86
 		{4498502A-E599-4E79-BB21-003D1F1858BB}.Debug|x86.Build.0 = Debug|x86
 		{4498502A-E599-4E79-BB21-003D1F1858BB}.Release|x86.ActiveCfg = Release|x86
+		{4498502A-E599-4E79-BB21-003D1F1858BB}.Release|x86.Build.0 = Release|x86
 		{1AF2D4D3-BCCD-479B-A47F-B74B63DA8D95}.Debug|x86.ActiveCfg = Debug|x86
 		{1AF2D4D3-BCCD-479B-A47F-B74B63DA8D95}.Debug|x86.Build.0 = Debug|x86
 		{1AF2D4D3-BCCD-479B-A47F-B74B63DA8D95}.Release|x86.ActiveCfg = Release|x86
+		{1AF2D4D3-BCCD-479B-A47F-B74B63DA8D95}.Release|x86.Build.0 = Release|x86
 		{37C10CE0-6137-4DF7-81FE-384F38BCE63F}.Debug|x86.ActiveCfg = Debug|x86
 		{37C10CE0-6137-4DF7-81FE-384F38BCE63F}.Debug|x86.Build.0 = Debug|x86
 		{37C10CE0-6137-4DF7-81FE-384F38BCE63F}.Release|x86.ActiveCfg = Release|x86
+		{37C10CE0-6137-4DF7-81FE-384F38BCE63F}.Release|x86.Build.0 = Release|x86
 		{25144B8B-69D6-4AE9-865D-C82035F4D05D}.Debug|x86.ActiveCfg = Debug|x86
 		{25144B8B-69D6-4AE9-865D-C82035F4D05D}.Debug|x86.Build.0 = Debug|x86
 		{25144B8B-69D6-4AE9-865D-C82035F4D05D}.Release|x86.ActiveCfg = Release|x86
+		{25144B8B-69D6-4AE9-865D-C82035F4D05D}.Release|x86.Build.0 = Release|x86
+		{7BA487BA-D629-4732-A5D2-F1C32BDB5882}.Debug|x86.ActiveCfg = Debug|x86
+		{7BA487BA-D629-4732-A5D2-F1C32BDB5882}.Debug|x86.Build.0 = Debug|x86
+		{7BA487BA-D629-4732-A5D2-F1C32BDB5882}.Release|x86.ActiveCfg = Release|x86
+		{7BA487BA-D629-4732-A5D2-F1C32BDB5882}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
