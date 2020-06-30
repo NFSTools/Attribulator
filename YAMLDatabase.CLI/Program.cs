@@ -4,9 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using CommandLine;
+using CoreLibraries.ModuleSystem;
 using McMaster.NETCore.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using VaultLib.Core.Hashing;
 using YAMLDatabase.API;
 using YAMLDatabase.API.Plugin;
 using YAMLDatabase.API.Serialization;
@@ -42,6 +44,11 @@ namespace YAMLDatabase.CLI
             LoadProfiles(services, serviceProvider);
             LoadStorageFormats(services, serviceProvider);
             LoadPlugins(plugins, serviceProvider);
+
+            // Load hashes
+            // TODO: This code should be part of the appropriate plugin.
+            HashManager.LoadDictionary(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "hashes.txt"));
+            new ModuleLoader("VaultLib.Support.*.dll").Load();
 
             // Off to the races!
             return await RunApplication(serviceProvider, args);
