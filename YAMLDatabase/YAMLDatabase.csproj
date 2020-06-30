@@ -7,7 +7,7 @@
     <OutputType>Exe</OutputType>
     <Platforms>x86</Platforms>
     <Product>YAMLDatabase</Product>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <Version>1.1.0</Version>
   </PropertyGroup>
 
@@ -18,8 +18,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CommandLineParser" Version="2.7.82" />
+    <PackageReference Include="CommandLineParser" Version="2.8.0" />
     <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
+    <PackageReference Include="McMaster.NETCore.Plugins" Version="1.3.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.5" />
     <PackageReference Include="VaultLib.Core" Version="1.1.3" />
     <PackageReference Include="VaultLib.Support.Carbon" Version="1.1.2" />
     <PackageReference Include="VaultLib.Support.MostWanted" Version="1.1.2" />
@@ -30,7 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\YAMLDatabase.Core\YAMLDatabase.Core.csproj" />
+    <ProjectReference Include="..\YAMLDatabase.API\YAMLDatabase.API.csproj" />
   </ItemGroup>
 
 </Project>

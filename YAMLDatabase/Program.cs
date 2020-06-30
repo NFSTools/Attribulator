@@ -1,236 +1,110 @@
-﻿using CommandLine;
-using CoreLibraries.ModuleSystem;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using VaultLib.Core.DB;
-using VaultLib.Core.Hashing;
-using YAMLDatabase.Core;
-using YAMLDatabase.ModScript;
-using YAMLDatabase.Profiles;
+using System.Linq;
+using CommandLine;
+using McMaster.NETCore.Plugins;
+using Microsoft.Extensions.DependencyInjection;
+using YAMLDatabase.API;
+using YAMLDatabase.API.Plugin;
+using YAMLDatabase.API.Services;
+using YAMLDatabase.Services;
 
 namespace YAMLDatabase
 {
     internal static class Program
     {
-        private static readonly List<BaseProfile> Profiles = new List<BaseProfile>
+        public static int Main(string[] args)
         {
-            new MostWantedProfile(),
-            new CarbonProfile(),
-            new ProStreetProfile(),
-            new UndercoverProfile(),
-            new WorldProfile(),
-        };
+            // Setup
+            var services = new ServiceCollection();
+            var loaders = GetPluginLoaders();
 
-        static int Main(string[] args)
-        {
-            new ModuleLoader("VaultLib.Support.*.dll").Load();
-            HashManager.LoadDictionary(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "hashes.txt"));
+            // Register services
+            services.AddSingleton<ICommandService, CommandServiceImpl>();
+            services.AddSingleton<IProfileService, ProfileServiceImpl>();
+            ConfigureServices(services, loaders);
 
-            return Parser.Default.ParseArguments<UnpackOptions, PackOptions, ApplyScriptOptions>(args)
-                .MapResult(
-                    (UnpackOptions opts) => RunUnpack(opts),
-                    (PackOptions opts) => RunPack(opts),
-                    (ApplyScriptOptions opts) => RunApplyModScript(opts),
-                    errs => 1);
+            using var serviceProvider = services.BuildServiceProvider();
+
+            // Load commands and profiles from DI container
+            LoadCommands(services, serviceProvider);
+            LoadProfiles(services, serviceProvider);
+
+            // Off to the races!
+            return RunApplication(serviceProvider, args);
         }
 
-        private static BaseProfile ResolveProfile(string name)
+        private static int RunApplication(IServiceProvider serviceProvider, string[] args)
         {
-            return Profiles.Find(p => p.GetName() == name);
+            var commandService = serviceProvider.GetRequiredService<ICommandService>();
+            var commandTypes = commandService.GetCommandTypes().ToArray();
+            return Parser.Default.ParseArguments(args, commandTypes)
+                .MapResult((ICommand cmd) => cmd.Execute(), errs => 1);
         }
 
-        private static int RunUnpack(UnpackOptions args)
+        private static void LoadCommands(ServiceCollection services, IServiceProvider serviceProvider)
         {
-            if (!Directory.Exists(args.InputDirectory))
+            var commandTypes = (from service in services
+                where typeof(ICommand).IsAssignableFrom(service.ImplementationType)
+                select service.ImplementationType).ToList();
+            var commandService = serviceProvider.GetRequiredService<ICommandService>();
+            foreach (var commandType in commandTypes)
             {
-                throw new Exception($"Non-existent input directory: {args.InputDirectory}");
+                commandService.RegisterCommand(commandType);
             }
-
-            if (!Directory.Exists(args.OutputDirectory))
-            {
-                Directory.CreateDirectory(args.OutputDirectory);
-            }
-
-            var profile = ResolveProfile(args.ProfileName);
-
-            if (profile == null)
-            {
-                Console.WriteLine("ERROR: Unknown profile {0}", args.ProfileName);
-                Console.WriteLine("AVAILABLE PROFILES:");
-                foreach (var baseProfile in Profiles)
-                {
-                    Console.WriteLine("\tNAME: {0}", baseProfile.GetName());
-                }
-
-                return 1;
-            }
-
-            var database = new Database(new DatabaseOptions(profile.GetGame(), profile.GetDatabaseType()));
-            var files = profile.LoadFiles(database, args.InputDirectory);
-            database.CompleteLoad();
-            var stopwatch = Stopwatch.StartNew();
-
-            var serializer = new DatabaseSerializer(database, args.OutputDirectory);
-            serializer.Serialize(files);
-
-            stopwatch.Stop();
-
-            Console.WriteLine("Exported database to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
-                stopwatch.ElapsedMilliseconds / 1000f, args.OutputDirectory);
-
-            return 0;
         }
 
-        private static int RunPack(PackOptions args)
+        private static void LoadProfiles(ServiceCollection services, IServiceProvider serviceProvider)
         {
-            if (!Directory.Exists(args.InputDirectory))
+            var profileTypes = (from service in services
+                where typeof(IProfile).IsAssignableFrom(service.ImplementationType)
+                select service.ImplementationType).ToList();
+            var profileService = serviceProvider.GetRequiredService<IProfileService>();
+            foreach (var profileType in profileTypes)
             {
-                throw new Exception($"Non-existent input directory: {args.InputDirectory}");
+                profileService.RegisterProfile(profileType);
             }
-
-            if (!Directory.Exists(args.OutputDirectory))
-            {
-                Directory.CreateDirectory(args.OutputDirectory);
-            }
-
-            var profile = ResolveProfile(args.ProfileName);
-
-            if (profile == null)
-            {
-                Console.WriteLine("ERROR: Unknown profile {0}", args.ProfileName);
-                Console.WriteLine("AVAILABLE PROFILES:");
-                foreach (var baseProfile in Profiles)
-                {
-                    Console.WriteLine("\tNAME: {0}", baseProfile.GetName());
-                }
-
-                return 1;
-            }
-
-            var database = new Database(new DatabaseOptions(profile.GetGame(), profile.GetDatabaseType()));
-            var deserializer = new DatabaseDeserializer(database, args.InputDirectory);
-
-            var stopwatch = Stopwatch.StartNew();
-            deserializer.Deserialize();
-            stopwatch.Stop();
-
-            Console.WriteLine("Loaded database from {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
-                stopwatch.ElapsedMilliseconds / 1000f, args.InputDirectory);
-
-            stopwatch.Restart();
-            deserializer.GenerateFiles(profile, args.OutputDirectory, args.Files);
-            stopwatch.Stop();
-            Console.WriteLine("Exported VLT files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
-                stopwatch.ElapsedMilliseconds / 1000f, args.OutputDirectory);
-            return 0;
         }
 
-        private static int RunApplyModScript(ApplyScriptOptions opts)
+        private static IEnumerable<PluginLoader> GetPluginLoaders()
         {
-            if (!Directory.Exists(opts.InputDirectory))
-            {
-                throw new Exception($"Non-existent input directory: {opts.InputDirectory}");
-            }
+            // create plugin loaders
+            var pluginsDir = Path.Combine(AppContext.BaseDirectory, "plugins");
 
-            if (!Directory.Exists(opts.OutputDirectory))
-            {
-                Directory.CreateDirectory(opts.OutputDirectory);
-            }
-
-            if (string.IsNullOrEmpty(opts.ModScriptPath))
-            {
-                throw new Exception("Missing modscript path!");
-            }
-
-            var profile = ResolveProfile(opts.ProfileName);
-
-            if (profile == null)
-            {
-                Console.WriteLine("ERROR: Unknown profile {0}", opts.ProfileName);
-                Console.WriteLine("AVAILABLE PROFILES:");
-                foreach (var baseProfile in Profiles)
+            return (from dir in Directory.GetDirectories(pluginsDir)
+                let dirName = Path.GetFileName(dir)
+                select Path.Combine(dir, dirName + ".dll")
+                into pluginDll
+                where File.Exists(pluginDll)
+                select PluginLoader.CreateFromAssemblyFile(pluginDll, new[]
                 {
-                    Console.WriteLine("\tNAME: {0}", baseProfile.GetName());
-                }
+                    // Basic stuff
+                    typeof(IPluginFactory), typeof(IServiceCollection),
 
-                return 1;
-            }
+                    // Application stuff
+                    typeof(ICommand), typeof(IProfile),
+                    
+                    // CommandLineParser
+                    typeof(VerbAttribute)
+                })).ToList();
+        }
 
-            var database = new Database(new DatabaseOptions(profile.GetGame(), profile.GetDatabaseType()));
-            var deserializer = new DatabaseDeserializer(database, opts.InputDirectory);
-
-            var stopwatch = Stopwatch.StartNew();
-            var loadedDatabase = deserializer.Deserialize();
-            stopwatch.Stop();
-
-            Console.WriteLine("Loaded database from {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
-                stopwatch.ElapsedMilliseconds / 1000f, opts.InputDirectory);
-
-            stopwatch.Restart();
-
-            var modScriptParser = new ModScriptParser(opts.ModScriptPath);
-            var cmdStopwatch = Stopwatch.StartNew();
-            var modScriptDatabase = new ModScriptDatabaseHelper(database);
-            var commandCount = 0;
-
-            foreach (var command in modScriptParser.Parse())
+        private static void ConfigureServices(IServiceCollection services, IEnumerable<PluginLoader> loaders)
+        {
+            // Create an instance of plugin types
+            foreach (var loader in loaders)
             {
-#if !DEBUG
-                try
+                foreach (var pluginType in loader
+                    .LoadDefaultAssembly()
+                    .GetTypes()
+                    .Where(t => typeof(IPluginFactory).IsAssignableFrom(t) && !t.IsAbstract))
                 {
-#endif
-                cmdStopwatch.Restart();
-                command.Execute(modScriptDatabase);
-                commandCount++;
-                //Console.WriteLine("Executed command in {1}ms: {0}", command.Line, cmdStopwatch.ElapsedMilliseconds);
-#if !DEBUG
+                    // This assumes the implementation of IPluginFactory has a parameterless constructor
+                    var plugin = Activator.CreateInstance(pluginType) as IPluginFactory;
+                    plugin?.Configure(services);
                 }
-                catch (Exception e)
-                {
-                    throw new ModScriptCommandExecutionException($"Failed to execute command: {command.Line}", e);
-                }
-#endif
             }
-
-            stopwatch.Stop();
-            var commandsPerSecond = commandCount / (stopwatch.ElapsedMilliseconds / 1000.0f);
-            Console.WriteLine("Applied script from {2} in {0}ms ({1:f2}s) ({4} commands @ ~{3:f2} commands/sec)",
-                stopwatch.ElapsedMilliseconds,
-                stopwatch.ElapsedMilliseconds / 1000f, opts.ModScriptPath, commandsPerSecond, commandCount);
-            if (opts.MakeBackup)
-            {
-                stopwatch.Restart();
-                Console.WriteLine("Making backup");
-                Directory.Move(opts.InputDirectory,
-                    $"{opts.InputDirectory.TrimEnd('/', '\\')}_{DateTimeOffset.Now.ToUnixTimeSeconds()}");
-                Directory.CreateDirectory(opts.InputDirectory);
-                stopwatch.Stop();
-                Console.WriteLine("Made backup in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
-                    stopwatch.ElapsedMilliseconds / 1000f);
-            }
-
-            stopwatch.Restart();
-            new DatabaseSerializer(database, opts.InputDirectory).Serialize(loadedDatabase.Files);
-
-            //deserializer.GenerateFiles(profile, args.OutputDirectory);
-            stopwatch.Stop();
-
-            Console.WriteLine("Exported YML files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
-                stopwatch.ElapsedMilliseconds / 1000f, opts.InputDirectory);
-
-            if (opts.GenerateBins)
-            {
-                stopwatch.Restart();
-                deserializer.GenerateFiles(profile, opts.OutputDirectory);
-                stopwatch.Stop();
-
-                Console.WriteLine("Exported VLT files to {2} in {0}ms ({1:f2}s)", stopwatch.ElapsedMilliseconds,
-                    stopwatch.ElapsedMilliseconds / 1000f, opts.OutputDirectory);
-            }
-
-            return 0;
         }
     }
 }

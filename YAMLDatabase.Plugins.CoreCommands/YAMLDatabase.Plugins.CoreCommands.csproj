@@ -1,7 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+        <Authors>heyitsleo/NFSTools</Authors>
+        <Company>NFSTools</Company>
+        <Description>Plugin providing basic commands for YAMLDatabase</Description>
+        <Platforms>x86</Platforms>
+        <Product>YAMLDatabase - Core Commands</Product>
         <TargetFramework>netcoreapp3.1</TargetFramework>
+        <Version>1.1.0</Version>
     </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\YAMLDatabase.API\YAMLDatabase.API.csproj" />
+    </ItemGroup>
 
 </Project>

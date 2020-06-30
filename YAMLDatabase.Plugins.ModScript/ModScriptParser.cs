@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using YAMLDatabase.ModScript.Commands;
+using YAMLDatabase.Plugins.ModScript.Commands;
 
 namespace YAMLDatabase.ModScript
 {

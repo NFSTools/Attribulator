@@ -10,7 +10,7 @@ using VaultLib.Core.Types.Abstractions;
 using VaultLib.Core.Types.Attrib.Types;
 using VaultLib.Core.Types.EA.Reflection;
 using VaultLib.Core.Utils;
-using YAMLDatabase.Core.Utils;
+using YAMLDatabase.API.Utils;
 using YAMLDatabase.ModScript.Utils;
 
 namespace YAMLDatabase.ModScript.Commands
