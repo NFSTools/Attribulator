@@ -6,7 +6,7 @@
     <Description>Allows the user to edit VLT databases through text (.yml) files</Description>
     <OutputType>Exe</OutputType>
     <Platforms>x86</Platforms>
-    <Product>YAMLDatabase</Product>
+    <Product>YAMLDatabase CLI</Product>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <Version>1.1.0</Version>
   </PropertyGroup>
