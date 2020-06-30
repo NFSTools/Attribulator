@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using CommandLine;
 using McMaster.NETCore.Plugins;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,7 +15,7 @@ namespace YAMLDatabase.CLI
 {
     internal static class Program
     {
-        public static int Main(string[] args)
+        public static async Task<int> Main(string[] args)
         {
             // Setup
             var services = new ServiceCollection();
@@ -25,26 +26,26 @@ namespace YAMLDatabase.CLI
             services.AddSingleton<IProfileService, ProfileServiceImpl>();
             ConfigureServices(services, loaders);
 
-            using var serviceProvider = services.BuildServiceProvider();
+            await using var serviceProvider = services.BuildServiceProvider();
 
             // Load commands and profiles from DI container
             LoadCommands(services, serviceProvider);
             LoadProfiles(services, serviceProvider);
 
             // Off to the races!
-            return RunApplication(serviceProvider, args);
+            return await RunApplication(serviceProvider, args);
         }
 
-        private static int RunApplication(IServiceProvider serviceProvider, IEnumerable<string> args)
+        private static async Task<int> RunApplication(IServiceProvider serviceProvider, IEnumerable<string> args)
         {
             var commandService = serviceProvider.GetRequiredService<ICommandService>();
             var commandTypes = commandService.GetCommandTypes().ToArray();
-            return Parser.Default.ParseArguments(args, commandTypes)
+            return await Parser.Default.ParseArguments(args, commandTypes)
                 .MapResult((BaseCommand cmd) =>
                 {
                     cmd.SetServiceProvider(serviceProvider);
                     return cmd.Execute();
-                }, errs => 1);
+                }, errs => Task.FromResult(1));
         }
 
         private static void LoadCommands(ServiceCollection services, IServiceProvider serviceProvider)

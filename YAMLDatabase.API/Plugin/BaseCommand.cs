@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using YAMLDatabase.API.Exceptions;
 using YAMLDatabase.API.Services;
@@ -32,7 +33,7 @@ namespace YAMLDatabase.API.Plugin
         /// Executes the command.
         /// </summary>
         /// <returns>The return code of the command (0 for success)</returns>
-        public abstract int Execute();
+        public abstract Task<int> Execute();
 
         protected IProfile FindProfile(string gameId)
         {

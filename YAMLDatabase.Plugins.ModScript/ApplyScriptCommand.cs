@@ -1,4 +1,5 @@
-﻿using CommandLine;
+﻿using System.Threading.Tasks;
+using CommandLine;
 using JetBrains.Annotations;
 using YAMLDatabase.API.Plugin;
 
@@ -20,9 +21,9 @@ namespace YAMLDatabase.Plugins.ModScript
         [UsedImplicitly]
         public string ProfileName { get; set; }
 
-        public override int Execute()
+        public override Task<int> Execute()
         {
-            return 0;
+            return Task.FromResult(0);
         }
     }
 }
