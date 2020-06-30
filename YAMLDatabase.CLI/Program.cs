@@ -122,7 +122,7 @@ namespace YAMLDatabase.CLI
                 }, conf => conf.PreferSharedTypes = true)).ToList();
         }
 
-        private static List<IPluginFactory> ConfigurePlugins(IServiceCollection services,
+        private static IEnumerable<IPluginFactory> ConfigurePlugins(IServiceCollection services,
             IEnumerable<PluginLoader> loaders)
         {
             var list = new List<IPluginFactory>();
