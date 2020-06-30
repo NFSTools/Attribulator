@@ -5,8 +5,8 @@ using YAMLDatabase.API.Plugin;
 
 namespace YAMLDatabase.Plugins.CoreCommands
 {
-    [Verb("unpack", HelpText = "Unpacks binary VLT files.")]
-    public class UnpackCommand : BaseCommand
+    [Verb("pack", HelpText = "Packs a database to BIN files.")]
+    public class PackCommand : BaseCommand
     {
         public override Task<int> Execute()
         {

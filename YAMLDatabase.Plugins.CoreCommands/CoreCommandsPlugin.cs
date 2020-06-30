@@ -4,13 +4,14 @@ using YAMLDatabase.API.Plugin;
 namespace YAMLDatabase.Plugins.CoreCommands
 {
     /// <summary>
-    /// Base class for the core commands plugin.
+    ///     Base class for the core commands plugin.
     /// </summary>
     public class CoreCommandsPlugin : IPluginFactory
     {
         public void Configure(IServiceCollection services)
         {
-            // services.AddTransient<ApplyScriptCommand>();
+            services.AddTransient<UnpackCommand>();
+            services.AddTransient<PackCommand>();
         }
 
         public string GetName()
