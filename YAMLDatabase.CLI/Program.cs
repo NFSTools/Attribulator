@@ -85,6 +85,8 @@ namespace YAMLDatabase.CLI
             commandService.RegisterCommand<PluginListCommand>();
             commandService.RegisterCommand<ProfileListCommand>();
             commandService.RegisterCommand<FormatListCommand>();
+            commandService.RegisterCommand<PackCommand>();
+            commandService.RegisterCommand<UnpackCommand>();
 
             // Then register plugin commands
             foreach (var commandType in commandTypes) commandService.RegisterCommand(commandType);
