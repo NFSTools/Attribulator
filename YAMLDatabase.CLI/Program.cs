@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CommandLine;
 using McMaster.NETCore.Plugins;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 using YAMLDatabase.API;
 using YAMLDatabase.API.Plugin;
 using YAMLDatabase.API.Serialization;
@@ -28,6 +29,10 @@ namespace YAMLDatabase.CLI
             services.AddSingleton<IProfileService, ProfileServiceImpl>();
             services.AddSingleton<IStorageFormatService, StorageFormatServiceImpl>();
             services.AddSingleton<IPluginService, PluginServiceImpl>();
+
+            // Set up logging
+            Log.Logger = new LoggerConfiguration().MinimumLevel.Debug().WriteTo.Console().CreateLogger();
+            services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(dispose: true));
 
             var plugins = ConfigurePlugins(services, loaders);
             await using var serviceProvider = services.BuildServiceProvider();
