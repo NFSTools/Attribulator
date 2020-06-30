@@ -11,6 +11,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="YamlDotNet" Version="8.1.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\YAMLDatabase.API\YAMLDatabase.API.csproj"/>
     </ItemGroup>
 
