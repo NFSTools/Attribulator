@@ -8,6 +8,7 @@ using McMaster.NETCore.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 using YAMLDatabase.API;
 using YAMLDatabase.API.Plugin;
+using YAMLDatabase.API.Serialization;
 using YAMLDatabase.API.Services;
 using YAMLDatabase.CLI.Commands;
 using YAMLDatabase.CLI.Services;
@@ -31,10 +32,10 @@ namespace YAMLDatabase.CLI
             var plugins = ConfigurePlugins(services, loaders);
             await using var serviceProvider = services.BuildServiceProvider();
 
-            // Load commands and profiles from DI container
+            // Load everything from DI container
             LoadCommands(services, serviceProvider);
             LoadProfiles(services, serviceProvider);
-
+            LoadStorageFormats(services, serviceProvider);
             LoadPlugins(plugins, serviceProvider);
 
             // Off to the races!
@@ -81,6 +82,16 @@ namespace YAMLDatabase.CLI
                 select service.ImplementationType).ToList();
             var profileService = serviceProvider.GetRequiredService<IProfileService>();
             foreach (var profileType in profileTypes) profileService.RegisterProfile(profileType);
+        }
+
+        private static void LoadStorageFormats(ServiceCollection services, IServiceProvider serviceProvider)
+        {
+            var storageFormatTypes = (from service in services
+                where typeof(IDatabaseStorageFormat).IsAssignableFrom(service.ImplementationType)
+                select service.ImplementationType).ToList();
+            var storageFormatService = serviceProvider.GetRequiredService<IStorageFormatService>();
+            foreach (var storageFormatType in storageFormatTypes)
+                storageFormatService.RegisterStorageFormat(storageFormatType);
         }
 
         private static IEnumerable<PluginLoader> GetPluginLoaders()
