@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace YAMLDatabase.ModScript.Commands
+namespace YAMLDatabase.Plugins.ModScript.Commands
 {
     public class GameModScriptCommand : BaseModScriptCommand
     {
@@ -8,7 +8,7 @@ namespace YAMLDatabase.ModScript.Commands
 
         public override void Parse(List<string> parts)
         {
-            this.Game = parts[1];
+            Game = parts[1];
         }
 
         public override void Execute(ModScriptDatabaseHelper database)

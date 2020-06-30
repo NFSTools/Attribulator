@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace YAMLDatabase.ModScript
+namespace YAMLDatabase.Plugins.ModScript
 {
     [Serializable]
     public class ModScriptParserException : Exception

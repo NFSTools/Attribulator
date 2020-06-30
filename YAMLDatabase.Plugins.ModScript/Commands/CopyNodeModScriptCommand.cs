@@ -2,9 +2,9 @@
 using System.IO;
 using VaultLib.Core.Data;
 using VaultLib.Core.DB;
-using YAMLDatabase.ModScript.Utils;
+using YAMLDatabase.Plugins.ModScript.Utils;
 
-namespace YAMLDatabase.ModScript.Commands
+namespace YAMLDatabase.Plugins.ModScript.Commands
 {
     // copy_node class sourceNode parentNode nodeName
     public class CopyNodeModScriptCommand : BaseModScriptCommand
@@ -17,9 +17,7 @@ namespace YAMLDatabase.ModScript.Commands
         public override void Parse(List<string> parts)
         {
             if (parts.Count != 4 && parts.Count != 5)
-            {
                 throw new ModScriptParserException($"4 or 5 tokens expected, got {parts.Count}");
-            }
 
             ClassName = parts[1];
             SourceCollectionName = parts[2];
@@ -29,17 +27,15 @@ namespace YAMLDatabase.ModScript.Commands
 
         public override void Execute(ModScriptDatabaseHelper database)
         {
-            VltCollection collection = GetCollection(database, ClassName, SourceCollectionName);
+            var collection = GetCollection(database, ClassName, SourceCollectionName);
 
             if (collection == null)
-            {
-                throw new InvalidDataException($"copy_node failed because there is no collection called '{SourceCollectionName}'");
-            }
+                throw new InvalidDataException(
+                    $"copy_node failed because there is no collection called '{SourceCollectionName}'");
 
             if (database.FindCollectionByName(ClassName, DestinationCollectionName) != null)
-            {
-                throw new InvalidDataException($"copy_node failed because there is already a collection called '{DestinationCollectionName}'");
-            }
+                throw new InvalidDataException(
+                    $"copy_node failed because there is already a collection called '{DestinationCollectionName}'");
 
             VltCollection parentCollection = null;
 
@@ -48,18 +44,15 @@ namespace YAMLDatabase.ModScript.Commands
                 parentCollection = database.FindCollectionByName(ClassName, ParentCollectionName);
 
                 if (parentCollection == null)
-                {
-                    throw new InvalidDataException($"copy_node failed because the parent collection called '{ParentCollectionName}' does not exist");
-                }
+                    throw new InvalidDataException(
+                        $"copy_node failed because the parent collection called '{ParentCollectionName}' does not exist");
             }
 
-            VltCollection newCollection = new VltCollection(collection.Vault, collection.Class, DestinationCollectionName);
+            var newCollection = new VltCollection(collection.Vault, collection.Class, DestinationCollectionName);
             CopyCollection(database.Database, collection, newCollection);
 
             if (newCollection.Class.HasField("CollectionName"))
-            {
                 newCollection.SetDataValue("CollectionName", DestinationCollectionName);
-            }
 
             database.AddCollection(newCollection, parentCollection);
         }
@@ -68,8 +61,9 @@ namespace YAMLDatabase.ModScript.Commands
         {
             foreach (var dataPair in from.GetData())
             {
-                VltClassField field = from.Class[dataPair.Key];
-                to.SetRawValue(dataPair.Key, ValueCloningUtils.CloneValue(database, dataPair.Value, to.Class, field, to));
+                var field = from.Class[dataPair.Key];
+                to.SetRawValue(dataPair.Key,
+                    ValueCloningUtils.CloneValue(database, dataPair.Value, to.Class, field, to));
             }
         }
     }

@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
-using VaultLib.Core.Data;
 using VaultLib.Core.Hashing;
 
-namespace YAMLDatabase.ModScript.Commands
+namespace YAMLDatabase.Plugins.ModScript.Commands
 {
     // delete_field class node field
     public class DeleteFieldModScriptCommand : BaseModScriptCommand
@@ -13,10 +12,7 @@ namespace YAMLDatabase.ModScript.Commands
 
         public override void Parse(List<string> parts)
         {
-            if (parts.Count != 4)
-            {
-                throw new ModScriptParserException($"Expected 4 tokens, got {parts.Count}");
-            }
+            if (parts.Count != 4) throw new ModScriptParserException($"Expected 4 tokens, got {parts.Count}");
 
             ClassName = CleanHashString(parts[1]);
             CollectionName = CleanHashString(parts[2]);
@@ -25,23 +21,20 @@ namespace YAMLDatabase.ModScript.Commands
 
         public override void Execute(ModScriptDatabaseHelper database)
         {
-            VltCollection collection = GetCollection(database, ClassName, CollectionName);
+            var collection = GetCollection(database, ClassName, CollectionName);
             if (collection.HasEntry(FieldName))
             {
                 collection.RemoveValue(FieldName);
             }
             else
             {
-                string hashed = $"0x{VLT32Hasher.Hash(FieldName):X8}";
+                var hashed = $"0x{VLT32Hasher.Hash(FieldName):X8}";
 
                 if (collection.HasEntry(hashed))
-                {
                     collection.RemoveValue(hashed);
-                }
                 else
-                {
-                    throw new ModScriptCommandExecutionException($"Could not delete field: {ClassName}/{CollectionName}[{FieldName}]");
-                }
+                    throw new ModScriptCommandExecutionException(
+                        $"Could not delete field: {ClassName}/{CollectionName}[{FieldName}]");
             }
         }
     }

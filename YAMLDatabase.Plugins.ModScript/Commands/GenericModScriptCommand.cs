@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
 
-namespace YAMLDatabase.ModScript
+namespace YAMLDatabase.Plugins.ModScript.Commands
 {
     public class GenericModScriptCommand : BaseModScriptCommand
     {
         public GenericModScriptCommand(string line)
         {
-            this.Command = line;
+            Command = line;
         }
 
         public string Command { get; }
@@ -18,7 +18,7 @@ namespace YAMLDatabase.ModScript
 
         public override void Execute(ModScriptDatabaseHelper database)
         {
-            throw new System.NotImplementedException();
+            throw new ModScriptCommandExecutionException("Cannot execute GenericModScriptCommand.");
         }
     }
 }

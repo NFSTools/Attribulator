@@ -5,7 +5,7 @@ using VaultLib.Core;
 using VaultLib.Core.Data;
 using VaultLib.Core.Types;
 
-namespace YAMLDatabase.ModScript.Commands
+namespace YAMLDatabase.Plugins.ModScript.Commands
 {
     // add_node class parentNode nodeName
     public class AddNodeModScriptCommand : BaseModScriptCommand
@@ -17,9 +17,7 @@ namespace YAMLDatabase.ModScript.Commands
         public override void Parse(List<string> parts)
         {
             if (parts.Count != 3 && parts.Count != 4)
-            {
                 throw new ModScriptParserException($"3 or 4 tokens expected, got {parts.Count}");
-            }
 
             ClassName = CleanHashString(parts[1]);
             ParentCollectionName = parts.Count == 4 ? CleanHashString(parts[2]) : "";
@@ -30,41 +28,32 @@ namespace YAMLDatabase.ModScript.Commands
         {
             VltCollection parentCollection = null;
             if (!string.IsNullOrEmpty(ParentCollectionName))
-            {
                 if ((parentCollection = GetCollection(database, ClassName, ParentCollectionName, false)) == null)
-                {
-                    throw new InvalidDataException($"add_node failed because parent collection does not exist: {ClassName}/{ParentCollectionName}");
-                }
-            }
+                    throw new InvalidDataException(
+                        $"add_node failed because parent collection does not exist: {ClassName}/{ParentCollectionName}");
 
             if (GetCollection(database, ClassName, CollectionName, false) != null)
-            {
-                throw new InvalidDataException($"add_node failed because collection already exists: {ClassName}/{CollectionName}");
-            }
+                throw new InvalidDataException(
+                    $"add_node failed because collection already exists: {ClassName}/{CollectionName}");
 
             Vault addToVault;
 
             if (parentCollection != null)
-            {
                 addToVault = parentCollection.Vault;
-            }
             else
-            {
                 addToVault = database.Vaults.FirstOrDefault(vault =>
                     database.GetCollectionsInVault(vault)
                         .Any(collection => collection.Class.Name == ClassName));
-            }
 
             if (addToVault == null)
-            {
                 throw new InvalidDataException("failed to determine vault to insert new collection into");
-            }
 
             var newNode = database.AddCollection(addToVault, ClassName, CollectionName, parentCollection);
 
             foreach (var baseField in newNode.Class.BaseFields)
             {
-                var vltBaseType = TypeRegistry.CreateInstance(database.Database.Options.GameId, newNode.Class, newNode.Class[baseField.Key],
+                var vltBaseType = TypeRegistry.CreateInstance(database.Database.Options.GameId, newNode.Class,
+                    newNode.Class[baseField.Key],
                     newNode);
 
                 if (vltBaseType is VLTArrayType array)
@@ -75,19 +64,15 @@ namespace YAMLDatabase.ModScript.Commands
                     array.Items = new List<VLTBaseType>();
 
                     for (var i = 0; i < array.Capacity; i++)
-                    {
-                        array.Items.Add(TypeRegistry.ConstructInstance(array.ItemType, newNode.Class, baseField, newNode));
-                    }
+                        array.Items.Add(TypeRegistry.ConstructInstance(array.ItemType, newNode.Class, baseField,
+                            newNode));
                 }
 
                 newNode.SetRawValue(baseField.Name,
                     vltBaseType);
             }
 
-            if (newNode.Class.HasField("CollectionName"))
-            {
-                newNode.SetDataValue("CollectionName", CollectionName);
-            }
+            if (newNode.Class.HasField("CollectionName")) newNode.SetDataValue("CollectionName", CollectionName);
         }
     }
 }

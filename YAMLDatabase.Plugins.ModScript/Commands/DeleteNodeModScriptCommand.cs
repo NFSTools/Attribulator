@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
-using VaultLib.Core.Data;
 
-namespace YAMLDatabase.ModScript.Commands
+namespace YAMLDatabase.Plugins.ModScript.Commands
 {
     public class DeleteNodeModScriptCommand : BaseModScriptCommand
     {
@@ -10,10 +9,7 @@ namespace YAMLDatabase.ModScript.Commands
 
         public override void Parse(List<string> parts)
         {
-            if (parts.Count != 3)
-            {
-                throw new ModScriptParserException($"Expected 3 tokens, got {parts.Count}");
-            }
+            if (parts.Count != 3) throw new ModScriptParserException($"Expected 3 tokens, got {parts.Count}");
 
             ClassName = CleanHashString(parts[1]);
             CollectionName = CleanHashString(parts[2]);
@@ -21,7 +17,7 @@ namespace YAMLDatabase.ModScript.Commands
 
         public override void Execute(ModScriptDatabaseHelper database)
         {
-            VltCollection collection = GetCollection(database, ClassName, CollectionName);
+            var collection = GetCollection(database, ClassName, CollectionName);
 
             database.RemoveCollection(collection);
         }

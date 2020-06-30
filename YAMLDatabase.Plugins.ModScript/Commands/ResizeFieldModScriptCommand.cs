@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
 using VaultLib.Core;
-using VaultLib.Core.Data;
 using VaultLib.Core.Types;
 
-namespace YAMLDatabase.ModScript.Commands
+namespace YAMLDatabase.Plugins.ModScript.Commands
 {
     public class ResizeFieldModScriptCommand : BaseModScriptCommand
     {
@@ -14,65 +13,45 @@ namespace YAMLDatabase.ModScript.Commands
 
         public override void Parse(List<string> parts)
         {
-            if (parts.Count != 5)
-            {
-                throw new ModScriptParserException($"Expected 5 tokens but got {parts.Count}");
-            }
+            if (parts.Count != 5) throw new ModScriptParserException($"Expected 5 tokens but got {parts.Count}");
 
             ClassName = CleanHashString(parts[1]);
             CollectionName = CleanHashString(parts[2]);
             FieldName = CleanHashString(parts[3]);
 
             if (!ushort.TryParse(parts[4], out var newCapacity))
-            {
                 throw new ModScriptParserException($"Failed to parse '{parts[4]}' as a number");
-            }
 
             NewCapacity = newCapacity;
         }
 
         public override void Execute(ModScriptDatabaseHelper database)
         {
-            VltCollection collection = GetCollection(database, ClassName, CollectionName);
-            VltClassField field = GetField(collection.Class, FieldName);
+            var collection = GetCollection(database, ClassName, CollectionName);
+            var field = GetField(collection.Class, FieldName);
 
             if (!field.IsArray)
-            {
                 throw new ModScriptCommandExecutionException($"Field {ClassName}[{FieldName}] is not an array!");
-            }
 
             if (field.MaxCount < NewCapacity)
-            {
                 throw new ModScriptCommandExecutionException(
                     $"Cannot resize field {ClassName}[{FieldName}] beyond maximum count (requested {NewCapacity} but limit is {field.MaxCount})");
-            }
 
             if (!collection.HasEntry(FieldName))
-            {
-                throw new ModScriptCommandExecutionException($"Collection {collection.ShortPath} does not have an entry for {FieldName}.");
-            }
+                throw new ModScriptCommandExecutionException(
+                    $"Collection {collection.ShortPath} does not have an entry for {FieldName}.");
 
-            VLTArrayType array = collection.GetRawValue<VLTArrayType>(FieldName);
+            var array = collection.GetRawValue<VLTArrayType>(FieldName);
 
             if (NewCapacity < array.Items.Count)
-            {
                 while (NewCapacity < array.Items.Count)
-                {
                     array.Items.RemoveAt(array.Items.Count - 1);
-                }
-            }
             else if (NewCapacity > array.Items.Count)
-            {
                 while (NewCapacity > array.Items.Count)
-                {
-                    array.Items.Add(TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field, collection));
-                }
-            }
+                    array.Items.Add(TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field,
+                        collection));
 
-            if (!field.IsInLayout)
-            {
-                array.Capacity = NewCapacity;
-            }
+            if (!field.IsInLayout) array.Capacity = NewCapacity;
         }
     }
 }

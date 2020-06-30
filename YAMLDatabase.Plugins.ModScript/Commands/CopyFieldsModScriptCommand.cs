@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using VaultLib.Core.Data;
 using VaultLib.Core.Types;
-using YAMLDatabase.ModScript.Utils;
+using YAMLDatabase.Plugins.ModScript.Utils;
 
-namespace YAMLDatabase.ModScript.Commands
+namespace YAMLDatabase.Plugins.ModScript.Commands
 {
     // copy_fields class sourceNode targetNode options
     public class CopyFieldsModScriptCommand : BaseModScriptCommand
@@ -25,10 +25,7 @@ namespace YAMLDatabase.ModScript.Commands
 
         public override void Parse(List<string> parts)
         {
-            if (parts.Count != 5)
-            {
-                throw new ModScriptParserException($"Expected 5 tokens, got {parts.Count}");
-            }
+            if (parts.Count != 5) throw new ModScriptParserException($"Expected 5 tokens, got {parts.Count}");
 
             ClassName = CleanHashString(parts[1]);
             SourceCollectionName = CleanHashString(parts[2]);
@@ -45,57 +42,41 @@ namespace YAMLDatabase.ModScript.Commands
 
         public override void Execute(ModScriptDatabaseHelper database)
         {
-            VltCollection srcCollection = GetCollection(database, ClassName, SourceCollectionName);
-            VltCollection dstCollection = GetCollection(database, ClassName, DestinationCollectionName);
-            Dictionary<VltClassField, VLTBaseType> values = new Dictionary<VltClassField, VLTBaseType>();
+            var srcCollection = GetCollection(database, ClassName, SourceCollectionName);
+            var dstCollection = GetCollection(database, ClassName, DestinationCollectionName);
+            var values = new Dictionary<VltClassField, VLTBaseType>();
 
             if ((Options & CopyOptions.Base) != 0)
-            {
                 foreach (var baseField in srcCollection.Class.BaseFields)
-                {
                     values.Add(baseField,
-                        ValueCloningUtils.CloneValue(database.Database, srcCollection.GetRawValue(baseField.Name), srcCollection.Class,
+                        ValueCloningUtils.CloneValue(database.Database, srcCollection.GetRawValue(baseField.Name),
+                            srcCollection.Class,
                             baseField, dstCollection));
-                }
-            }
 
             if ((Options & CopyOptions.Optional) != 0)
-            {
                 foreach (var (key, value) in srcCollection.GetData())
                 {
                     var field = srcCollection.Class[key];
 
                     if (!field.IsInLayout)
-                    {
-                        values.Add(field, ValueCloningUtils.CloneValue(database.Database, value, srcCollection.Class, field, dstCollection));
-                    }
+                        values.Add(field,
+                            ValueCloningUtils.CloneValue(database.Database, value, srcCollection.Class, field,
+                                dstCollection));
                 }
-            }
 
             // base will always overwrite
             // optional by itself will copy anything that doesn't exist
             // optional + overwrite will copy nonexistent fields and overwrite the other ones(optional only)
             if ((Options & CopyOptions.Base) != 0)
-            {
                 foreach (var (key, value) in values)
-                {
                     if (key.IsInLayout)
-                    {
                         dstCollection.SetRawValue(key.Name, value);
-                    }
-                }
-            }
 
             if ((Options & CopyOptions.Optional) != 0)
-            {
                 foreach (var (field, value) in values)
-                {
-                    if (!field.IsInLayout && (!dstCollection.HasEntry(field.Name) || (Options & CopyOptions.OverwriteOptional) != 0))
-                    {
+                    if (!field.IsInLayout && (!dstCollection.HasEntry(field.Name) ||
+                                              (Options & CopyOptions.OverwriteOptional) != 0))
                         dstCollection.SetRawValue(field.Name, value);
-                    }
-                }
-            }
         }
     }
 }
