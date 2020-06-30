@@ -8,6 +8,7 @@ namespace YAMLDatabase.Plugins.SpeedProfiles
     {
         public void Configure(IServiceCollection services)
         {
+            services.AddTransient<MostWantedProfile>();
             services.AddTransient<SpeedProfilesPlugin>();
         }
 

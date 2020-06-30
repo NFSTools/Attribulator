@@ -1,4 +1,6 @@
-﻿using VaultLib.Core.DB;
+﻿using System.Collections.Generic;
+using VaultLib.Core.DB;
+using YAMLDatabase.API.Data;
 
 namespace YAMLDatabase.API.Serialization
 {
@@ -23,7 +25,8 @@ namespace YAMLDatabase.API.Serialization
         /// </summary>
         /// <param name="sourceDatabase">The <see cref="Database" /> instance to load data from.</param>
         /// <param name="destinationDirectory">The path to the directory to write data to.</param>
-        void Serialize(Database sourceDatabase, string destinationDirectory);
+        /// <param name="loadedFiles">The loaded files</param>
+        void Serialize(Database sourceDatabase, string destinationDirectory, IEnumerable<LoadedFile> loadedFiles);
 
         /// <summary>
         ///     Gets the identifier of the storage format.
