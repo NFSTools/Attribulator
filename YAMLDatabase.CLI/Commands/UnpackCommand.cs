@@ -9,7 +9,7 @@ using YAMLDatabase.API.Services;
 
 namespace YAMLDatabase.CLI.Commands
 {
-    [Verb("unpack", HelpText = "Unpacks binary VLT files.")]
+    [Verb("unpack", HelpText = "Unpack binary VLT files.")]
     public class UnpackCommand : BaseCommand
     {
         [Option('i', HelpText = "Directory to read BIN files from", Required = true)]

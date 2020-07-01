@@ -19,7 +19,7 @@ using YAMLDatabase.CLI.Build;
 
 namespace YAMLDatabase.CLI.Commands
 {
-    [Verb("pack", HelpText = "Packs a database to BIN files.")]
+    [Verb("pack", HelpText = "Pack a database to BIN files.")]
     public class PackCommand : BaseCommand
     {
         [Option('i', "input", HelpText = "Directory to read unpacked files from", Required = true)]
