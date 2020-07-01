@@ -11,15 +11,23 @@ namespace YAMLDatabase.API.Serialization
     public interface IDatabaseStorageFormat
     {
         /// <summary>
+        ///     Deserializes and returns the INFORMATION about the database stored in the given directory.
+        /// </summary>
+        /// <param name="sourceDirectory">The path to the directory to read data from.</param>
+        /// <returns>A new instance of the <see cref="SerializedDatabaseInfo" /> object containing information about the database.</returns>
+        SerializedDatabaseInfo LoadInfo(string sourceDirectory);
+
+        /// <summary>
         ///     Deserializes data in the given directory and loads it into the given database.
         /// </summary>
         /// <param name="sourceDirectory">The path to the directory to read data from.</param>
         /// <param name="destinationDatabase">The <see cref="Database" /> instance to load data into.</param>
+        /// <param name="fileNames">The names of the database files to load.</param>
         /// <returns>
-        ///     A new instance of the <see cref="SerializedDatabaseInfo" /> class with information about the serialized
-        ///     database.
+        ///     An enumerable object of <see cref="LoadedFile" /> instances.
         /// </returns>
-        IEnumerable<LoadedFile> Deserialize(string sourceDirectory, Database destinationDatabase);
+        IEnumerable<LoadedFile> Deserialize(string sourceDirectory, Database destinationDatabase,
+            IEnumerable<string> fileNames = null);
 
         /// <summary>
         ///     Serializes data in the given database to files in the given directory.
@@ -54,6 +62,6 @@ namespace YAMLDatabase.API.Serialization
         /// <param name="sourceDirectory">The base directory to load data from.</param>
         /// <param name="file">The file information object.</param>
         /// <returns>A hash string.</returns>
-        ValueTask<string> ComputeHashAsync(string sourceDirectory, LoadedFile file);
+        ValueTask<string> ComputeHashAsync(string sourceDirectory, SerializedDatabaseFile file);
     }
 }

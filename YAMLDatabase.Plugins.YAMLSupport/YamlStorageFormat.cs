@@ -30,13 +30,21 @@ namespace YAMLDatabase.Plugins.YAMLSupport
     /// TODO: This is in DESPERATE need of refactoring. Storage code needs to be as unified as possible.
     public class YamlStorageFormat : IDatabaseStorageFormat
     {
-        public IEnumerable<LoadedFile> Deserialize(string sourceDirectory, Database destinationDatabase)
+        public SerializedDatabaseInfo LoadInfo(string sourceDirectory)
         {
             var deserializer = new DeserializerBuilder().Build();
 
             using var dbs = new StreamReader(Path.Combine(sourceDirectory, "info.yml"));
-            var loadedDatabase = deserializer.Deserialize<SerializedDatabaseInfo>(dbs);
+            return deserializer.Deserialize<SerializedDatabaseInfo>(dbs);
+        }
+
+        public IEnumerable<LoadedFile> Deserialize(string sourceDirectory, Database destinationDatabase,
+            IEnumerable<string> fileNames = null)
+        {
+            var deserializer = new DeserializerBuilder().Build();
+            var loadedDatabase = LoadInfo(sourceDirectory);
             var isX86 = destinationDatabase.Options.Type == DatabaseType.X86Database;
+            var fileNameList = fileNames?.ToList() ?? new List<string>();
 
             foreach (var loadedDatabaseClass in loadedDatabase.Classes)
             {
@@ -77,13 +85,14 @@ namespace YAMLDatabase.Plugins.YAMLSupport
             var vaultsToSaveDictionary = new Dictionary<string, List<Vault>>();
             var collectionsToBeAdded = new List<VltCollection>();
 
-            foreach (var file in loadedDatabase.Files)
+            foreach (var file in loadedDatabase.Files.Where(f => fileNameList.Contains(f.Name)))
             {
                 var baseDirectory = Path.Combine(sourceDirectory, file.Group, file.Name);
                 vaultsToSaveDictionary[file.Name] = new List<Vault>();
                 foreach (var vault in file.Vaults)
                 {
                     var vaultDirectory = Path.Combine(baseDirectory, vault).Trim();
+                    // TODO: IsPrimaryVault should not rely on hardcoded "db" name
                     var newVault = new Vault(vault) {Database = destinationDatabase, IsPrimaryVault = vault == "db"};
                     if (Directory.Exists(vaultDirectory))
                     {
@@ -325,7 +334,7 @@ namespace YAMLDatabase.Plugins.YAMLSupport
             return File.Exists(Path.Combine(sourceDirectory, "info.yml"));
         }
 
-        public async ValueTask<string> ComputeHashAsync(string sourceDirectory, LoadedFile loadedFile)
+        public async ValueTask<string> ComputeHashAsync(string sourceDirectory, SerializedDatabaseFile loadedFile)
         {
             var path = Path.Combine(sourceDirectory, loadedFile.Group, loadedFile.Name);
 

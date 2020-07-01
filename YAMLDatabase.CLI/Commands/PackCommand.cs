@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -55,16 +56,14 @@ namespace YAMLDatabase.CLI.Commands
                 throw new CommandException(
                     $"Cannot find storage format that is compatible with directory [{InputDirectory}].");
 
-            var database = new Database(new DatabaseOptions(profile.GetGameId(), profile.GetDatabaseType()));
-            logger.LogInformation("Loading database from disk...");
-            var files = storageFormat.Deserialize(InputDirectory, database).ToList();
-            logger.LogInformation("Loaded database");
 
             // Parallel hash check
-            var filesToCompile = new ConcurrentBag<LoadedFile>();
+            var fileNamesToCompile = new ConcurrentBag<string>();
             var cache = new BuildCache();
             var dbInternalPath = Path.Combine(InputDirectory, ".db");
             var cacheFilePath = Path.Combine(dbInternalPath, ".cache.json");
+
+            var dbInfo = storageFormat.LoadInfo(InputDirectory);
 
             if (UseCache)
             {
@@ -78,7 +77,7 @@ namespace YAMLDatabase.CLI.Commands
 
                 logger.LogInformation("Performing cache check...");
 
-                await files.ParallelForEachAsync(async f =>
+                await dbInfo.Files.ParallelForEachAsync(async f =>
                 {
                     var storageHash = await storageFormat.ComputeHashAsync(InputDirectory, f);
                     var cacheKey = $"{f.Group}_{f.Name}";
@@ -86,7 +85,8 @@ namespace YAMLDatabase.CLI.Commands
 
                     if (cacheEntry.Hash != storageHash)
                     {
-                        filesToCompile.Add(f);
+                        fileNamesToCompile.Add(f.Name);
+                        foreach (var dependency in cacheEntry.Dependencies) fileNamesToCompile.Add(dependency);
                         cacheEntry.Hash = storageHash;
                         cacheEntry.LastModified = DateTimeOffset.Now;
                         cache.Entries[cacheKey] = cacheEntry;
@@ -96,22 +96,62 @@ namespace YAMLDatabase.CLI.Commands
             }
             else
             {
-                filesToCompile = new ConcurrentBag<LoadedFile>(files);
+                // filesToCompile = new ConcurrentBag<LoadedFile>(files);
+                fileNamesToCompile = new ConcurrentBag<string>(dbInfo.Files.Select(f => f.Name));
             }
 
+            var database = new Database(new DatabaseOptions(profile.GetGameId(), profile.GetDatabaseType()));
+            logger.LogInformation("Loading database from disk...");
+            var files = storageFormat.Deserialize(InputDirectory, database, fileNamesToCompile).ToList();
+            logger.LogInformation("Loaded database");
             logger.LogInformation("Saving files...");
-            profile.SaveFiles(database, OutputDirectory, filesToCompile.ToList());
+            var filesToCompile = files.Where(loadedFile => fileNamesToCompile.Contains(loadedFile.Name)).ToList();
+            profile.SaveFiles(database, OutputDirectory, filesToCompile);
 
             if (UseCache)
             {
                 logger.LogInformation("Writing cache...");
                 Directory.CreateDirectory(dbInternalPath);
+
+                var vaultFileMap = new Dictionary<string, string>();
+
+                foreach (var file in files)
+                foreach (var vault in file.Vaults)
+                    vaultFileMap[vault.Name] = file.Name;
+
+                foreach (var f in filesToCompile)
+                {
+                    var cacheKey = $"{f.Group}_{f.Name}";
+                    var cacheEntry = cache.FindEntry(cacheKey);
+                    cacheEntry.Dependencies = ComputeDependencies(vaultFileMap, f, database);
+                }
+
                 cache.LastUpdated = DateTimeOffset.Now;
                 await File.WriteAllTextAsync(cacheFilePath, JsonConvert.SerializeObject(cache));
             }
 
             logger.LogInformation("Done!");
             return 0;
+        }
+
+        private HashSet<string> ComputeDependencies(Dictionary<string, string> vaultFileMap, LoadedFile file,
+            Database database)
+        {
+            var fileDependencies = new HashSet<string>();
+            foreach (var vault in file.Vaults)
+            {
+                var collections = database.RowManager.GetCollectionsInVault(vault);
+
+                foreach (var collection in collections)
+                {
+                    if (collection.Parent == null || collection.Parent.Vault == vault) continue;
+
+                    var vaultFile = vaultFileMap[collection.Parent.Vault.Name];
+                    if (vaultFile != file.Name) fileDependencies.Add(vaultFile);
+                }
+            }
+
+            return fileDependencies;
         }
     }
 }

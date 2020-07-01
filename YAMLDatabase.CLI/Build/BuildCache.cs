@@ -42,7 +42,7 @@ namespace YAMLDatabase.CLI.Build
         /// <summary>
         ///     Gets or sets the list of dependencies.
         /// </summary>
-        public List<string> Dependencies { get; set; } = new List<string>();
+        public HashSet<string> Dependencies { get; set; } = new HashSet<string>();
 
         /// <summary>
         ///     Gets or sets the modification timestamp.
