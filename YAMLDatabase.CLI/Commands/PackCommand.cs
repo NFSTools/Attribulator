@@ -104,6 +104,7 @@ namespace YAMLDatabase.CLI.Commands
             {
                 logger.LogInformation("Writing cache...");
                 Directory.CreateDirectory(dbInternalPath);
+                cache.LastUpdated = DateTimeOffset.Now;
                 await File.WriteAllTextAsync(cacheFilePath, JsonConvert.SerializeObject(cache));
             }
 
