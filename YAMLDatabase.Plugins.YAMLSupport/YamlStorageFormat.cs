@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 using CoreLibraries.GameUtilities;
 using VaultLib.Core;
 using VaultLib.Core.Data;
@@ -324,7 +325,7 @@ namespace YAMLDatabase.Plugins.YAMLSupport
             return File.Exists(Path.Combine(sourceDirectory, "info.yml"));
         }
 
-        public string ComputeHash(string sourceDirectory, LoadedFile loadedFile)
+        public async ValueTask<string> ComputeHashAsync(string sourceDirectory, LoadedFile loadedFile)
         {
             var path = Path.Combine(sourceDirectory, loadedFile.Group, loadedFile.Name);
 
@@ -344,7 +345,7 @@ namespace YAMLDatabase.Plugins.YAMLSupport
                 md5.TransformBlock(pathBytes, 0, pathBytes.Length, pathBytes, 0);
 
                 // hash contents
-                var contentBytes = File.ReadAllBytes(file);
+                var contentBytes = await File.ReadAllBytesAsync(file);
                 if (i == files.Count - 1)
                     md5.TransformFinalBlock(contentBytes, 0, contentBytes.Length);
                 else

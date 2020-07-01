@@ -1,13 +1,20 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Concurrent;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using CommandLine;
+using Dasync.Collections;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using VaultLib.Core.DB;
+using YAMLDatabase.API.Data;
 using YAMLDatabase.API.Exceptions;
 using YAMLDatabase.API.Plugin;
 using YAMLDatabase.API.Services;
+using YAMLDatabase.CLI.Build;
 
 namespace YAMLDatabase.CLI.Commands
 {
@@ -26,11 +33,12 @@ namespace YAMLDatabase.CLI.Commands
         [UsedImplicitly]
         public string ProfileName { get; set; }
 
-        public override Task<int> Execute()
+        public override async Task<int> Execute()
         {
+            var logger = ServiceProvider.GetRequiredService<ILogger<PackCommand>>();
+
             if (!Directory.Exists(InputDirectory))
-                return Task.FromException<int>(
-                    new DirectoryNotFoundException($"Cannot find input directory: {InputDirectory}"));
+                throw new DirectoryNotFoundException($"Cannot find input directory: {InputDirectory}");
 
             if (!Directory.Exists(OutputDirectory)) Directory.CreateDirectory(OutputDirectory);
 
@@ -40,15 +48,53 @@ namespace YAMLDatabase.CLI.Commands
                 .FirstOrDefault(testStorageFormat => testStorageFormat.CanDeserializeFrom(InputDirectory));
 
             if (storageFormat == null)
-                return Task.FromException<int>(new CommandException(
-                    $"Cannot find storage format that is compatible with directory [{InputDirectory}]."));
+                throw new CommandException(
+                    $"Cannot find storage format that is compatible with directory [{InputDirectory}].");
 
             var database = new Database(new DatabaseOptions(profile.GetGameId(), profile.GetDatabaseType()));
+            logger.LogInformation("Loading database from disk...");
             var files = storageFormat.Deserialize(InputDirectory, database).ToList();
+            logger.LogInformation("Loaded database");
+            // TODO: Refactor cache handling to a separate class/service.
+            var cache = new BuildCache();
 
-            profile.SaveFiles(database, OutputDirectory, files);
+            var dbInternalPath = Path.Combine(InputDirectory, ".db");
+            var cacheFilePath = Path.Combine(dbInternalPath, ".cache.json");
+            if (Directory.Exists(dbInternalPath) && File.Exists(cacheFilePath))
+            {
+                // Load cache from file
+                logger.LogInformation("Loading cache from disk...");
+                cache = JsonConvert.DeserializeObject<BuildCache>(await File.ReadAllTextAsync(cacheFilePath));
+                logger.LogInformation("Loaded cache from disk");
+            }
 
-            return Task.FromResult(0);
+            // Parallel hash check
+            var filesToCompile = new ConcurrentBag<LoadedFile>();
+            logger.LogInformation("Performing cache check...");
+
+            await files.ParallelForEachAsync(async f =>
+            {
+                logger.LogInformation("Checking file {Group}[{Name}]", f.Group, f.Name);
+
+                var storageHash = await storageFormat.ComputeHashAsync(InputDirectory, f);
+                var cacheKey = $"{f.Group}_{f.Name}";
+                var cacheHash = cache.GetHash(cacheKey);
+
+                if (cacheHash != storageHash)
+                {
+                    filesToCompile.Add(f);
+                    cache.HashMap[cacheKey] = storageHash;
+                    logger.LogInformation("Detected change in file {Group}[{Name}]", f.Group, f.Name);
+                }
+            }, Environment.ProcessorCount);
+
+            logger.LogInformation("Saving files...");
+            profile.SaveFiles(database, OutputDirectory, filesToCompile.ToList());
+            logger.LogInformation("Writing cache...");
+            Directory.CreateDirectory(dbInternalPath);
+            await File.WriteAllTextAsync(cacheFilePath, JsonConvert.SerializeObject(cache));
+            logger.LogInformation("Done!");
+            return 0;
         }
     }
 }

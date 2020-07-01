@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using VaultLib.Core.DB;
 using YAMLDatabase.API.Data;
 
@@ -53,6 +54,6 @@ namespace YAMLDatabase.API.Serialization
         /// <param name="sourceDirectory">The base directory to load data from.</param>
         /// <param name="file">The file information object.</param>
         /// <returns>A hash string.</returns>
-        string ComputeHash(string sourceDirectory, LoadedFile file);
+        ValueTask<string> ComputeHashAsync(string sourceDirectory, LoadedFile file);
     }
 }
