@@ -74,7 +74,7 @@ namespace YAMLDatabase.CLI.Commands
 
             await files.ParallelForEachAsync(async f =>
             {
-                logger.LogInformation("Checking file {Group}[{Name}]", f.Group, f.Name);
+                // logger.LogInformation("Checking file {Group}[{Name}]", f.Group, f.Name);
 
                 var storageHash = await storageFormat.ComputeHashAsync(InputDirectory, f);
                 var cacheKey = $"{f.Group}_{f.Name}";
