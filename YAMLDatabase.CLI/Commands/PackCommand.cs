@@ -77,6 +77,16 @@ namespace YAMLDatabase.CLI.Commands
 
                 logger.LogInformation("Performing cache check...");
 
+                var depMap = new Dictionary<string, List<string>>();
+
+                foreach (var (key, value) in cache.Entries)
+                foreach (var dependency in value.Dependencies)
+                {
+                    if (!depMap.ContainsKey(dependency)) depMap[dependency] = new List<string>();
+
+                    depMap[dependency].Add(key);
+                }
+
                 await dbInfo.Files.ParallelForEachAsync(async f =>
                 {
                     var storageHash = await storageFormat.ComputeHashAsync(InputDirectory, f);
@@ -85,8 +95,11 @@ namespace YAMLDatabase.CLI.Commands
 
                     if (cacheEntry.Hash != storageHash)
                     {
-                        fileNamesToCompile.Add(f.Name);
+                        if (depMap.TryGetValue(cacheKey, out var depList))
+                            foreach (var dep in depList)
+                                fileNamesToCompile.Add(dep);
                         foreach (var dependency in cacheEntry.Dependencies) fileNamesToCompile.Add(dependency);
+                        fileNamesToCompile.Add(f.Name);
                         cacheEntry.Hash = storageHash;
                         cacheEntry.LastModified = DateTimeOffset.Now;
                         cache.Entries[cacheKey] = cacheEntry;
