@@ -88,6 +88,7 @@ namespace YAMLDatabase.CLI.Commands
                     {
                         filesToCompile.Add(f);
                         cacheEntry.Hash = storageHash;
+                        cacheEntry.LastModified = DateTimeOffset.Now;
                         cache.Entries[cacheKey] = cacheEntry;
                         logger.LogInformation("Detected change in file {Group}[{Name}]", f.Group, f.Name);
                     }
