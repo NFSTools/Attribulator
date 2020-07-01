@@ -46,5 +46,13 @@ namespace YAMLDatabase.API.Serialization
         /// <param name="sourceDirectory">The directory to test.</param>
         /// <returns><c>true</c> if the storage format can read from the directory; otherwise, <c>false</c>.</returns>
         bool CanDeserializeFrom(string sourceDirectory);
+
+        /// <summary>
+        ///     Computes a hash of the data stored for the given file.
+        /// </summary>
+        /// <param name="sourceDirectory">The base directory to load data from.</param>
+        /// <param name="file">The file information object.</param>
+        /// <returns>A hash string.</returns>
+        string ComputeHash(string sourceDirectory, LoadedFile file);
     }
 }
