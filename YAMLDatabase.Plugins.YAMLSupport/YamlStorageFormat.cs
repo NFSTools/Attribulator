@@ -27,7 +27,7 @@ namespace YAMLDatabase.Plugins.YAMLSupport
     /// TODO: This is in DESPERATE need of refactoring. Storage code needs to be as unified as possible.
     public class YamlStorageFormat : IDatabaseStorageFormat
     {
-        public SerializedDatabaseInfo Deserialize(string sourceDirectory, Database destinationDatabase)
+        public IEnumerable<LoadedFile> Deserialize(string sourceDirectory, Database destinationDatabase)
         {
             var deserializer = new DeserializerBuilder().Build();
 
@@ -167,8 +167,9 @@ namespace YAMLDatabase.Plugins.YAMLSupport
 
                     vaultsToSaveDictionary[file.Name].Add(newVault);
                     destinationDatabase.Vaults.Add(newVault);
-                    file.Vaults.Add(newVault.Name);
                 }
+
+                yield return new LoadedFile(file.Name, file.Group, vaultsToSaveDictionary[file.Name]);
             }
 
             // dependency resolution
@@ -225,8 +226,6 @@ namespace YAMLDatabase.Plugins.YAMLSupport
                     }
                 }
             }
-
-            return loadedDatabase;
         }
 
         public void Serialize(Database sourceDatabase, string destinationDirectory, IEnumerable<LoadedFile> loadedFiles)

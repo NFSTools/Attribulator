@@ -44,9 +44,9 @@ namespace YAMLDatabase.CLI.Commands
                     $"Cannot find storage format that is compatible with directory [{InputDirectory}]."));
 
             var database = new Database(new DatabaseOptions(profile.GetGameId(), profile.GetDatabaseType()));
-            var serializedDatabaseInfo = storageFormat.Deserialize(InputDirectory, database);
+            var files = storageFormat.Deserialize(InputDirectory, database).ToList();
 
-            // TODO: We can't call IProfile.SaveFiles() because SerializedDatabaseInfo doesn't have proper LoadedFile objects.
+            profile.SaveFiles(database, OutputDirectory, files);
 
             return Task.FromResult(0);
         }

@@ -18,7 +18,7 @@ namespace YAMLDatabase.API.Serialization
         ///     A new instance of the <see cref="SerializedDatabaseInfo" /> class with information about the serialized
         ///     database.
         /// </returns>
-        SerializedDatabaseInfo Deserialize(string sourceDirectory, Database destinationDatabase);
+        IEnumerable<LoadedFile> Deserialize(string sourceDirectory, Database destinationDatabase);
 
         /// <summary>
         ///     Serializes data in the given database to files in the given directory.
