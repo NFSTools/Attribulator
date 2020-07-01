@@ -124,9 +124,6 @@ namespace YAMLDatabase.Plugins.YAMLSupport
             {
                 var baseDirectory = Path.Combine(sourceDirectory, file.Group, file.Name);
                 vaultsToSaveDictionary[file.Name] = new List<Vault>();
-                // foreach (var vault in file.Vaults)
-                // {
-                // }
 
                 await file.Vaults.ParallelForEachAsync(async vaultName =>
                 {
@@ -136,8 +133,6 @@ namespace YAMLDatabase.Plugins.YAMLSupport
                     var newVault = new Vault(vaultName)
                         {Database = destinationDatabase, IsPrimaryVault = vaultName == "db"};
                     if (Directory.Exists(vaultDirectory))
-                        // var trackedCollections = new HashSet<string>();
-
                         // TODO: bring back collection duplicate tracking
                         await Directory.GetFiles(vaultDirectory, "*.yml").ParallelForEachAsync(async dataFile =>
                         {
@@ -166,38 +161,6 @@ namespace YAMLDatabase.Plugins.YAMLSupport
 
                             foreach (var newCollection in newCollections) collectionsToBeAdded.Add(newCollection);
                         });
-                    // foreach (var dataFile in Directory.GetFiles(vaultDirectory, "*.yml"))
-                    // {
-                    //     var className = Path.GetFileNameWithoutExtension(dataFile);
-                    //     var vltClass = destinationDatabase.FindClass(className);
-                    //
-                    //     if (vltClass == null)
-                    //         throw new InvalidDataException($"Unknown class: {className} ({dataFile})");
-                    //
-                    //     var collections = deserializer.Deserialize<List<SerializedCollection>>(await File.ReadAllTextAsync(dataFile));
-                    //
-                    //     foreach (var loadedCollection in collections)
-                    //     {
-                    //         // BUG 16.02.2020: we have to do this to get around a YamlDotNet bug
-                    //         loadedCollection.Name ??= "null";
-                    //
-                    //         foreach (var k in loadedCollection.Data.Keys.ToList()
-                    //             .Where(k => loadedCollection.Data[k] == null))
-                    //             loadedCollection.Data[k] = "null";
-                    //     }
-                    //
-                    //     var newCollections = new List<VltCollection>();
-                    //     AddCollectionsToList(newVault, vltClass, vaultDirectory, newCollections, collections);
-                    //
-                    //     foreach (var newCollection in newCollections)
-                    //     {
-                    //         if (!trackedCollections.Add(newCollection.ShortPath))
-                    //             throw new Exception(
-                    //                 $"Duplicate collection found! Multiple collections at '{newCollection.ShortPath}' have been defined in your YML files.");
-                    //
-                    //         collectionsToBeAdded.Add(newCollection);
-                    //     }
-                    // }
                     else
                         Console.WriteLine("WARN: vault {0} has no folder; looked for {1}", vaultName, vaultDirectory);
 
