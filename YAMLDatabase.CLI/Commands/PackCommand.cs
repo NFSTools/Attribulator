@@ -21,17 +21,21 @@ namespace YAMLDatabase.CLI.Commands
     [Verb("pack", HelpText = "Packs a database to BIN files.")]
     public class PackCommand : BaseCommand
     {
-        [Option('i', HelpText = "Directory to read unpacked files from", Required = true)]
+        [Option('i', "input", HelpText = "Directory to read unpacked files from", Required = true)]
         [UsedImplicitly]
         public string InputDirectory { get; set; }
 
-        [Option('o', HelpText = "Directory to write BIN files to", Required = true)]
+        [Option('o', "output", HelpText = "Directory to write BIN files to", Required = true)]
         [UsedImplicitly]
         public string OutputDirectory { get; set; }
 
-        [Option('p', HelpText = "The profile to use", Required = true)]
+        [Option('p', "profile", HelpText = "The profile to use", Required = true)]
         [UsedImplicitly]
         public string ProfileName { get; set; }
+
+        [Option('c', "cache", HelpText = "Whether to use the build cache")]
+        [UsedImplicitly]
+        public bool UseCache { get; set; }
 
         public override async Task<int> Execute()
         {
@@ -55,44 +59,54 @@ namespace YAMLDatabase.CLI.Commands
             logger.LogInformation("Loading database from disk...");
             var files = storageFormat.Deserialize(InputDirectory, database).ToList();
             logger.LogInformation("Loaded database");
-            // TODO: Refactor cache handling to a separate class/service.
-            var cache = new BuildCache();
-
-            var dbInternalPath = Path.Combine(InputDirectory, ".db");
-            var cacheFilePath = Path.Combine(dbInternalPath, ".cache.json");
-            if (Directory.Exists(dbInternalPath) && File.Exists(cacheFilePath))
-            {
-                // Load cache from file
-                logger.LogInformation("Loading cache from disk...");
-                cache = JsonConvert.DeserializeObject<BuildCache>(await File.ReadAllTextAsync(cacheFilePath));
-                logger.LogInformation("Loaded cache from disk");
-            }
 
             // Parallel hash check
             var filesToCompile = new ConcurrentBag<LoadedFile>();
-            logger.LogInformation("Performing cache check...");
+            var cache = new BuildCache();
+            var dbInternalPath = Path.Combine(InputDirectory, ".db");
+            var cacheFilePath = Path.Combine(dbInternalPath, ".cache.json");
 
-            await files.ParallelForEachAsync(async f =>
+            if (UseCache)
             {
-                // logger.LogInformation("Checking file {Group}[{Name}]", f.Group, f.Name);
-
-                var storageHash = await storageFormat.ComputeHashAsync(InputDirectory, f);
-                var cacheKey = $"{f.Group}_{f.Name}";
-                var cacheHash = cache.GetHash(cacheKey);
-
-                if (cacheHash != storageHash)
+                if (Directory.Exists(dbInternalPath) && File.Exists(cacheFilePath))
                 {
-                    filesToCompile.Add(f);
-                    cache.HashMap[cacheKey] = storageHash;
-                    logger.LogInformation("Detected change in file {Group}[{Name}]", f.Group, f.Name);
+                    // Load cache from file
+                    logger.LogInformation("Loading cache from disk...");
+                    cache = JsonConvert.DeserializeObject<BuildCache>(await File.ReadAllTextAsync(cacheFilePath));
+                    logger.LogInformation("Loaded cache from disk");
                 }
-            }, Environment.ProcessorCount);
+
+                logger.LogInformation("Performing cache check...");
+
+                await files.ParallelForEachAsync(async f =>
+                {
+                    var storageHash = await storageFormat.ComputeHashAsync(InputDirectory, f);
+                    var cacheKey = $"{f.Group}_{f.Name}";
+                    var cacheHash = cache.GetHash(cacheKey);
+
+                    if (cacheHash != storageHash)
+                    {
+                        filesToCompile.Add(f);
+                        cache.HashMap[cacheKey] = storageHash;
+                        logger.LogInformation("Detected change in file {Group}[{Name}]", f.Group, f.Name);
+                    }
+                }, Environment.ProcessorCount);
+            }
+            else
+            {
+                filesToCompile = new ConcurrentBag<LoadedFile>(files);
+            }
 
             logger.LogInformation("Saving files...");
             profile.SaveFiles(database, OutputDirectory, filesToCompile.ToList());
-            logger.LogInformation("Writing cache...");
-            Directory.CreateDirectory(dbInternalPath);
-            await File.WriteAllTextAsync(cacheFilePath, JsonConvert.SerializeObject(cache));
+
+            if (UseCache)
+            {
+                logger.LogInformation("Writing cache...");
+                Directory.CreateDirectory(dbInternalPath);
+                await File.WriteAllTextAsync(cacheFilePath, JsonConvert.SerializeObject(cache));
+            }
+
             logger.LogInformation("Done!");
             return 0;
         }
