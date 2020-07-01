@@ -26,7 +26,7 @@ namespace YAMLDatabase.API.Serialization
         /// <returns>
         ///     An enumerable object of <see cref="LoadedFile" /> instances.
         /// </returns>
-        IEnumerable<LoadedFile> Deserialize(string sourceDirectory, Database destinationDatabase,
+        Task<IEnumerable<LoadedFile>> DeserializeAsync(string sourceDirectory, Database destinationDatabase,
             IEnumerable<string> fileNames = null);
 
         /// <summary>

@@ -115,7 +115,7 @@ namespace YAMLDatabase.CLI.Commands
 
             var database = new Database(new DatabaseOptions(profile.GetGameId(), profile.GetDatabaseType()));
             logger.LogInformation("Loading database from disk...");
-            var files = storageFormat.Deserialize(InputDirectory, database, fileNamesToCompile).ToList();
+            var files = (await storageFormat.DeserializeAsync(InputDirectory, database, fileNamesToCompile)).ToList();
             logger.LogInformation("Loaded database");
             logger.LogInformation("Saving files...");
             var filesToCompile = files.Where(loadedFile => fileNamesToCompile.Contains(loadedFile.Name)).ToList();
