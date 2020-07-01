@@ -46,6 +46,8 @@ namespace YAMLDatabase.CLI.Commands
             var database = new Database(new DatabaseOptions(profile.GetGameId(), profile.GetDatabaseType()));
             var serializedDatabaseInfo = storageFormat.Deserialize(InputDirectory, database);
 
+            // TODO: We can't call IProfile.SaveFiles() because SerializedDatabaseInfo doesn't have proper LoadedFile objects.
+
             return Task.FromResult(0);
         }
     }
