@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 
 namespace YAMLDatabase.CLI.Build
@@ -10,20 +11,42 @@ namespace YAMLDatabase.CLI.Build
     [JsonObject]
     public class BuildCache
     {
-        [JsonProperty("hashes")]
-        public ConcurrentDictionary<string, string> HashMap { get; set; } = new ConcurrentDictionary<string, string>();
+        [JsonProperty("entries")]
+        public ConcurrentDictionary<string, BuildCacheEntry> Entries { get; set; } =
+            new ConcurrentDictionary<string, BuildCacheEntry>();
 
         [JsonProperty("last_updated")] public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.Now;
 
         /// <summary>
-        ///     Returns the hash associated with the given key.
-        ///     If no hash exists, returns <c>null</c>.
+        ///     Retrieves the cache entry with the given name.
         /// </summary>
-        /// <param name="key">The key to search for.</param>
-        /// <returns>The hash, if one is found; otherwise, <c>null</c>.</returns>
-        public string GetHash(string key)
+        /// <param name="name">The name to search for.</param>
+        /// <returns>The cache entry with the given name.</returns>
+        public BuildCacheEntry FindEntry(string name)
         {
-            return HashMap.TryGetValue(key, out var value) ? value : null;
+            return Entries.TryGetValue(name, out var value) ? value : null;
         }
+    }
+
+    /// <summary>
+    ///     Represents an entry in a <see cref="BuildCache" /> object.
+    /// </summary>
+    [JsonObject]
+    public class BuildCacheEntry
+    {
+        /// <summary>
+        ///     Gets or sets the entry hash.
+        /// </summary>
+        public string Hash { get; set; }
+
+        /// <summary>
+        ///     Gets or sets the list of dependencies.
+        /// </summary>
+        public List<string> Dependencies { get; set; } = new List<string>();
+
+        /// <summary>
+        ///     Gets or sets the modification timestamp.
+        /// </summary>
+        public DateTimeOffset LastModified { get; set; } = DateTimeOffset.Now;
     }
 }

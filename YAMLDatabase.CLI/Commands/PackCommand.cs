@@ -82,12 +82,13 @@ namespace YAMLDatabase.CLI.Commands
                 {
                     var storageHash = await storageFormat.ComputeHashAsync(InputDirectory, f);
                     var cacheKey = $"{f.Group}_{f.Name}";
-                    var cacheHash = cache.GetHash(cacheKey);
+                    var cacheEntry = cache.FindEntry(cacheKey) ?? new BuildCacheEntry();
 
-                    if (cacheHash != storageHash)
+                    if (cacheEntry.Hash != storageHash)
                     {
                         filesToCompile.Add(f);
-                        cache.HashMap[cacheKey] = storageHash;
+                        cacheEntry.Hash = storageHash;
+                        cache.Entries[cacheKey] = cacheEntry;
                         logger.LogInformation("Detected change in file {Group}[{Name}]", f.Group, f.Name);
                     }
                 }, Environment.ProcessorCount);
