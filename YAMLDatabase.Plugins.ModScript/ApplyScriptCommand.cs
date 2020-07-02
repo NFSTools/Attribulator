@@ -93,7 +93,7 @@ namespace YAMLDatabase.Plugins.ModScript
 
             scriptStopwatch.Stop();
 
-            var commandsPerSecond = numCommands / (scriptStopwatch.ElapsedMilliseconds / 1000.0);
+            var commandsPerSecond = (ulong) (numCommands / (scriptStopwatch.ElapsedMilliseconds / 1000.0));
             _logger.LogInformation(
                 "Applied {NumCommands} command(s) from script in {ElapsedMilliseconds}ms ({Duration}; ~ {NumPerSec}/sec)",
                 numCommands, scriptStopwatch.ElapsedMilliseconds, scriptStopwatch.Elapsed, commandsPerSecond);
