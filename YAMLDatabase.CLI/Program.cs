@@ -7,6 +7,7 @@ using CommandLine;
 using CoreLibraries.ModuleSystem;
 using McMaster.NETCore.Plugins;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using VaultLib.Core.Hashing;
 using YAMLDatabase.API;
@@ -58,12 +59,20 @@ namespace YAMLDatabase.CLI
         {
             var commandService = serviceProvider.GetRequiredService<ICommandService>();
             var commandTypes = commandService.GetCommandTypes().ToArray();
-            return await Parser.Default.ParseArguments(args, commandTypes)
-                .MapResult((BaseCommand cmd) =>
-                {
-                    cmd.SetServiceProvider(serviceProvider);
-                    return cmd.Execute();
-                }, errs => Task.FromResult(1));
+            try
+            {
+                return await Parser.Default.ParseArguments(args, commandTypes)
+                    .MapResult((BaseCommand cmd) =>
+                    {
+                        cmd.SetServiceProvider(serviceProvider);
+                        return cmd.Execute();
+                    }, errs => Task.FromResult(1));
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "An error occurred while running the application.");
+                return 1;
+            }
         }
 
         private static void LoadPlugins(IEnumerable<IPluginFactory> plugins, IServiceProvider serviceProvider)
