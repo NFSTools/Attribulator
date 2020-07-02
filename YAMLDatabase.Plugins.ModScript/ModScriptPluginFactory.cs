@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.Extensions.DependencyInjection;
 using YAMLDatabase.API.Plugin;
+using YAMLDatabase.ModScript.API;
 
 namespace YAMLDatabase.Plugins.ModScript
 {
@@ -11,8 +12,9 @@ namespace YAMLDatabase.Plugins.ModScript
     {
         public void Configure(IServiceCollection services)
         {
+            services.AddSingleton<IModScriptService, ModScriptService>();
             services.AddTransient<ApplyScriptCommand>();
-            services.AddTransient<ModScriptPlugin>();
+            services.AddSingleton<ModScriptPlugin>();
         }
 
         public IPlugin CreatePlugin(IServiceProvider serviceProvider)

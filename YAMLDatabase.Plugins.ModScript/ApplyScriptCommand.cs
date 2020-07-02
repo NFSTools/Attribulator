@@ -20,6 +20,7 @@ namespace YAMLDatabase.Plugins.ModScript
     public class ApplyScriptCommand : BaseCommand
     {
         private ILogger<ApplyScriptCommand> _logger;
+        private IModScriptService _modScriptService;
 
         [Option('i', HelpText = "Directory to read unpacked files from", Required = true)]
         [UsedImplicitly]
@@ -50,6 +51,7 @@ namespace YAMLDatabase.Plugins.ModScript
             base.SetServiceProvider(serviceProvider);
 
             _logger = ServiceProvider.GetRequiredService<ILogger<ApplyScriptCommand>>();
+            _modScriptService = ServiceProvider.GetService<IModScriptService>();
         }
 
         public override async Task<int> Execute()
@@ -76,12 +78,11 @@ namespace YAMLDatabase.Plugins.ModScript
             var files = (await storageFormat.DeserializeAsync(InputDirectory, database)).ToList();
             _logger.LogInformation("Loaded database");
 
-            var modScriptParser = new ModScriptParser(ModScriptPath);
             var modScriptDatabase = new DatabaseHelper(database);
             var scriptStopwatch = Stopwatch.StartNew();
             var numCommands = 0L;
 
-            foreach (var command in modScriptParser.Parse())
+            foreach (var command in _modScriptService.ParseCommands(File.ReadLines(ModScriptPath)))
                 try
                 {
                     command.Execute(modScriptDatabase);
