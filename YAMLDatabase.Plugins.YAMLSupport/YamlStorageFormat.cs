@@ -86,7 +86,7 @@ namespace YAMLDatabase.Plugins.YAMLSupport
             var collectionParentDictionary = new ConcurrentDictionary<string, string>();
             var collectionDictionary = new ConcurrentDictionary<string, VltCollection>();
             var vaultsToSaveDictionary = new ConcurrentDictionary<string, List<Vault>>();
-            var collectionsToBeAdded = new ConcurrentBag<VltCollection>();
+            var tempCollectionListsDictionary = new ConcurrentDictionary<string, List<VltCollection>>();
 
             void AddCollectionsToList(Vault newVault, VltClass vltClass, string vaultDirectory,
                 ICollection<VltCollection> collectionList,
@@ -120,7 +120,8 @@ namespace YAMLDatabase.Plugins.YAMLSupport
                 }
             }
 
-            foreach (var file in loadedDatabase.Files.Where(f => fileNameList.Contains(f.Name)))
+            foreach (var file in loadedDatabase.Files.Where(f =>
+                fileNameList.Count == 0 || fileNameList.Contains(f.Name)))
             {
                 var baseDirectory = Path.Combine(sourceDirectory, file.Group, file.Name);
                 vaultsToSaveDictionary[file.Name] = new List<Vault>();
@@ -133,6 +134,9 @@ namespace YAMLDatabase.Plugins.YAMLSupport
                     var newVault = new Vault(vaultName)
                         {Database = destinationDatabase, IsPrimaryVault = vaultName == "db"};
                     if (Directory.Exists(vaultDirectory))
+                    {
+                        var collectionsToBeAdded = new List<VltCollection>();
+
                         // TODO: bring back collection duplicate tracking
                         await Directory.GetFiles(vaultDirectory, "*.yml").ParallelForEachAsync(async dataFile =>
                         {
@@ -159,10 +163,16 @@ namespace YAMLDatabase.Plugins.YAMLSupport
                             var newCollections = new List<VltCollection>();
                             AddCollectionsToList(newVault, vltClass, vaultDirectory, newCollections, collections);
 
-                            foreach (var newCollection in newCollections) collectionsToBeAdded.Add(newCollection);
+                            collectionsToBeAdded.AddRange(newCollections);
+                            // foreach (var newCollection in newCollections) collectionsToBeAdded.Add(newCollection);
                         });
+
+                        tempCollectionListsDictionary[newVault.Name] = collectionsToBeAdded;
+                    }
                     else
+                    {
                         Console.WriteLine("WARN: vault {0} has no folder; looked for {1}", vaultName, vaultDirectory);
+                    }
 
                     vaultsToSaveDictionary[file.Name].Add(newVault);
                     destinationDatabase.Vaults.Add(newVault);
@@ -177,7 +187,7 @@ namespace YAMLDatabase.Plugins.YAMLSupport
 
             foreach (var vault in destinationDatabase.Vaults)
             {
-                var vaultCollections = collectionsToBeAdded.Where(c => c.Vault.Name == vault.Name).ToList();
+                var vaultCollections = tempCollectionListsDictionary[vault.Name];
                 var node = new VaultDependencyNode(vault);
 
                 foreach (var vaultCollection in vaultCollections)
@@ -205,7 +215,7 @@ namespace YAMLDatabase.Plugins.YAMLSupport
             foreach (var node in resolved)
             {
                 var vault = node.Vault;
-                var vaultCollections = collectionsToBeAdded.Where(c => c.Vault.Name == vault.Name).ToList();
+                var vaultCollections = tempCollectionListsDictionary[vault.Name];
 
                 Debug.WriteLine("Loading collections for vault {0} ({1})", vault.Name, vaultCollections.Count);
 

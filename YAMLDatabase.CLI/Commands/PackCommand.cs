@@ -22,6 +22,8 @@ namespace YAMLDatabase.CLI.Commands
     [Verb("pack", HelpText = "Pack a database to BIN files.")]
     public class PackCommand : BaseCommand
     {
+        private ILogger<PackCommand> _logger;
+
         [Option('i', "input", HelpText = "Directory to read unpacked files from", Required = true)]
         [UsedImplicitly]
         public string InputDirectory { get; set; }
@@ -38,10 +40,15 @@ namespace YAMLDatabase.CLI.Commands
         [UsedImplicitly]
         public bool UseCache { get; set; }
 
+        public override void SetServiceProvider(IServiceProvider serviceProvider)
+        {
+            base.SetServiceProvider(serviceProvider);
+
+            _logger = ServiceProvider.GetRequiredService<ILogger<PackCommand>>();
+        }
+
         public override async Task<int> Execute()
         {
-            var logger = ServiceProvider.GetRequiredService<ILogger<PackCommand>>();
-
             if (!Directory.Exists(InputDirectory))
                 throw new DirectoryNotFoundException($"Cannot find input directory: {InputDirectory}");
 
@@ -58,6 +65,7 @@ namespace YAMLDatabase.CLI.Commands
 
 
             // Parallel hash check
+            // TODO refactor build cache system to be reusable
             var fileNamesToCompile = new ConcurrentBag<string>();
             var cache = new BuildCache();
             var dbInternalPath = Path.Combine(InputDirectory, ".db");
@@ -70,12 +78,12 @@ namespace YAMLDatabase.CLI.Commands
                 if (Directory.Exists(dbInternalPath) && File.Exists(cacheFilePath))
                 {
                     // Load cache from file
-                    logger.LogInformation("Loading cache from disk...");
+                    _logger.LogInformation("Loading cache from disk...");
                     cache = JsonConvert.DeserializeObject<BuildCache>(await File.ReadAllTextAsync(cacheFilePath));
-                    logger.LogInformation("Loaded cache from disk");
+                    _logger.LogInformation("Loaded cache from disk");
                 }
 
-                logger.LogInformation("Performing cache check...");
+                _logger.LogInformation("Performing cache check...");
 
                 var depMap = new Dictionary<string, List<string>>();
 
@@ -103,7 +111,7 @@ namespace YAMLDatabase.CLI.Commands
                         cacheEntry.Hash = storageHash;
                         cacheEntry.LastModified = DateTimeOffset.Now;
                         cache.Entries[cacheKey] = cacheEntry;
-                        logger.LogInformation("Detected change in file {Group}[{Name}]", f.Group, f.Name);
+                        _logger.LogInformation("Detected change in file {Group}[{Name}]", f.Group, f.Name);
                     }
                 }, Environment.ProcessorCount);
             }
@@ -114,16 +122,16 @@ namespace YAMLDatabase.CLI.Commands
             }
 
             var database = new Database(new DatabaseOptions(profile.GetGameId(), profile.GetDatabaseType()));
-            logger.LogInformation("Loading database from disk...");
+            _logger.LogInformation("Loading database from disk...");
             var files = (await storageFormat.DeserializeAsync(InputDirectory, database, fileNamesToCompile)).ToList();
-            logger.LogInformation("Loaded database");
-            logger.LogInformation("Saving files...");
+            _logger.LogInformation("Loaded database");
+            _logger.LogInformation("Saving files...");
             var filesToCompile = files.Where(loadedFile => fileNamesToCompile.Contains(loadedFile.Name)).ToList();
             profile.SaveFiles(database, OutputDirectory, filesToCompile);
 
             if (UseCache)
             {
-                logger.LogInformation("Writing cache...");
+                _logger.LogInformation("Writing cache...");
                 Directory.CreateDirectory(dbInternalPath);
 
                 var vaultFileMap = new Dictionary<string, string>();
@@ -143,11 +151,12 @@ namespace YAMLDatabase.CLI.Commands
                 await File.WriteAllTextAsync(cacheFilePath, JsonConvert.SerializeObject(cache));
             }
 
-            logger.LogInformation("Done!");
+            _logger.LogInformation("Done!");
             return 0;
         }
 
-        private HashSet<string> ComputeDependencies(Dictionary<string, string> vaultFileMap, LoadedFile file,
+        private static HashSet<string> ComputeDependencies(IReadOnlyDictionary<string, string> vaultFileMap,
+            LoadedFile file,
             Database database)
         {
             var fileDependencies = new HashSet<string>();
