@@ -76,8 +76,9 @@ namespace YAMLDatabase.Plugins.ModScript
             _logger.LogInformation("Loaded database");
 
             var modScriptParser = new ModScriptParser(ModScriptPath);
-            var cmdStopwatch = Stopwatch.StartNew();
             var modScriptDatabase = new ModScriptDatabaseHelper(database);
+            var scriptStopwatch = Stopwatch.StartNew();
+            var numCommands = 0L;
 
             foreach (var command in modScriptParser.Parse())
             {
@@ -85,8 +86,8 @@ namespace YAMLDatabase.Plugins.ModScript
                 try
                 {
 #endif
-                cmdStopwatch.Restart();
                 command.Execute(modScriptDatabase);
+                numCommands++;
                 //Console.WriteLine("Executed command in {1}ms: {0}", command.Line, cmdStopwatch.ElapsedMilliseconds);
 #if !DEBUG
                 }
@@ -97,7 +98,12 @@ namespace YAMLDatabase.Plugins.ModScript
 #endif
             }
 
-            _logger.LogInformation("Applied script");
+            scriptStopwatch.Stop();
+
+            var commandsPerSecond = numCommands / (scriptStopwatch.ElapsedMilliseconds / 1000.0);
+            _logger.LogInformation(
+                "Applied {NumCommands} command(s) from script in {ElapsedMilliseconds}ms ({Duration}; ~ {NumPerSec}/sec)",
+                numCommands, scriptStopwatch.ElapsedMilliseconds, scriptStopwatch.Elapsed, commandsPerSecond);
 
             if (!DisableBackup)
             {
