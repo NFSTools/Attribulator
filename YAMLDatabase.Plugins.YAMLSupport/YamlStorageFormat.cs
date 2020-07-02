@@ -120,8 +120,7 @@ namespace YAMLDatabase.Plugins.YAMLSupport
                 }
             }
 
-            foreach (var file in loadedDatabase.Files.Where(f =>
-                fileNameList.Count == 0 || fileNameList.Contains(f.Name)))
+            foreach (var file in loadedDatabase.Files.Where(f => fileNames == null || fileNameList.Contains(f.Name)))
             {
                 var baseDirectory = Path.Combine(sourceDirectory, file.Group, file.Name);
                 vaultsToSaveDictionary[file.Name] = new List<Vault>();
