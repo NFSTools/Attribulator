@@ -11,7 +11,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             Game = parts[1];
         }
 
-        public override void Execute(ModScriptDatabaseHelper database)
+        public override void Execute(ModScriptDatabaseHelper databaseHelper)
         {
             //
         }

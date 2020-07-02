@@ -21,14 +21,14 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             VaultName = CleanHashString(parts[3]);
         }
 
-        public override void Execute(ModScriptDatabaseHelper database)
+        public override void Execute(ModScriptDatabaseHelper databaseHelper)
         {
-            var collection = GetCollection(database, ClassName, CollectionName);
+            var collection = GetCollection(databaseHelper, ClassName, CollectionName);
             Vault vault;
 
             try
             {
-                vault = database.Database.FindVault(VaultName);
+                vault = databaseHelper.Database.FindVault(VaultName);
             }
             catch (InvalidOperationException e)
             {

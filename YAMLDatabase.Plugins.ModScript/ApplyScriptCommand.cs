@@ -81,22 +81,15 @@ namespace YAMLDatabase.Plugins.ModScript
             var numCommands = 0L;
 
             foreach (var command in modScriptParser.Parse())
-            {
-#if !DEBUG
                 try
                 {
-#endif
-                command.Execute(modScriptDatabase);
-                numCommands++;
-                //Console.WriteLine("Executed command in {1}ms: {0}", command.Line, cmdStopwatch.ElapsedMilliseconds);
-#if !DEBUG
+                    command.Execute(modScriptDatabase);
+                    numCommands++;
                 }
                 catch (Exception e)
                 {
                     throw new ModScriptCommandExecutionException($"Failed to execute command: {command.Line}", e);
                 }
-#endif
-            }
 
             scriptStopwatch.Stop();
 

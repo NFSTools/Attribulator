@@ -19,15 +19,15 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             NewName = parts[3];
         }
 
-        public override void Execute(ModScriptDatabaseHelper database)
+        public override void Execute(ModScriptDatabaseHelper databaseHelper)
         {
-            var collection = GetCollection(database, ClassName, CollectionName);
+            var collection = GetCollection(databaseHelper, ClassName, CollectionName);
 
-            if (GetCollection(database, ClassName, NewName, false) != null)
+            if (GetCollection(databaseHelper, ClassName, NewName, false) != null)
                 throw new InvalidDataException(
                     $"rename_node failed because there is already a collection called '{NewName}'");
 
-            database.RenameCollection(collection, NewName);
+            databaseHelper.RenameCollection(collection, NewName);
         }
     }
 }

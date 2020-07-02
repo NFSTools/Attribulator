@@ -10,7 +10,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
         public string Line { get; set; }
         public abstract void Parse(List<string> parts);
 
-        public abstract void Execute(ModScriptDatabaseHelper database);
+        public abstract void Execute(ModScriptDatabaseHelper databaseHelper);
 
         protected VltCollection GetCollection(ModScriptDatabaseHelper database, string className, string collectionName,
             bool throwOnMissing = true)

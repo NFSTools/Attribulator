@@ -40,16 +40,16 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
                 Options |= CopyOptions.OverwriteOptional;
         }
 
-        public override void Execute(ModScriptDatabaseHelper database)
+        public override void Execute(ModScriptDatabaseHelper databaseHelper)
         {
-            var srcCollection = GetCollection(database, ClassName, SourceCollectionName);
-            var dstCollection = GetCollection(database, ClassName, DestinationCollectionName);
+            var srcCollection = GetCollection(databaseHelper, ClassName, SourceCollectionName);
+            var dstCollection = GetCollection(databaseHelper, ClassName, DestinationCollectionName);
             var values = new Dictionary<VltClassField, VLTBaseType>();
 
             if ((Options & CopyOptions.Base) != 0)
                 foreach (var baseField in srcCollection.Class.BaseFields)
                     values.Add(baseField,
-                        ValueCloningUtils.CloneValue(database.Database, srcCollection.GetRawValue(baseField.Name),
+                        ValueCloningUtils.CloneValue(databaseHelper.Database, srcCollection.GetRawValue(baseField.Name),
                             srcCollection.Class,
                             baseField, dstCollection));
 
@@ -60,7 +60,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
 
                     if (!field.IsInLayout)
                         values.Add(field,
-                            ValueCloningUtils.CloneValue(database.Database, value, srcCollection.Class, field,
+                            ValueCloningUtils.CloneValue(databaseHelper.Database, value, srcCollection.Class, field,
                                 dstCollection));
                 }
 

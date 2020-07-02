@@ -32,9 +32,9 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             }
         }
 
-        public override void Execute(ModScriptDatabaseHelper database)
+        public override void Execute(ModScriptDatabaseHelper databaseHelper)
         {
-            var collection = GetCollection(database, ClassName, CollectionName);
+            var collection = GetCollection(databaseHelper, ClassName, CollectionName);
             var field = GetField(collection.Class, FieldName);
 
             if (!field.IsArray)

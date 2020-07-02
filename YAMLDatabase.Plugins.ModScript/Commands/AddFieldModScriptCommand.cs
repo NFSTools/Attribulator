@@ -25,9 +25,9 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             if (parts.Count == 5) ArrayCapacity = ushort.Parse(parts[4]);
         }
 
-        public override void Execute(ModScriptDatabaseHelper database)
+        public override void Execute(ModScriptDatabaseHelper databaseHelper)
         {
-            var collection = GetCollection(database, ClassName, CollectionName);
+            var collection = GetCollection(databaseHelper, ClassName, CollectionName);
             var field = collection.Class[FieldName];
 
             if (field.IsInLayout)
@@ -38,7 +38,8 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
                     $"add_field failed because collection '{collection.ShortPath}' already has field '{field.Name}'");
 
             var vltBaseType =
-                TypeRegistry.CreateInstance(database.Database.Options.GameId, collection.Class, field, collection);
+                TypeRegistry.CreateInstance(databaseHelper.Database.Options.GameId, collection.Class, field,
+                    collection);
 
             if (vltBaseType is VLTArrayType array)
             {

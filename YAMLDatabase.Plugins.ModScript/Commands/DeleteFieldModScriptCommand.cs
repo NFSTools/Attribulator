@@ -19,9 +19,9 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             FieldName = CleanHashString(parts[3]);
         }
 
-        public override void Execute(ModScriptDatabaseHelper database)
+        public override void Execute(ModScriptDatabaseHelper databaseHelper)
         {
-            var collection = GetCollection(database, ClassName, CollectionName);
+            var collection = GetCollection(databaseHelper, ClassName, CollectionName);
             if (collection.HasEntry(FieldName))
             {
                 collection.RemoveValue(FieldName);

@@ -25,15 +25,15 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             DestinationCollectionName = parts[^1];
         }
 
-        public override void Execute(ModScriptDatabaseHelper database)
+        public override void Execute(ModScriptDatabaseHelper databaseHelper)
         {
-            var collection = GetCollection(database, ClassName, SourceCollectionName);
+            var collection = GetCollection(databaseHelper, ClassName, SourceCollectionName);
 
             if (collection == null)
                 throw new InvalidDataException(
                     $"copy_node failed because there is no collection called '{SourceCollectionName}'");
 
-            if (database.FindCollectionByName(ClassName, DestinationCollectionName) != null)
+            if (databaseHelper.FindCollectionByName(ClassName, DestinationCollectionName) != null)
                 throw new InvalidDataException(
                     $"copy_node failed because there is already a collection called '{DestinationCollectionName}'");
 
@@ -41,7 +41,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
 
             if (!string.IsNullOrWhiteSpace(ParentCollectionName))
             {
-                parentCollection = database.FindCollectionByName(ClassName, ParentCollectionName);
+                parentCollection = databaseHelper.FindCollectionByName(ClassName, ParentCollectionName);
 
                 if (parentCollection == null)
                     throw new InvalidDataException(
@@ -49,12 +49,12 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             }
 
             var newCollection = new VltCollection(collection.Vault, collection.Class, DestinationCollectionName);
-            CopyCollection(database.Database, collection, newCollection);
+            CopyCollection(databaseHelper.Database, collection, newCollection);
 
             if (newCollection.Class.HasField("CollectionName"))
                 newCollection.SetDataValue("CollectionName", DestinationCollectionName);
 
-            database.AddCollection(newCollection, parentCollection);
+            databaseHelper.AddCollection(newCollection, parentCollection);
         }
 
         private void CopyCollection(Database database, VltCollection from, VltCollection to)

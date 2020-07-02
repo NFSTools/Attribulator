@@ -15,7 +15,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
                     "This tool is only compatible with ModScript files for NFS-VltEd 4.6.");
         }
 
-        public override void Execute(ModScriptDatabaseHelper database)
+        public override void Execute(ModScriptDatabaseHelper databaseHelper)
         {
             //
         }

@@ -24,15 +24,15 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             CollectionName = CleanHashString(parts[^1]);
         }
 
-        public override void Execute(ModScriptDatabaseHelper database)
+        public override void Execute(ModScriptDatabaseHelper databaseHelper)
         {
             VltCollection parentCollection = null;
             if (!string.IsNullOrEmpty(ParentCollectionName))
-                if ((parentCollection = GetCollection(database, ClassName, ParentCollectionName, false)) == null)
+                if ((parentCollection = GetCollection(databaseHelper, ClassName, ParentCollectionName, false)) == null)
                     throw new InvalidDataException(
                         $"add_node failed because parent collection does not exist: {ClassName}/{ParentCollectionName}");
 
-            if (GetCollection(database, ClassName, CollectionName, false) != null)
+            if (GetCollection(databaseHelper, ClassName, CollectionName, false) != null)
                 throw new InvalidDataException(
                     $"add_node failed because collection already exists: {ClassName}/{CollectionName}");
 
@@ -41,18 +41,18 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             if (parentCollection != null)
                 addToVault = parentCollection.Vault;
             else
-                addToVault = database.Vaults.FirstOrDefault(vault =>
-                    database.GetCollectionsInVault(vault)
+                addToVault = databaseHelper.Vaults.FirstOrDefault(vault =>
+                    databaseHelper.GetCollectionsInVault(vault)
                         .Any(collection => collection.Class.Name == ClassName));
 
             if (addToVault == null)
                 throw new InvalidDataException("failed to determine vault to insert new collection into");
 
-            var newNode = database.AddCollection(addToVault, ClassName, CollectionName, parentCollection);
+            var newNode = databaseHelper.AddCollection(addToVault, ClassName, CollectionName, parentCollection);
 
             foreach (var baseField in newNode.Class.BaseFields)
             {
-                var vltBaseType = TypeRegistry.CreateInstance(database.Database.Options.GameId, newNode.Class,
+                var vltBaseType = TypeRegistry.CreateInstance(databaseHelper.Database.Options.GameId, newNode.Class,
                     newNode.Class[baseField.Key],
                     newNode);
 

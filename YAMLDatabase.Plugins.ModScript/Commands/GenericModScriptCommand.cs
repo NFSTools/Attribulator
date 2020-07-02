@@ -16,7 +16,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             //
         }
 
-        public override void Execute(ModScriptDatabaseHelper database)
+        public override void Execute(ModScriptDatabaseHelper databaseHelper)
         {
             throw new ModScriptCommandExecutionException("Cannot execute GenericModScriptCommand.");
         }

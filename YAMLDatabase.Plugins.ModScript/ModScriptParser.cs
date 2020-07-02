@@ -60,6 +60,7 @@ namespace YAMLDatabase.Plugins.ModScript
                     "add_field" => new AddFieldModScriptCommand(),
                     "delete_field" => new DeleteFieldModScriptCommand(),
                     "rename_node" => new RenameNodeModScriptCommand(),
+                    "move_node" => new MoveNodeModScriptCommand(),
                     _ => new GenericModScriptCommand(line)
                 };
 
