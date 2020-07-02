@@ -4,6 +4,7 @@ using System.Linq;
 using VaultLib.Core;
 using VaultLib.Core.Data;
 using VaultLib.Core.Types;
+using YAMLDatabase.ModScript.API;
 
 namespace YAMLDatabase.Plugins.ModScript.Commands
 {
@@ -17,14 +18,14 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
         public override void Parse(List<string> parts)
         {
             if (parts.Count != 3 && parts.Count != 4)
-                throw new ModScriptParserException($"3 or 4 tokens expected, got {parts.Count}");
+                throw new CommandParseException($"3 or 4 tokens expected, got {parts.Count}");
 
             ClassName = CleanHashString(parts[1]);
             ParentCollectionName = parts.Count == 4 ? CleanHashString(parts[2]) : "";
             CollectionName = CleanHashString(parts[^1]);
         }
 
-        public override void Execute(ModScriptDatabaseHelper databaseHelper)
+        public override void Execute(DatabaseHelper databaseHelper)
         {
             VltCollection parentCollection = null;
             if (!string.IsNullOrEmpty(ParentCollectionName))

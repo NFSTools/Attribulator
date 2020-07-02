@@ -5,11 +5,11 @@ using VaultLib.Core;
 using VaultLib.Core.Data;
 using VaultLib.Core.DB;
 
-namespace YAMLDatabase.Plugins.ModScript
+namespace YAMLDatabase.ModScript.API
 {
-    public class ModScriptDatabaseHelper
+    public class DatabaseHelper
     {
-        public ModScriptDatabaseHelper(Database database)
+        public DatabaseHelper(Database database)
         {
             Database = database;
             Collections = database.RowManager.GetFlattenedCollections().ToDictionary(c => c.ShortPath, c => c);

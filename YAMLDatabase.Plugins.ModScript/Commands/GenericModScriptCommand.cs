@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using YAMLDatabase.ModScript.API;
 
 namespace YAMLDatabase.Plugins.ModScript.Commands
 {
@@ -16,9 +17,9 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             //
         }
 
-        public override void Execute(ModScriptDatabaseHelper databaseHelper)
+        public override void Execute(DatabaseHelper databaseHelper)
         {
-            throw new ModScriptCommandExecutionException("Cannot execute GenericModScriptCommand.");
+            throw new CommandExecutionException("Cannot execute GenericModScriptCommand.");
         }
     }
 }

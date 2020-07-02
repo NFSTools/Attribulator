@@ -11,6 +11,7 @@ using VaultLib.Core.DB;
 using YAMLDatabase.API.Exceptions;
 using YAMLDatabase.API.Plugin;
 using YAMLDatabase.API.Services;
+using YAMLDatabase.ModScript.API;
 
 namespace YAMLDatabase.Plugins.ModScript
 {
@@ -76,7 +77,7 @@ namespace YAMLDatabase.Plugins.ModScript
             _logger.LogInformation("Loaded database");
 
             var modScriptParser = new ModScriptParser(ModScriptPath);
-            var modScriptDatabase = new ModScriptDatabaseHelper(database);
+            var modScriptDatabase = new DatabaseHelper(database);
             var scriptStopwatch = Stopwatch.StartNew();
             var numCommands = 0L;
 
@@ -88,7 +89,7 @@ namespace YAMLDatabase.Plugins.ModScript
                 }
                 catch (Exception e)
                 {
-                    throw new ModScriptCommandExecutionException($"Failed to execute command: {command.Line}", e);
+                    throw new CommandExecutionException($"Failed to execute command: {command.Line}", e);
                 }
 
             scriptStopwatch.Stop();

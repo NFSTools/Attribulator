@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using VaultLib.Core;
+using YAMLDatabase.ModScript.API;
 
 namespace YAMLDatabase.Plugins.ModScript.Commands
 {
@@ -14,14 +15,14 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
         public override void Parse(List<string> parts)
         {
             if (parts.Count != 4)
-                throw new ModScriptParserException($"Expected 4 tokens, got {parts.Count} ({string.Join(' ', parts)})");
+                throw new CommandParseException($"Expected 4 tokens, got {parts.Count} ({string.Join(' ', parts)})");
 
             ClassName = CleanHashString(parts[1]);
             CollectionName = CleanHashString(parts[2]);
             VaultName = CleanHashString(parts[3]);
         }
 
-        public override void Execute(ModScriptDatabaseHelper databaseHelper)
+        public override void Execute(DatabaseHelper databaseHelper)
         {
             var collection = GetCollection(databaseHelper, ClassName, CollectionName);
             Vault vault;
@@ -32,7 +33,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             }
             catch (InvalidOperationException e)
             {
-                throw new ModScriptCommandExecutionException($"Cannot find vault '{VaultName}'", e);
+                throw new CommandExecutionException($"Cannot find vault '{VaultName}'", e);
             }
 
             collection.SetVault(vault);

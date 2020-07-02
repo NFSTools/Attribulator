@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using VaultLib.Core.Hashing;
+using YAMLDatabase.ModScript.API;
 
 namespace YAMLDatabase.Plugins.ModScript.Commands
 {
@@ -12,14 +13,14 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
 
         public override void Parse(List<string> parts)
         {
-            if (parts.Count != 4) throw new ModScriptParserException($"Expected 4 tokens, got {parts.Count}");
+            if (parts.Count != 4) throw new CommandParseException($"Expected 4 tokens, got {parts.Count}");
 
             ClassName = CleanHashString(parts[1]);
             CollectionName = CleanHashString(parts[2]);
             FieldName = CleanHashString(parts[3]);
         }
 
-        public override void Execute(ModScriptDatabaseHelper databaseHelper)
+        public override void Execute(DatabaseHelper databaseHelper)
         {
             var collection = GetCollection(databaseHelper, ClassName, CollectionName);
             if (collection.HasEntry(FieldName))
@@ -33,7 +34,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
                 if (collection.HasEntry(hashed))
                     collection.RemoveValue(hashed);
                 else
-                    throw new ModScriptCommandExecutionException(
+                    throw new CommandExecutionException(
                         $"Could not delete field: {ClassName}/{CollectionName}[{FieldName}]");
             }
         }

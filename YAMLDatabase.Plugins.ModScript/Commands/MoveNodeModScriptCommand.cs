@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using VaultLib.Core.Data;
+using YAMLDatabase.ModScript.API;
 
 namespace YAMLDatabase.Plugins.ModScript.Commands
 {
@@ -14,17 +15,17 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
         public override void Parse(List<string> parts)
         {
             if (parts.Count < 3 || parts.Count > 4)
-                throw new ModScriptParserException("Expected command to be in format: move_node class node [parent]");
+                throw new CommandParseException("Expected command to be in format: move_node class node [parent]");
 
             ClassName = CleanHashString(parts[1]);
             CollectionName = CleanHashString(parts[2]);
             ParentName = parts.Count == 4 ? parts[3] : null;
 
             if (ParentName == CollectionName)
-                throw new ModScriptParserException("Parent name cannot be the same as collection name.");
+                throw new CommandParseException("Parent name cannot be the same as collection name.");
         }
 
-        public override void Execute(ModScriptDatabaseHelper databaseHelper)
+        public override void Execute(DatabaseHelper databaseHelper)
         {
             var collectionToMove = GetCollection(databaseHelper, ClassName, CollectionName);
             VltCollection newParentCollection = null;
@@ -34,7 +35,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
                 newParentCollection = GetCollection(databaseHelper, ClassName, ParentName);
 
                 if (IsChild(databaseHelper, collectionToMove, newParentCollection))
-                    throw new ModScriptCommandExecutionException(
+                    throw new CommandExecutionException(
                         $"Requested parent collection {ParentName} is a child of {CollectionName}.");
             }
 
@@ -55,7 +56,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             }
         }
 
-        private bool IsChild(ModScriptDatabaseHelper databaseHelper, VltCollection root, VltCollection test)
+        private bool IsChild(DatabaseHelper databaseHelper, VltCollection root, VltCollection test)
         {
             var flattenedChildren =
                 databaseHelper.Database.RowManager.EnumerateFlattenedCollections(root.Children);

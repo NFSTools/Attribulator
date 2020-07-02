@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using YAMLDatabase.ModScript.API;
 
 namespace YAMLDatabase.Plugins.ModScript.Commands
 {
@@ -12,14 +13,14 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
 
         public override void Parse(List<string> parts)
         {
-            if (parts.Count != 4) throw new ModScriptParserException($"Expected 4 tokens, got {parts.Count}");
+            if (parts.Count != 4) throw new CommandParseException($"Expected 4 tokens, got {parts.Count}");
 
             ClassName = parts[1];
             CollectionName = parts[2];
             NewName = parts[3];
         }
 
-        public override void Execute(ModScriptDatabaseHelper databaseHelper)
+        public override void Execute(DatabaseHelper databaseHelper)
         {
             var collection = GetCollection(databaseHelper, ClassName, CollectionName);
 

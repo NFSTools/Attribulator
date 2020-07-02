@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using YAMLDatabase.ModScript.API;
 
 namespace YAMLDatabase.Plugins.ModScript.Commands
 {
@@ -11,11 +12,11 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             Version = parts[1];
 
             if (Version != "4.6")
-                throw new ModScriptParserException(
+                throw new CommandParseException(
                     "This tool is only compatible with ModScript files for NFS-VltEd 4.6.");
         }
 
-        public override void Execute(ModScriptDatabaseHelper databaseHelper)
+        public override void Execute(DatabaseHelper databaseHelper)
         {
             //
         }

@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YAMLDatabase.Plugins.SpeedP
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YAMLDatabase.Plugins.YAMLSupport", "YAMLDatabase.Plugins.YAMLSupport\YAMLDatabase.Plugins.YAMLSupport.csproj", "{7BA487BA-D629-4732-A5D2-F1C32BDB5882}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YAMLDatabase.ModScript.API", "YAMLDatabase.ModScript.API\YAMLDatabase.ModScript.API.csproj", "{2C4AFABD-4592-4453-A7B5-092639D55707}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -39,6 +41,10 @@ Global
 		{7BA487BA-D629-4732-A5D2-F1C32BDB5882}.Debug|x86.Build.0 = Debug|x86
 		{7BA487BA-D629-4732-A5D2-F1C32BDB5882}.Release|x86.ActiveCfg = Release|x86
 		{7BA487BA-D629-4732-A5D2-F1C32BDB5882}.Release|x86.Build.0 = Release|x86
+		{2C4AFABD-4592-4453-A7B5-092639D55707}.Debug|x86.ActiveCfg = Debug|x86
+		{2C4AFABD-4592-4453-A7B5-092639D55707}.Debug|x86.Build.0 = Debug|x86
+		{2C4AFABD-4592-4453-A7B5-092639D55707}.Release|x86.ActiveCfg = Release|x86
+		{2C4AFABD-4592-4453-A7B5-092639D55707}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace YAMLDatabase.Plugins.ModScript
+namespace YAMLDatabase.ModScript.API
 {
     [Serializable]
-    public class ModScriptParserException : Exception
+    public class CommandParseException : Exception
     {
         //
         // For guidelines regarding the creation of new exception types, see
@@ -13,19 +13,19 @@ namespace YAMLDatabase.Plugins.ModScript
         //    http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dncscol/html/csharp07192001.asp
         //
 
-        public ModScriptParserException()
+        public CommandParseException()
         {
         }
 
-        public ModScriptParserException(string message) : base(message)
+        public CommandParseException(string message) : base(message)
         {
         }
 
-        public ModScriptParserException(string message, Exception inner) : base(message, inner)
+        public CommandParseException(string message, Exception inner) : base(message, inner)
         {
         }
 
-        protected ModScriptParserException(
+        protected CommandParseException(
             SerializationInfo info,
             StreamingContext context) : base(info, context)
         {

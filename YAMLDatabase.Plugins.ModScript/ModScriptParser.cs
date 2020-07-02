@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using YAMLDatabase.ModScript.API;
 using YAMLDatabase.Plugins.ModScript.Commands;
 
 namespace YAMLDatabase.Plugins.ModScript

@@ -5,6 +5,7 @@ using VaultLib.Core.Types.Abstractions;
 using VaultLib.Core.Types.EA.Reflection;
 using VaultLib.Core.Utils;
 using YAMLDatabase.API.Utils;
+using YAMLDatabase.ModScript.API;
 
 namespace YAMLDatabase.Plugins.ModScript.Commands
 {
@@ -19,7 +20,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
 
         public override void Parse(List<string> parts)
         {
-            if (parts.Count < 4) throw new ModScriptParserException("Expected at least 4 tokens");
+            if (parts.Count < 4) throw new CommandParseException("Expected at least 4 tokens");
 
             ClassName = parts[1];
             CollectionName = CleanHashString(parts[2]);
@@ -32,25 +33,25 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             }
         }
 
-        public override void Execute(ModScriptDatabaseHelper databaseHelper)
+        public override void Execute(DatabaseHelper databaseHelper)
         {
             var collection = GetCollection(databaseHelper, ClassName, CollectionName);
             var field = GetField(collection.Class, FieldName);
 
             if (!field.IsArray)
-                throw new ModScriptCommandExecutionException($"Field {ClassName}[{FieldName}] is not an array!");
+                throw new CommandExecutionException($"Field {ClassName}[{FieldName}] is not an array!");
 
             if (!collection.HasEntry(FieldName))
-                throw new ModScriptCommandExecutionException(
+                throw new CommandExecutionException(
                     $"Collection {collection.ShortPath} does not have an entry for {FieldName}.");
 
             var array = collection.GetRawValue<VLTArrayType>(FieldName);
 
             if (array.Items.Count == array.Capacity && field.IsInLayout)
-                throw new ModScriptCommandExecutionException("Cannot append to a full array when it is a layout field");
+                throw new CommandExecutionException("Cannot append to a full array when it is a layout field");
 
             if (array.Items.Count + 1 > field.MaxCount)
-                throw new ModScriptCommandExecutionException(
+                throw new CommandExecutionException(
                     "Appending to this array would cause it to exceed the maximum number of allowed elements.");
 
             var itemToEdit = TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field, collection);
@@ -69,7 +70,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
                         refSpec.CollectionKey = Value;
                         break;
                     default:
-                        throw new ModScriptCommandExecutionException(
+                        throw new CommandExecutionException(
                             $"Object stored in {collection.Class.Name}[{field.Name}] is not a simple type and cannot be used in a value-append command");
                 }
 

@@ -2,6 +2,7 @@
 using System.IO;
 using VaultLib.Core;
 using VaultLib.Core.Types;
+using YAMLDatabase.ModScript.API;
 
 namespace YAMLDatabase.Plugins.ModScript.Commands
 {
@@ -16,7 +17,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
         public override void Parse(List<string> parts)
         {
             if (parts.Count != 4 && parts.Count != 5)
-                throw new ModScriptParserException($"Expected 4 or 5 tokens, got {parts.Count}");
+                throw new CommandParseException($"Expected 4 or 5 tokens, got {parts.Count}");
 
             ClassName = CleanHashString(parts[1]);
             CollectionName = CleanHashString(parts[2]);
@@ -25,7 +26,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             if (parts.Count == 5) ArrayCapacity = ushort.Parse(parts[4]);
         }
 
-        public override void Execute(ModScriptDatabaseHelper databaseHelper)
+        public override void Execute(DatabaseHelper databaseHelper)
         {
             var collection = GetCollection(databaseHelper, ClassName, CollectionName);
             var field = collection.Class[FieldName];
@@ -44,7 +45,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             if (vltBaseType is VLTArrayType array)
             {
                 if (ArrayCapacity > field.MaxCount)
-                    throw new ModScriptCommandExecutionException(
+                    throw new CommandExecutionException(
                         $"Cannot add field {ClassName}[{FieldName}] with capacity beyond maximum (requested {ArrayCapacity} but limit is {field.MaxCount})");
 
                 array.Capacity = ArrayCapacity;

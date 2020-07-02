@@ -10,6 +10,7 @@ using VaultLib.Core.Types.Attrib.Types;
 using VaultLib.Core.Types.EA.Reflection;
 using VaultLib.Core.Utils;
 using YAMLDatabase.API.Utils;
+using YAMLDatabase.ModScript.API;
 
 namespace YAMLDatabase.Plugins.ModScript.Commands
 {
@@ -25,7 +26,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
 
         public override void Parse(List<string> parts)
         {
-            if (parts.Count < 5) throw new ModScriptParserException("Expected at least 5 tokens");
+            if (parts.Count < 5) throw new CommandParseException("Expected at least 5 tokens");
 
             ClassName = parts[1];
             CollectionName = CleanHashString(parts[2]);
@@ -55,7 +56,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             }
         }
 
-        public override void Execute(ModScriptDatabaseHelper databaseHelper)
+        public override void Execute(DatabaseHelper databaseHelper)
         {
             var collection = GetCollection(databaseHelper, ClassName, CollectionName);
             var field = GetField(collection.Class, FieldName);
@@ -69,7 +70,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
                 if (ArrayIndex >= 0 && ArrayIndex < array.Items.Count)
                     itemToEdit = array.Items[ArrayIndex];
                 else
-                    throw new ModScriptCommandExecutionException(
+                    throw new CommandExecutionException(
                         $"update_field command is out of bounds. Checked: 0 <= {ArrayIndex} < {array.Items.Count}");
             }
 
@@ -88,7 +89,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
                         refSpec.CollectionKey = Value;
                         break;
                     default:
-                        throw new ModScriptCommandExecutionException(
+                        throw new CommandExecutionException(
                             $"cannot handle update for {collection.Class.Name}[{field.Name}]");
                 }
             }
@@ -102,7 +103,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
                     var indices = matrixPath.Split(',', StringSplitOptions.RemoveEmptyEntries)
                         .Select(int.Parse)
                         .ToArray();
-                    if (indices.Length != 2) throw new ModScriptCommandExecutionException("invalid matrix access");
+                    if (indices.Length != 2) throw new CommandExecutionException("invalid matrix access");
 
                     matrix.Data ??= new float[16];
                     matrix.Data[4 * (indices[0] - 1) + (indices[1] - 1)] =

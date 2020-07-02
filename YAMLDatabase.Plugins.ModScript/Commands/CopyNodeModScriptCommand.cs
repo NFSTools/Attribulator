@@ -2,6 +2,7 @@
 using System.IO;
 using VaultLib.Core.Data;
 using VaultLib.Core.DB;
+using YAMLDatabase.ModScript.API;
 using YAMLDatabase.Plugins.ModScript.Utils;
 
 namespace YAMLDatabase.Plugins.ModScript.Commands
@@ -17,7 +18,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
         public override void Parse(List<string> parts)
         {
             if (parts.Count != 4 && parts.Count != 5)
-                throw new ModScriptParserException($"4 or 5 tokens expected, got {parts.Count}");
+                throw new CommandParseException($"4 or 5 tokens expected, got {parts.Count}");
 
             ClassName = parts[1];
             SourceCollectionName = parts[2];
@@ -25,7 +26,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             DestinationCollectionName = parts[^1];
         }
 
-        public override void Execute(ModScriptDatabaseHelper databaseHelper)
+        public override void Execute(DatabaseHelper databaseHelper)
         {
             var collection = GetCollection(databaseHelper, ClassName, SourceCollectionName);
 
