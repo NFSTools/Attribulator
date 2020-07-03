@@ -55,7 +55,7 @@ namespace YAMLDatabase.Plugins.SpeedProfiles
 
         public string GetName()
         {
-            return "Most Wanted";
+            return "Need for Speed Most Wanted";
         }
 
         public string GetGameId()

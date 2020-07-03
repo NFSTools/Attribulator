@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using CoreLibraries.GameUtilities;
 using VaultLib.Core.DB;
 using VaultLib.Core.Pack;
 using YAMLDatabase.API;
@@ -56,12 +55,12 @@ namespace YAMLDatabase.Plugins.SpeedProfiles
 
         public string GetName()
         {
-            return "Undercover";
+            return "Need for Speed Undercover";
         }
 
         public string GetGameId()
         {
-            return GameIdHelper.ID_UNDERCOVER;
+            return "UNDERCOVER";
         }
 
         public DatabaseType GetDatabaseType()

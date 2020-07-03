@@ -55,7 +55,7 @@ namespace YAMLDatabase.Plugins.SpeedProfiles
 
         public string GetName()
         {
-            return "Carbon";
+            return "Need for Speed Carbon";
         }
 
         public string GetGameId()

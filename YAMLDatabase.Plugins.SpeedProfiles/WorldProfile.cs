@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using CoreLibraries.GameUtilities;
 using VaultLib.Core.DB;
 using VaultLib.Core.Pack;
 using YAMLDatabase.API;
@@ -61,12 +60,12 @@ namespace YAMLDatabase.Plugins.SpeedProfiles
 
         public string GetName()
         {
-            return GameIdHelper.ID_WORLD;
+            return "Need for Speed World";
         }
 
         public string GetGameId()
         {
-            return GameIdHelper.ID_WORLD;
+            return "WORLD";
         }
 
         public DatabaseType GetDatabaseType()
