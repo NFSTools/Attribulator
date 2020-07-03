@@ -90,7 +90,8 @@ namespace YAMLDatabase.Plugins.ModScript
                 }
                 catch (Exception e)
                 {
-                    throw new CommandExecutionException($"Failed to execute command: {command.Line}", e);
+                    _logger.LogError(e, "Failed to execute script command: {Line}", command.Line);
+                    return 1;
                 }
 
             scriptStopwatch.Stop();
