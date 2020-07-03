@@ -48,5 +48,10 @@ namespace YAMLDatabase.Plugins.ModScript
         {
             _commandMappings.Add(name, line => new TCommand {Line = line});
         }
+
+        public IEnumerable<string> GetAvailableCommandNames()
+        {
+            return _commandMappings.Keys;
+        }
     }
 }

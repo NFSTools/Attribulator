@@ -20,5 +20,11 @@ namespace YAMLDatabase.ModScript.API
         /// <param name="name">The name of the command.</param>
         /// <typeparam name="TCommand">The type of the command.</typeparam>
         void RegisterCommand<TCommand>(string name) where TCommand : IModScriptCommand, new();
+
+        /// <summary>
+        ///     Returns the names of the available ModScript commands.
+        /// </summary>
+        /// <returns>The names of the available commands.</returns>
+        IEnumerable<string> GetAvailableCommandNames();
     }
 }
