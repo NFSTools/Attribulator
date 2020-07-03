@@ -627,7 +627,7 @@ namespace YAMLDatabase.Plugins.YAMLSupport
         private static object FixUpValueForComplexObject(object value, Type elemType)
         {
             if (value is string s)
-                if (s.StartsWith("0x") && elemType == typeof(uint))
+                if (s.StartsWith("0x", StringComparison.Ordinal) && elemType == typeof(uint))
                     return uint.Parse(s.Substring(2), NumberStyles.AllowHexSpecifier);
 
             return value;

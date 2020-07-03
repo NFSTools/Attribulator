@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using VaultLib.Core.Data;
 using VaultLib.Core.Hashing;
@@ -61,7 +62,7 @@ namespace YAMLDatabase.ModScript.API
         /// <returns>The original string.</returns>
         protected string CleanHashString(string hashString)
         {
-            if (hashString.StartsWith("0x"))
+            if (hashString.StartsWith("0x", StringComparison.Ordinal))
                 hashString =
                     HashManager.ResolveVLT(uint.Parse(hashString.Substring(2), NumberStyles.AllowHexSpecifier));
 

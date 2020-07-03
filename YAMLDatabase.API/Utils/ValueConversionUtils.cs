@@ -12,15 +12,13 @@ namespace YAMLDatabase.API.Utils
 {
     public static class ValueConversionUtils
     {
-        private static Dictionary<Type, Type> _typeCache = new Dictionary<Type, Type>();
+        private static readonly Dictionary<Type, Type> _typeCache = new Dictionary<Type, Type>();
 
         public static VLTBaseType DoPrimitiveConversion(PrimitiveTypeBase primitiveTypeBase, string str)
         {
             var type = primitiveTypeBase.GetType();
             if (_typeCache.TryGetValue(type, out var conversionType))
-            {
                 return DoPrimitiveConversion(primitiveTypeBase, str, conversionType);
-            }
 
             // Do primitive conversion
             var primitiveInfoAttribute =
@@ -31,13 +29,9 @@ namespace YAMLDatabase.API.Utils
                 // Try to determine enum type
                 if (type.IsGenericType &&
                     type.GetGenericTypeDefinition() == typeof(VLTEnumType<>))
-                {
                     primitiveInfoAttribute = new PrimitiveInfoAttribute(type.GetGenericArguments()[0]);
-                }
                 else
-                {
                     throw new InvalidDataException("Cannot determine primitive type");
-                }
             }
 
             var primitiveType = primitiveInfoAttribute.PrimitiveType;
@@ -45,39 +39,35 @@ namespace YAMLDatabase.API.Utils
             return DoPrimitiveConversion(primitiveTypeBase, str, primitiveType);
         }
 
-        private static VLTBaseType DoPrimitiveConversion(PrimitiveTypeBase primitiveTypeBase, string str, Type conversionType)
+        private static VLTBaseType DoPrimitiveConversion(PrimitiveTypeBase primitiveTypeBase, string str,
+            Type conversionType)
         {
             if (conversionType.IsEnum)
             {
-                if (str.StartsWith("0x") &&
-                    uint.TryParse(str.Substring(2), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out uint val))
-                {
+                if (str.StartsWith("0x", StringComparison.Ordinal) &&
+                    uint.TryParse(str.Substring(2), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture,
+                        out var val))
                     primitiveTypeBase.SetValue((IConvertible) Enum.Parse(conversionType, val.ToString()));
-                }
                 else
-                {
                     primitiveTypeBase.SetValue((IConvertible) Enum.Parse(conversionType, str));
-                }
             }
             else
             {
-                if (str.StartsWith("0x") && uint.TryParse(str.Substring(2), NumberStyles.AllowHexSpecifier,
-                    CultureInfo.InvariantCulture, out uint val))
-                {
+                if (str.StartsWith("0x", StringComparison.Ordinal) && uint.TryParse(str.Substring(2),
+                    NumberStyles.AllowHexSpecifier,
+                    CultureInfo.InvariantCulture, out var val))
                     primitiveTypeBase.SetValue((IConvertible) Convert.ChangeType(val, conversionType));
-                }
                 else
-                {
                     try
                     {
                         primitiveTypeBase.SetValue(
-                            (IConvertible)Convert.ChangeType(str, conversionType, CultureInfo.InvariantCulture));
+                            (IConvertible) Convert.ChangeType(str, conversionType, CultureInfo.InvariantCulture));
                     }
                     catch (Exception e)
                     {
-                        throw new ValueConversionException($"Failed to parse value [{str}] as type {conversionType}", e);
+                        throw new ValueConversionException($"Failed to parse value [{str}] as type {conversionType}",
+                            e);
                     }
-                }
             }
 
             return primitiveTypeBase;
@@ -86,26 +76,24 @@ namespace YAMLDatabase.API.Utils
         public static object DoPrimitiveConversion(object value, string str)
         {
             if (value == null)
-            {
                 // we don't know the type, just assume we need a string
                 return str;
-            }
 
-            Type type = value.GetType();
+            var type = value.GetType();
 
             if (type == typeof(uint))
             {
-                if (str.StartsWith("0x"))
+                if (str.StartsWith("0x", StringComparison.Ordinal))
                     return uint.Parse(str.Substring(2), NumberStyles.AllowHexSpecifier);
                 if (!uint.TryParse(str, out _))
                     return VLT32Hasher.Hash(str);
             }
             else if (type == typeof(int))
             {
-                if (str.StartsWith("0x"))
+                if (str.StartsWith("0x", StringComparison.Ordinal))
                     return int.Parse(str.Substring(2), NumberStyles.AllowHexSpecifier);
                 if (!uint.TryParse(str, out _))
-                    return unchecked((int)VLT32Hasher.Hash(str));
+                    return unchecked((int) VLT32Hasher.Hash(str));
             }
 
             return type.IsEnum ? Enum.Parse(type, str) : Convert.ChangeType(str, type, CultureInfo.InvariantCulture);
