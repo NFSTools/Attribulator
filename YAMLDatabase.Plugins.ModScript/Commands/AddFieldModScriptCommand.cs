@@ -35,8 +35,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
                 throw new InvalidDataException($"add_field failed because field '{field.Name}' is a base field");
 
             if (collection.HasEntry(field.Name))
-                throw new InvalidDataException(
-                    $"add_field failed because collection '{collection.ShortPath}' already has field '{field.Name}'");
+                return;
 
             var vltBaseType =
                 TypeRegistry.CreateInstance(databaseHelper.Database.Options.GameId, collection.Class, field,
