@@ -33,9 +33,6 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
 
                 if (collection.HasEntry(hashed))
                     collection.RemoveValue(hashed);
-                else
-                    throw new CommandExecutionException(
-                        $"Could not delete field: {ClassName}/{CollectionName}[{FieldName}]");
             }
         }
     }
