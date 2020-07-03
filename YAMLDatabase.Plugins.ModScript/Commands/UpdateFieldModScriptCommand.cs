@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using VaultLib.Core.Types;
@@ -127,10 +126,12 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
                             .GetProperty(PropertyPath[i], BindingFlags.Instance | BindingFlags.Public);
 
                         if (propertyInfo == null)
-                            throw new InvalidDataException($"{itemToEdit.GetType()}[{PropertyPath[i]}] does not exist");
+                            throw new CommandExecutionException(
+                                $"{itemToEdit.GetType()}[{PropertyPath[i]}] does not exist");
 
                         if (!(propertyInfo.SetMethod?.IsPublic ?? false))
-                            throw new InvalidDataException($"{itemToEdit.GetType()}[{PropertyPath[i]}] is read-only");
+                            throw new CommandExecutionException(
+                                $"{itemToEdit.GetType()}[{PropertyPath[i]}] is read-only");
 
                         if (i == PropertyPath.Count - 1) break;
 

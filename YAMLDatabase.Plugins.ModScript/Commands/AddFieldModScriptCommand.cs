@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.IO;
 using VaultLib.Core;
 using VaultLib.Core.Types;
 using YAMLDatabase.ModScript.API;
@@ -32,7 +31,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             var field = collection.Class[FieldName];
 
             if (field.IsInLayout)
-                throw new InvalidDataException($"add_field failed because field '{field.Name}' is a base field");
+                throw new CommandExecutionException($"add_field failed because field '{field.Name}' is a base field");
 
             if (collection.HasEntry(field.Name))
                 return;

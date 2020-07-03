@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using VaultLib.Core;
 using VaultLib.Core.Data;
@@ -30,11 +29,11 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             VltCollection parentCollection = null;
             if (!string.IsNullOrEmpty(ParentCollectionName))
                 if ((parentCollection = GetCollection(databaseHelper, ClassName, ParentCollectionName, false)) == null)
-                    throw new InvalidDataException(
+                    throw new CommandExecutionException(
                         $"add_node failed because parent collection does not exist: {ClassName}/{ParentCollectionName}");
 
             if (GetCollection(databaseHelper, ClassName, CollectionName, false) != null)
-                throw new InvalidDataException(
+                throw new CommandExecutionException(
                     $"add_node failed because collection already exists: {ClassName}/{CollectionName}");
 
             Vault addToVault;
@@ -47,7 +46,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
                         .Any(collection => collection.Class.Name == ClassName));
 
             if (addToVault == null)
-                throw new InvalidDataException("failed to determine vault to insert new collection into");
+                throw new CommandExecutionException("failed to determine vault to insert new collection into");
 
             var newNode = databaseHelper.AddCollection(addToVault, ClassName, CollectionName, parentCollection);
 

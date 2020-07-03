@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.IO;
 using VaultLib.Core.Data;
 using VaultLib.Core.DB;
 using YAMLDatabase.ModScript.API;
@@ -31,11 +30,11 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             var collection = GetCollection(databaseHelper, ClassName, SourceCollectionName);
 
             if (collection == null)
-                throw new InvalidDataException(
+                throw new CommandExecutionException(
                     $"copy_node failed because there is no collection called '{SourceCollectionName}'");
 
             if (databaseHelper.FindCollectionByName(ClassName, DestinationCollectionName) != null)
-                throw new InvalidDataException(
+                throw new CommandExecutionException(
                     $"copy_node failed because there is already a collection called '{DestinationCollectionName}'");
 
             VltCollection parentCollection = null;
@@ -45,7 +44,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
                 parentCollection = databaseHelper.FindCollectionByName(ClassName, ParentCollectionName);
 
                 if (parentCollection == null)
-                    throw new InvalidDataException(
+                    throw new CommandExecutionException(
                         $"copy_node failed because the parent collection called '{ParentCollectionName}' does not exist");
             }
 

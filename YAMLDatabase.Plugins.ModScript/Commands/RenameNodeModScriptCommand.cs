@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.IO;
 using YAMLDatabase.ModScript.API;
 
 namespace YAMLDatabase.Plugins.ModScript.Commands
@@ -25,7 +24,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             var collection = GetCollection(databaseHelper, ClassName, CollectionName);
 
             if (GetCollection(databaseHelper, ClassName, NewName, false) != null)
-                throw new InvalidDataException(
+                throw new CommandExecutionException(
                     $"rename_node failed because there is already a collection called '{NewName}'");
 
             databaseHelper.RenameCollection(collection, NewName);
