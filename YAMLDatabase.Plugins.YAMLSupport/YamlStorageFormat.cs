@@ -49,6 +49,9 @@ namespace YAMLDatabase.Plugins.YAMLSupport
             var isX86 = destinationDatabase.Options.Type == DatabaseType.X86Database;
             var fileNameList = fileNames?.ToList() ?? new List<string>();
 
+            if (string.IsNullOrEmpty(loadedDatabase.PrimaryVaultName))
+                throw new Exception("No primary vault name has been specified.");
+
             foreach (var loadedDatabaseClass in loadedDatabase.Classes)
             {
                 var vltClass = new VltClass(loadedDatabaseClass.Name);
