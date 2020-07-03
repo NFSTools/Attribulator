@@ -21,5 +21,10 @@ namespace YAMLDatabase.API.Serialization
         ///     Gets or sets the list of serialized file records.
         /// </summary>
         public List<SerializedDatabaseFile> Files { get; set; }
+
+        /// <summary>
+        ///     Gets or sets the name of the primary vault.
+        /// </summary>
+        public string PrimaryVaultName { get; set; }
     }
 }
