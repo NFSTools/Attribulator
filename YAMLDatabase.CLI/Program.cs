@@ -7,7 +7,6 @@ using CommandLine;
 using CoreLibraries.ModuleSystem;
 using McMaster.NETCore.Plugins;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using VaultLib.Core.Hashing;
 using YAMLDatabase.API;
@@ -37,22 +36,30 @@ namespace YAMLDatabase.CLI
             Log.Logger = new LoggerConfiguration().MinimumLevel.Debug().WriteTo.Console().CreateLogger();
             services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(dispose: true));
 
-            var plugins = ConfigurePlugins(services, loaders);
-            await using var serviceProvider = services.BuildServiceProvider();
+            try
+            {
+                var plugins = ConfigurePlugins(services, loaders);
+                await using var serviceProvider = services.BuildServiceProvider();
 
-            // Load everything from DI container
-            LoadCommands(services, serviceProvider);
-            LoadProfiles(services, serviceProvider);
-            LoadStorageFormats(services, serviceProvider);
-            LoadPlugins(plugins, serviceProvider);
+                // Load everything from DI container
+                LoadCommands(services, serviceProvider);
+                LoadProfiles(services, serviceProvider);
+                LoadStorageFormats(services, serviceProvider);
+                LoadPlugins(plugins, serviceProvider);
 
-            // Load hashes
-            // TODO: This code should be part of the appropriate plugin.
-            HashManager.LoadDictionary(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "hashes.txt"));
-            new ModuleLoader("VaultLib.Support.*.dll").Load();
+                // Load hashes
+                // TODO: This code should be part of the appropriate plugin.
+                HashManager.LoadDictionary(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "hashes.txt"));
+                new ModuleLoader("VaultLib.Support.*.dll").Load();
 
-            // Off to the races!
-            return await RunApplication(serviceProvider, args);
+                // Off to the races!
+                return await RunApplication(serviceProvider, args);
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "An error occurred while initializing the application.");
+                return 1;
+            }
         }
 
         private static async Task<int> RunApplication(IServiceProvider serviceProvider, IEnumerable<string> args)
@@ -146,26 +153,112 @@ namespace YAMLDatabase.CLI
         private static IEnumerable<IPluginFactory> ConfigurePlugins(IServiceCollection services,
             IEnumerable<PluginLoader> loaders)
         {
-            var list = new List<IPluginFactory>();
+            var idToFactoryMap = new Dictionary<string, IPluginFactory>();
 
-            // Create an instance of plugin types
             foreach (var loader in loaders)
-            foreach (var pluginType in loader
-                .LoadDefaultAssembly()
-                .GetTypes()
-                .Where(t => typeof(IPluginFactory).IsAssignableFrom(t) && !t.IsAbstract))
+            foreach (var pluginType in from pluginType in loader.LoadDefaultAssembly().GetTypes()
+                where typeof(IPluginFactory).IsAssignableFrom(pluginType) && !pluginType.IsAbstract
+                select pluginType)
             {
-                // This assumes the implementation of IPluginFactory has a parameterless constructor
-                var plugin = (IPluginFactory) Activator.CreateInstance(pluginType);
+                var pluginFactory = (IPluginFactory) Activator.CreateInstance(pluginType);
 
-                if (plugin == null)
+                if (pluginFactory == null)
                     throw new Exception("Activator.CreateInstance returned null while trying to load plugin");
 
-                plugin.Configure(services);
-                list.Add(plugin);
+                idToFactoryMap.Add(pluginFactory.GetId(), pluginFactory);
             }
 
+            var unresolved = new List<PluginResolutionNode>();
+            var resolved = new List<PluginResolutionNode>();
+            var dependents =
+                new Dictionary<string, List<string>>(); // key: plugin; value: list of plugins that require it
+
+            foreach (var (id, factory) in idToFactoryMap)
+            {
+                var node = new PluginResolutionNode(id);
+
+                foreach (var requiredPlugin in factory.GetRequiredPlugins())
+                {
+                    node.AddEdge(new PluginResolutionNode(requiredPlugin));
+
+                    if (!dependents.ContainsKey(requiredPlugin))
+                        dependents.Add(requiredPlugin, new List<string>());
+                    dependents[requiredPlugin].Add(id);
+                }
+
+                ResolveDependencies(node, resolved, unresolved);
+            }
+
+            resolved = resolved.Distinct(PluginResolutionNode.IdComparer).ToList();
+            unresolved = unresolved.Distinct(PluginResolutionNode.IdComparer).ToList();
+
+            if (unresolved.Count != 0) throw new Exception("unresolved.Count != 0");
+
+            var list = new List<IPluginFactory>();
+
+            foreach (var node in resolved)
+                if (idToFactoryMap.TryGetValue(node.Id, out var factory))
+                {
+                    factory.Configure(services);
+                    list.Add(factory);
+                }
+                else
+                {
+                    throw new Exception(
+                        $"Encountered unresolved dependency while loading plugins: {node.Id} (dependents: {string.Join(", ", dependents[node.Id])})");
+                }
+
             return list;
+        }
+
+        private static void ResolveDependencies(PluginResolutionNode node, List<PluginResolutionNode> resolved,
+            List<PluginResolutionNode> unresolved)
+        {
+            unresolved.Add(node);
+
+            foreach (var edge in node.Edges)
+                if (!resolved.Contains(edge))
+                    ResolveDependencies(edge, resolved, unresolved);
+
+            resolved.Add(node);
+            unresolved.Remove(node);
+        }
+
+        private class PluginResolutionNode
+        {
+            public PluginResolutionNode(string id)
+            {
+                Id = id;
+                Edges = new List<PluginResolutionNode>();
+            }
+
+            public string Id { get; }
+
+            public List<PluginResolutionNode> Edges { get; }
+
+            public static IEqualityComparer<PluginResolutionNode> IdComparer { get; } = new IdEqualityComparer();
+
+            public void AddEdge(PluginResolutionNode node)
+            {
+                Edges.Add(node);
+            }
+
+            private sealed class IdEqualityComparer : IEqualityComparer<PluginResolutionNode>
+            {
+                public bool Equals(PluginResolutionNode x, PluginResolutionNode y)
+                {
+                    if (ReferenceEquals(x, y)) return true;
+                    if (ReferenceEquals(x, null)) return false;
+                    if (ReferenceEquals(y, null)) return false;
+                    if (x.GetType() != y.GetType()) return false;
+                    return x.Id == y.Id;
+                }
+
+                public int GetHashCode(PluginResolutionNode obj)
+                {
+                    return obj.Id != null ? obj.Id.GetHashCode() : 0;
+                }
+            }
         }
     }
 }
