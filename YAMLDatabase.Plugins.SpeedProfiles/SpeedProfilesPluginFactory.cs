@@ -9,6 +9,9 @@ namespace YAMLDatabase.Plugins.SpeedProfiles
         public void Configure(IServiceCollection services)
         {
             services.AddTransient<MostWantedProfile>();
+            services.AddTransient<CarbonProfile>();
+            services.AddTransient<ProStreetProfile>();
+            services.AddTransient<UndercoverProfile>();
             services.AddTransient<WorldProfile>();
             services.AddTransient<SpeedProfilesPlugin>();
         }
