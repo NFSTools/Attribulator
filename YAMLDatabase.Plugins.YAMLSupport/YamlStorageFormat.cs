@@ -129,9 +129,8 @@ namespace YAMLDatabase.Plugins.YAMLSupport
                 {
                     var deserializer = new DeserializerBuilder().Build();
                     var vaultDirectory = Path.Combine(baseDirectory, vaultName).Trim();
-                    // TODO: IsPrimaryVault should not rely on hardcoded "db" name
                     var newVault = new Vault(vaultName)
-                        {Database = destinationDatabase, IsPrimaryVault = vaultName == "db"};
+                        {Database = destinationDatabase, IsPrimaryVault = vaultName == loadedDatabase.PrimaryVaultName};
                     if (Directory.Exists(vaultDirectory))
                     {
                         var collectionsToBeAdded = new List<VltCollection>();
@@ -240,14 +239,14 @@ namespace YAMLDatabase.Plugins.YAMLSupport
 
         public void Serialize(Database sourceDatabase, string destinationDirectory, IEnumerable<LoadedFile> loadedFiles)
         {
+            var loadedFileList = loadedFiles.ToList();
             var loadedDatabase = new SerializedDatabaseInfo
             {
                 Classes = new List<SerializedDatabaseClass>(),
                 Files = new List<SerializedDatabaseFile>(),
-                Types = new List<SerializedTypeInfo>()
+                Types = new List<SerializedTypeInfo>(),
+                PrimaryVaultName = loadedFileList.SelectMany(f => f.Vaults).First(v => v.IsPrimaryVault).Name
             };
-
-            var loadedFileList = loadedFiles.ToList();
 
             loadedDatabase.Files.AddRange(loadedFileList.Select(f => new SerializedDatabaseFile
                 {Name = f.Name, Group = f.Group, Vaults = f.Vaults.Select(v => v.Name).ToList()}));
