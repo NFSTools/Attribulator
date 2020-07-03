@@ -21,5 +21,10 @@ namespace YAMLDatabase.Plugins.ModScript
         {
             return serviceProvider.GetService<ModScriptPlugin>();
         }
+
+        public string GetId()
+        {
+            return "YAMLDatabase.Plugins.ModScript";
+        }
     }
 }

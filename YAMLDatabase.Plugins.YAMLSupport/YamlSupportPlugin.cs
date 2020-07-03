@@ -8,5 +8,10 @@ namespace YAMLDatabase.Plugins.YAMLSupport
         {
             return "YAML Support";
         }
+
+        public void Init()
+        {
+            //
+        }
     }
 }

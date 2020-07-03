@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace YAMLDatabase.API.Plugin
@@ -20,5 +21,20 @@ namespace YAMLDatabase.API.Plugin
         /// <param name="serviceProvider">The DI service provider.</param>
         /// <returns>The plugin object.</returns>
         IPlugin CreatePlugin(IServiceProvider serviceProvider);
+
+        /// <summary>
+        ///     Gets the unique ID of the plugin.
+        /// </summary>
+        /// <returns>The unique ID of the plugin.</returns>
+        string GetId();
+
+        /// <summary>
+        ///     Gets the list of IDs of required plugins.
+        /// </summary>
+        /// <returns>The list of required plugin IDs.</returns>
+        IEnumerable<string> GetRequiredPlugins()
+        {
+            return Array.Empty<string>();
+        }
     }
 }

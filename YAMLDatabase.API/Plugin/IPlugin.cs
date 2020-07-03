@@ -10,5 +10,10 @@
         /// </summary>
         /// <returns>The name of the plugin.</returns>
         string GetName();
+
+        /// <summary>
+        ///     Initializes the plugin.
+        /// </summary>
+        void Init();
     }
 }

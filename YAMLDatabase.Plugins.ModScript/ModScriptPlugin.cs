@@ -9,27 +9,34 @@ namespace YAMLDatabase.Plugins.ModScript
     /// </summary>
     public class ModScriptPlugin : IPlugin
     {
+        private readonly IModScriptService _modScriptService;
+
         public ModScriptPlugin(IModScriptService modScriptService)
         {
-            modScriptService.RegisterCommand<AppendArrayModScriptCommand>("append_array");
-            modScriptService.RegisterCommand<VersionModScriptCommand>("version");
-            modScriptService.RegisterCommand<GameModScriptCommand>("game");
-            modScriptService.RegisterCommand<ResizeFieldModScriptCommand>("resize_field");
-            modScriptService.RegisterCommand<UpdateFieldModScriptCommand>("update_field");
-            modScriptService.RegisterCommand<CopyNodeModScriptCommand>("copy_node");
-            modScriptService.RegisterCommand<AddNodeModScriptCommand>("add_node");
-            modScriptService.RegisterCommand<ChangeVaultModScriptCommand>("change_vault");
-            modScriptService.RegisterCommand<CopyFieldsModScriptCommand>("copy_fields");
-            modScriptService.RegisterCommand<DeleteNodeModScriptCommand>("delete_node");
-            modScriptService.RegisterCommand<AddFieldModScriptCommand>("add_field");
-            modScriptService.RegisterCommand<DeleteFieldModScriptCommand>("delete_field");
-            modScriptService.RegisterCommand<RenameNodeModScriptCommand>("rename_node");
-            modScriptService.RegisterCommand<MoveNodeModScriptCommand>("move_node");
+            _modScriptService = modScriptService;
         }
 
         public string GetName()
         {
             return "ModScript Support";
+        }
+
+        public void Init()
+        {
+            _modScriptService.RegisterCommand<AppendArrayModScriptCommand>("append_array");
+            _modScriptService.RegisterCommand<VersionModScriptCommand>("version");
+            _modScriptService.RegisterCommand<GameModScriptCommand>("game");
+            _modScriptService.RegisterCommand<ResizeFieldModScriptCommand>("resize_field");
+            _modScriptService.RegisterCommand<UpdateFieldModScriptCommand>("update_field");
+            _modScriptService.RegisterCommand<CopyNodeModScriptCommand>("copy_node");
+            _modScriptService.RegisterCommand<AddNodeModScriptCommand>("add_node");
+            _modScriptService.RegisterCommand<ChangeVaultModScriptCommand>("change_vault");
+            _modScriptService.RegisterCommand<CopyFieldsModScriptCommand>("copy_fields");
+            _modScriptService.RegisterCommand<DeleteNodeModScriptCommand>("delete_node");
+            _modScriptService.RegisterCommand<AddFieldModScriptCommand>("add_field");
+            _modScriptService.RegisterCommand<DeleteFieldModScriptCommand>("delete_field");
+            _modScriptService.RegisterCommand<RenameNodeModScriptCommand>("rename_node");
+            _modScriptService.RegisterCommand<MoveNodeModScriptCommand>("move_node");
         }
     }
 }

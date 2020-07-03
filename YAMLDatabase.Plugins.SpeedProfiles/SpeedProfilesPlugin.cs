@@ -8,5 +8,10 @@ namespace YAMLDatabase.Plugins.SpeedProfiles
         {
             return "Speed Profiles";
         }
+
+        public void Init()
+        {
+            //
+        }
     }
 }

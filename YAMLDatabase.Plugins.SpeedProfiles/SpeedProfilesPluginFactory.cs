@@ -17,5 +17,10 @@ namespace YAMLDatabase.Plugins.SpeedProfiles
         {
             return serviceProvider.GetService<SpeedProfilesPlugin>();
         }
+
+        public string GetId()
+        {
+            return "YAMLDatabase.Plugins.SpeedProfiles";
+        }
     }
 }

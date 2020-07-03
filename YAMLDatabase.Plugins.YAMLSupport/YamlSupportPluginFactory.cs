@@ -16,5 +16,10 @@ namespace YAMLDatabase.Plugins.YAMLSupport
         {
             return serviceProvider.GetService<YamlSupportPlugin>();
         }
+
+        public string GetId()
+        {
+            return "YAMLDatabase.Plugins.YAMLSupport";
+        }
     }
 }
