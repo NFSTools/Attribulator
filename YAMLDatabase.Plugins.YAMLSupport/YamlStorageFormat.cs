@@ -537,7 +537,9 @@ namespace YAMLDatabase.Plugins.YAMLSupport
             if (capacity < rawItemList.Count)
                 throw new InvalidDataException(
                     $"In collection {vltCollection.ShortPath}, the capacity of array field [{field.Name}] ({capacity}) is less than the number of elements in the array ({rawItemList.Count}).");
-
+            if (field.MaxCount > 0 && (capacity > field.MaxCount || rawItemList.Count > field.MaxCount))
+                throw new InvalidDataException(
+                    $"In collection {vltCollection.ShortPath}, the size or capacity of array field [{field.Name}] is greater than the allowed size ({field.MaxCount}).");
             array.Capacity = capacity;
             array.Items = new List<VLTBaseType>();
             array.ItemAlignment = field.Alignment;
