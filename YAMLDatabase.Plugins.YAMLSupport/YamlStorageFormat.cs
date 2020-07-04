@@ -534,6 +534,10 @@ namespace YAMLDatabase.Plugins.YAMLSupport
             var capacity = ushort.Parse(dictionary["Capacity"].ToString());
             var rawItemList = (List<object>) dictionary["Data"];
 
+            if (capacity < rawItemList.Count)
+                throw new InvalidDataException(
+                    $"In collection {vltCollection.ShortPath}, the capacity of array field [{field.Name}] ({capacity}) is less than the number of elements in the array ({rawItemList.Count}).");
+
             array.Capacity = capacity;
             array.Items = new List<VLTBaseType>();
             array.ItemAlignment = field.Alignment;
