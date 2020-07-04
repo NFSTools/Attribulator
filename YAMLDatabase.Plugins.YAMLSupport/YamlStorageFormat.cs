@@ -90,6 +90,7 @@ namespace YAMLDatabase.Plugins.YAMLSupport
             var collectionDictionary = new ConcurrentDictionary<string, VltCollection>();
             var vaultsToSaveDictionary = new ConcurrentDictionary<string, List<Vault>>();
             var tempCollectionListsDictionary = new ConcurrentDictionary<string, List<VltCollection>>();
+            var seenCollections = new ConcurrentDictionary<string, bool>();
 
             void AddCollectionsToList(Vault newVault, VltClass vltClass, string vaultDirectory,
                 ICollection<VltCollection> collectionList,
@@ -102,6 +103,9 @@ namespace YAMLDatabase.Plugins.YAMLSupport
                 foreach (var loadedCollection in collectionsToAdd)
                 {
                     var newVltCollection = new VltCollection(newVault, vltClass, loadedCollection.Name);
+
+                    if (!seenCollections.TryAdd(newVltCollection.ShortPath, true))
+                        throw new Exception("Duplicate collection detected: " + newVltCollection.ShortPath);
 
                     foreach (var (key, value) in loadedCollection.Data)
                     {
@@ -122,6 +126,7 @@ namespace YAMLDatabase.Plugins.YAMLSupport
                     collectionDictionary[newVltCollection.ShortPath] = newVltCollection;
                 }
             }
+
 
             foreach (var file in loadedDatabase.Files.Where(f => fileNames == null || fileNameList.Contains(f.Name)))
             {
