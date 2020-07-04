@@ -14,6 +14,7 @@ namespace YAMLDatabase.Plugins.ModScript
         {
             services.AddSingleton<IModScriptService, ModScriptService>();
             services.AddTransient<ApplyScriptCommand>();
+            services.AddTransient<ApplyScriptToBinCommand>();
             services.AddTransient<AvailableCommandsCommand>();
             services.AddSingleton<ModScriptPlugin>();
         }
