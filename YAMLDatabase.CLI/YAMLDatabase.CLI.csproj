@@ -12,12 +12,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="hashes.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
-
-  <ItemGroup>
       <PackageReference Include="AsyncEnumerator" Version="4.0.2"/>
       <PackageReference Include="CommandLineParser" Version="2.8.0" />
       <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />

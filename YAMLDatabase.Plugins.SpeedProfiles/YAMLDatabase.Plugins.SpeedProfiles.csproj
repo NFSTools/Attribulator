@@ -24,4 +24,10 @@
         <ProjectReference Include="..\YAMLDatabase.API\YAMLDatabase.API.csproj"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <EmbeddedResource Include="Resources\hashes.txt">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </EmbeddedResource>
+    </ItemGroup>
+
 </Project>
