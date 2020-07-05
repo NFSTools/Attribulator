@@ -16,9 +16,9 @@ jobs:
         run: dotnet publish -c Release
       - name: Install plugins
         run: |
-          xcopy /E /I YAMLDatabase.Plugins.ModScript/bin/x86/Release/netcoreapp3.1/publish YAMLDatabase.CLI/bin/x86/Release/netcoreapp3.1/publish/plugins/YAMLDatabase.Plugins.ModScript
-          xcopy /E /I YAMLDatabase.Plugins.SpeedProfiles/bin/x86/Release/netcoreapp3.1/publish YAMLDatabase.CLI/bin/x86/Release/netcoreapp3.1/publish/plugins/YAMLDatabase.Plugins.SpeedProfiles
-          xcopy /E /I YAMLDatabase.Plugins.YAMLSupport/bin/x86/Release/netcoreapp3.1/publish YAMLDatabase.CLI/bin/x86/Release/netcoreapp3.1/publish/plugins/YAMLDatabase.Plugins.YAMLSupport
+          xcopy /s /E /I /Y /q "YAMLDatabase.Plugins.ModScript\\bin\\x86\\Release\\netcoreapp3.1\\publish" "YAMLDatabase.CLI\\bin\\x86\\Release\\netcoreapp3.1\\publish\\plugins\\YAMLDatabase.Plugins.ModScript"
+          xcopy /s /E /I /Y /q "YAMLDatabase.Plugins.YAMLSupport\\bin\\x86\\Release\\netcoreapp3.1\\publish" "YAMLDatabase.CLI\\bin\\x86\\Release\\netcoreapp3.1\\publish\\plugins\\YAMLDatabase.Plugins.YAMLSupport"
+          xcopy /s /E /I /Y /q "YAMLDatabase.Plugins.SpeedProfiles\\bin\\x86\\Release\\netcoreapp3.1\\publish" "YAMLDatabase.CLI\\bin\\x86\\Release\\netcoreapp3.1\\publish\\plugins\\YAMLDatabase.Plugins.SpeedProfiles"
       - name: Add NativeLibrary.dll
         run: curl -o YAMLDatabase.CLI/bin/x86/Release/netcoreapp3.1/publish/NativeLibrary.dll https://s.heyitsleo.io/NFSTools/NativeLibrary.dll
       - name: Upload artifact
