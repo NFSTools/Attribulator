@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -34,9 +35,9 @@ namespace YAMLDatabase.Plugins.ModScript
         [UsedImplicitly]
         public string ProfileName { get; set; }
 
-        [Option('s', HelpText = "The path to the .nfsms file", Required = true)]
+        [Option('s', HelpText = "The path(s) to the .nfsms file(s)", Required = true)]
         [UsedImplicitly]
-        public string ModScriptPath { get; set; }
+        public IEnumerable<string> ModScriptPaths { get; set; }
 
         [Option("no-backup", HelpText = "Disable backup generation.")]
         [UsedImplicitly]
@@ -59,8 +60,11 @@ namespace YAMLDatabase.Plugins.ModScript
             if (!Directory.Exists(InputDirectory))
                 throw new DirectoryNotFoundException($"Cannot find input directory: {InputDirectory}");
 
-            if (!File.Exists(ModScriptPath))
-                throw new FileNotFoundException($"Cannot find ModScript file: {ModScriptPath}");
+            var scriptFiles = ModScriptPaths.ToList();
+
+            foreach (var scriptFile in scriptFiles)
+                if (!File.Exists(scriptFile))
+                    throw new FileNotFoundException($"Cannot find ModScript file: {scriptFile}");
 
             if (!Directory.Exists(OutputDirectory)) Directory.CreateDirectory(OutputDirectory);
 
@@ -78,28 +82,46 @@ namespace YAMLDatabase.Plugins.ModScript
             var files = (await storageFormat.DeserializeAsync(InputDirectory, database)).ToList();
             _logger.LogInformation("Loaded database");
 
+            var overallStopwatch = Stopwatch.StartNew();
             var modScriptDatabase = new DatabaseHelper(database);
-            var scriptStopwatch = Stopwatch.StartNew();
-            var numCommands = 0L;
+            var totalCommands = 0L;
 
-            foreach (var command in _modScriptService.ParseCommands(File.ReadLines(ModScriptPath)))
-                try
-                {
-                    command.Execute(modScriptDatabase);
-                    numCommands++;
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError(e, "Failed to execute script command: {Line}", command.Line);
-                    return 1;
-                }
+            foreach (var scriptFile in scriptFiles)
+            {
+                _logger.LogInformation("Processing script: {FileName}", scriptFile);
+                var fileStopwatch = Stopwatch.StartNew();
+                var numCommands = 0L;
 
-            scriptStopwatch.Stop();
+                foreach (var command in _modScriptService.ParseCommands(File.ReadLines(scriptFile)))
+                    try
+                    {
+                        command.Execute(modScriptDatabase);
+                        numCommands++;
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError(e, "Failed to execute script command: {Line}", command.Line);
+                        return 1;
+                    }
 
-            var commandsPerSecond = (ulong) (numCommands / (scriptStopwatch.ElapsedMilliseconds / 1000.0));
+                fileStopwatch.Stop();
+
+                var commandsPerSecond = (ulong) (numCommands / (fileStopwatch.ElapsedMilliseconds / 1000.0));
+                _logger.LogInformation(
+                    "Applied {NumCommands} command(s) from script [{FileName}] in {ElapsedMilliseconds}ms ({Duration}; ~ {NumPerSec}/sec)",
+                    numCommands, scriptFile, fileStopwatch.ElapsedMilliseconds, fileStopwatch.Elapsed,
+                    commandsPerSecond);
+
+                totalCommands += numCommands;
+            }
+
+            overallStopwatch.Stop();
+            var totalCommandsPerSecond = (ulong) (totalCommands / (overallStopwatch.ElapsedMilliseconds / 1000.0));
+
             _logger.LogInformation(
-                "Applied {NumCommands} command(s) from script in {ElapsedMilliseconds}ms ({Duration}; ~ {NumPerSec}/sec)",
-                numCommands, scriptStopwatch.ElapsedMilliseconds, scriptStopwatch.Elapsed, commandsPerSecond);
+                "Overall: Applied {NumCommands} command(s) from {NumScripts} script(s) in {ElapsedMilliseconds}ms ({Duration}; ~ {NumPerSec}/sec)",
+                totalCommands, scriptFiles.Count, overallStopwatch.ElapsedMilliseconds, overallStopwatch.Elapsed,
+                totalCommandsPerSecond);
 
             if (!DisableBackup)
             {
