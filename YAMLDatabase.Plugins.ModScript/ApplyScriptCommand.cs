@@ -85,6 +85,7 @@ namespace YAMLDatabase.Plugins.ModScript
             var overallStopwatch = Stopwatch.StartNew();
             var modScriptDatabase = new DatabaseHelper(database);
             var totalCommands = 0L;
+            var totalMilliseconds = 0L;
 
             foreach (var scriptFile in scriptFiles)
             {
@@ -113,14 +114,19 @@ namespace YAMLDatabase.Plugins.ModScript
                     commandsPerSecond);
 
                 totalCommands += numCommands;
+                totalMilliseconds += fileStopwatch.ElapsedMilliseconds;
             }
 
             overallStopwatch.Stop();
             var totalCommandsPerSecond = (ulong) (totalCommands / (overallStopwatch.ElapsedMilliseconds / 1000.0));
 
             _logger.LogInformation(
-                "Overall: Applied {NumCommands} command(s) from {NumScripts} script(s) in {ElapsedMilliseconds}ms ({Duration}; ~ {NumPerSec}/sec)",
-                totalCommands, scriptFiles.Count, overallStopwatch.ElapsedMilliseconds, overallStopwatch.Elapsed,
+                "Completed in {OverallTimeInMilliseconds}ms ({OverallDuration}).", overallStopwatch.ElapsedMilliseconds,
+                overallStopwatch.Elapsed);
+
+            _logger.LogInformation(
+                "Overall: Applied {NumCommands} command(s) from {NumScripts} script(s) (execution time: {ElapsedMilliseconds}ms / {Duration}; ~ {NumPerSec}/sec)",
+                totalCommands, scriptFiles.Count, totalMilliseconds, TimeSpan.FromMilliseconds(totalMilliseconds),
                 totalCommandsPerSecond);
 
             if (!DisableBackup)
