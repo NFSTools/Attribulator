@@ -11,7 +11,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using CoreLibraries.GameUtilities;
-using Dasync.Collections;
 using VaultLib.Core;
 using VaultLib.Core.Data;
 using VaultLib.Core.DB;
@@ -133,7 +132,7 @@ namespace YAMLDatabase.Plugins.YAMLSupport
                 var baseDirectory = Path.Combine(sourceDirectory, file.Group, file.Name);
                 vaultsToSaveDictionary[file.Name] = new List<Vault>();
 
-                await file.Vaults.ParallelForEachAsync(async vaultName =>
+                foreach (var vaultName in file.Vaults)
                 {
                     var deserializer = new DeserializerBuilder().Build();
                     var vaultDirectory = Path.Combine(baseDirectory, vaultName).Trim();
@@ -143,8 +142,7 @@ namespace YAMLDatabase.Plugins.YAMLSupport
                     {
                         var collectionsToBeAdded = new List<VltCollection>();
 
-                        // TODO: bring back collection duplicate tracking
-                        await Directory.GetFiles(vaultDirectory, "*.yml").ParallelForEachAsync(async dataFile =>
+                        foreach (var dataFile in Directory.GetFiles(vaultDirectory, "*.yml"))
                         {
                             var className = Path.GetFileNameWithoutExtension(dataFile);
                             var vltClass = destinationDatabase.FindClass(className);
@@ -158,7 +156,6 @@ namespace YAMLDatabase.Plugins.YAMLSupport
 
                             foreach (var loadedCollection in collections)
                             {
-                                // BUG 16.02.2020: we have to do this to get around a YamlDotNet bug
                                 loadedCollection.Name ??= "null";
 
                                 foreach (var k in loadedCollection.Data.Keys.ToList()
@@ -170,8 +167,7 @@ namespace YAMLDatabase.Plugins.YAMLSupport
                             AddCollectionsToList(newVault, vltClass, vaultDirectory, newCollections, collections);
 
                             collectionsToBeAdded.AddRange(newCollections);
-                            // foreach (var newCollection in newCollections) collectionsToBeAdded.Add(newCollection);
-                        });
+                        }
 
                         tempCollectionListsDictionary[newVault.Name] = collectionsToBeAdded;
                     }
@@ -182,7 +178,7 @@ namespace YAMLDatabase.Plugins.YAMLSupport
 
                     vaultsToSaveDictionary[file.Name].Add(newVault);
                     destinationDatabase.Vaults.Add(newVault);
-                }, Environment.ProcessorCount);
+                }
 
                 loadedFiles.Add(new LoadedFile(file.Name, file.Group, vaultsToSaveDictionary[file.Name]));
             }
@@ -196,17 +192,14 @@ namespace YAMLDatabase.Plugins.YAMLSupport
                 var vaultCollections = tempCollectionListsDictionary[vault.Name];
                 var node = new VaultDependencyNode(vault);
 
-                foreach (var vaultCollection in vaultCollections)
-                {
-                    var parentKey = collectionParentDictionary[vaultCollection.ShortPath];
-
-                    if (!string.IsNullOrEmpty(parentKey))
-                    {
-                        var parentCollection = collectionDictionary[$"{vaultCollection.Class.Name}/{parentKey}"];
-                        if (parentCollection.Vault.Name != vault.Name)
-                            node.AddEdge(new VaultDependencyNode(parentCollection.Vault));
-                    }
-                }
+                foreach (var parentCollection in from vaultCollection in vaultCollections
+                    let parentKey = collectionParentDictionary[vaultCollection.ShortPath]
+                    where !string.IsNullOrEmpty(parentKey)
+                    select collectionDictionary[$"{vaultCollection.Class.Name}/{parentKey}"]
+                    into parentCollection
+                    where parentCollection.Vault.Name != vault.Name
+                    select parentCollection)
+                    node.AddEdge(new VaultDependencyNode(parentCollection.Vault));
 
                 ResolveDependencies(node, resolved, unresolved);
 
@@ -526,7 +519,7 @@ namespace YAMLDatabase.Plugins.YAMLSupport
                 case Dictionary<object, object> dictionary:
                     return (VLTBaseType) (instance is VLTArrayType array
                         ? DoArrayConversion(database, gameId, dir, vltClass, field, vltCollection, array, dictionary)
-                        : DoDictionaryConversion(gameId, dir, vltClass, field, vltCollection, instance, dictionary));
+                        : DoDictionaryConversion(vltClass, field, vltCollection, instance, dictionary));
             }
 
             throw new InvalidDataException("Could not convert serialized value of type: " + serializedValue.GetType());
@@ -561,12 +554,12 @@ namespace YAMLDatabase.Plugins.YAMLSupport
             return array;
         }
 
-        private object DoDictionaryConversion(string gameId, string dir, VltClass vltClass, VltClassField field,
+        private static object DoDictionaryConversion(VltClass vltClass, VltClassField field,
             VltCollection vltCollection, object instance, Dictionary<object, object> dictionary)
         {
-            foreach (var pair in dictionary)
+            foreach (var (key, value) in dictionary)
             {
-                var propName = (string) pair.Key;
+                var propName = (string) key;
                 var propertyInfo =
                     instance.GetType().GetProperty(propName, BindingFlags.Public | BindingFlags.Instance);
 
@@ -580,58 +573,65 @@ namespace YAMLDatabase.Plugins.YAMLSupport
 
                 if (propType.IsEnum)
                 {
-                    propertyInfo.SetValue(instance, Enum.Parse(propType, pair.Value.ToString()));
+                    propertyInfo.SetValue(instance, Enum.Parse(propType, value.ToString()));
                 }
                 else if (propType.IsPrimitive || propType == typeof(string))
                 {
-                    var newValue = FixUpValueForComplexObject(pair.Value, propType);
+                    var newValue = FixUpValueForComplexObject(value, propType);
                     propertyInfo.SetValue(instance,
                         Convert.ChangeType(newValue, propType, CultureInfo.InvariantCulture));
                 }
-                else if (pair.Value is List<object> objects)
+                else
                 {
-                    var newList = (IList) Activator.CreateInstance(propType, objects.Count);
-                    var elemType = propType.GetElementType() ?? throw new Exception();
-
-                    for (var index = 0; index < objects.Count; index++)
-                        if (elemType.IsEnum)
+                    switch (value)
+                    {
+                        case List<object> objects:
                         {
-                            newList[index] = Enum.Parse(elemType, objects[index].ToString());
+                            var newList = (IList) Activator.CreateInstance(propType, objects.Count);
+                            var elemType = propType.GetElementType() ?? throw new Exception();
+
+                            for (var index = 0; index < objects.Count; index++)
+                                if (elemType.IsEnum)
+                                {
+                                    newList[index] = Enum.Parse(elemType, objects[index].ToString());
+                                }
+                                else
+                                {
+                                    if (elemType == typeof(string))
+                                    {
+                                        newList[index] = objects[index];
+                                    }
+                                    else
+                                    {
+                                        var fixedValue = FixUpValueForComplexObject(objects[index], elemType);
+                                        var convertedValue =
+                                            Convert.ChangeType(fixedValue, elemType, CultureInfo.InvariantCulture);
+
+                                        newList[index] = convertedValue;
+                                    }
+                                }
+
+                            propertyInfo.SetValue(instance, newList);
+                            break;
                         }
-                        else
+                        case Dictionary<object, object> objectDictionary:
                         {
-                            if (elemType == typeof(string))
-                            {
-                                newList[index] = objects[index];
-                            }
-                            else
-                            {
-                                var fixedValue = FixUpValueForComplexObject(objects[index], elemType);
-                                var convertedValue =
-                                    Convert.ChangeType(fixedValue, elemType, CultureInfo.InvariantCulture);
+                            var propInstance = propType.IsSubclassOf(typeof(VLTBaseType))
+                                ? TypeRegistry.ConstructInstance(propType, vltClass, field, vltCollection)
+                                : Activator.CreateInstance(propType);
 
-                                newList[index] = convertedValue;
-                            }
-
-                            //newList[index] = FixUpValueForComplexObject(objects[index]);
-                            //newList[index] = Convert.ChangeType(objects[index].ToString(), elemType, CultureInfo.InvariantCulture);
+                            propertyInfo.SetValue(instance,
+                                DoDictionaryConversion(vltClass, field, vltCollection, propInstance,
+                                    objectDictionary));
+                            break;
                         }
+                        default:
+                        {
+                            if (value != null) throw new Exception();
 
-                    propertyInfo.SetValue(instance, newList);
-                }
-                else if (pair.Value is Dictionary<object, object> objectDictionary)
-                {
-                    var propInstance = propType.IsSubclassOf(typeof(VLTBaseType))
-                        ? TypeRegistry.ConstructInstance(propType, vltClass, field, vltCollection)
-                        : Activator.CreateInstance(propType);
-
-                    propertyInfo.SetValue(instance,
-                        DoDictionaryConversion(gameId, dir, vltClass, field, vltCollection, propInstance,
-                            objectDictionary));
-                }
-                else if (pair.Value != null)
-                {
-                    throw new Exception();
+                            break;
+                        }
+                    }
                 }
             }
 
