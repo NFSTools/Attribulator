@@ -12,12 +12,12 @@ namespace YAMLDatabase.API.Utils
 {
     public static class ValueConversionUtils
     {
-        private static readonly Dictionary<Type, Type> _typeCache = new Dictionary<Type, Type>();
+        private static readonly Dictionary<Type, Type> TypeCache = new Dictionary<Type, Type>();
 
         public static VLTBaseType DoPrimitiveConversion(PrimitiveTypeBase primitiveTypeBase, string str)
         {
             var type = primitiveTypeBase.GetType();
-            if (_typeCache.TryGetValue(type, out var conversionType))
+            if (TypeCache.TryGetValue(type, out var conversionType))
                 return DoPrimitiveConversion(primitiveTypeBase, str, conversionType);
 
             // Do primitive conversion
@@ -35,7 +35,7 @@ namespace YAMLDatabase.API.Utils
             }
 
             var primitiveType = primitiveInfoAttribute.PrimitiveType;
-            _typeCache[type] = primitiveType;
+            TypeCache[type] = primitiveType;
             return DoPrimitiveConversion(primitiveTypeBase, str, primitiveType);
         }
 
@@ -43,32 +43,18 @@ namespace YAMLDatabase.API.Utils
             Type conversionType)
         {
             if (conversionType.IsEnum)
-            {
-                if (str.StartsWith("0x", StringComparison.Ordinal) &&
-                    uint.TryParse(str.Substring(2), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture,
-                        out var val))
-                    primitiveTypeBase.SetValue((IConvertible) Enum.Parse(conversionType, val.ToString()));
-                else
-                    primitiveTypeBase.SetValue((IConvertible) Enum.Parse(conversionType, str));
-            }
+                primitiveTypeBase.SetValue((IConvertible) Enum.Parse(conversionType, str));
             else
-            {
-                if (str.StartsWith("0x", StringComparison.Ordinal) && uint.TryParse(str.Substring(2),
-                    NumberStyles.AllowHexSpecifier,
-                    CultureInfo.InvariantCulture, out var val))
-                    primitiveTypeBase.SetValue((IConvertible) Convert.ChangeType(val, conversionType));
-                else
-                    try
-                    {
-                        primitiveTypeBase.SetValue(
-                            (IConvertible) Convert.ChangeType(str, conversionType, CultureInfo.InvariantCulture));
-                    }
-                    catch (Exception e)
-                    {
-                        throw new ValueConversionException($"Failed to parse value [{str}] as type {conversionType}",
-                            e);
-                    }
-            }
+                try
+                {
+                    primitiveTypeBase.SetValue(
+                        (IConvertible) Convert.ChangeType(str, conversionType, CultureInfo.InvariantCulture));
+                }
+                catch (Exception e)
+                {
+                    throw new ValueConversionException($"Failed to parse value [{str}] as type {conversionType}",
+                        e);
+                }
 
             return primitiveTypeBase;
         }
