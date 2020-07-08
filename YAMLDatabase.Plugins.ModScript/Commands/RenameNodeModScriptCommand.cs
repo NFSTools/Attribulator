@@ -28,6 +28,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
                     $"rename_node failed because there is already a collection called '{NewName}'");
 
             databaseHelper.RenameCollection(collection, NewName);
+            CollectionCache.Remove($"{ClassName}_{CollectionName}");
         }
     }
 }

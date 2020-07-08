@@ -21,6 +21,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
             var collection = GetCollection(databaseHelper, ClassName, CollectionName);
 
             databaseHelper.RemoveCollection(collection);
+            CollectionCache.Remove($"{ClassName}_{CollectionName}");
         }
     }
 }

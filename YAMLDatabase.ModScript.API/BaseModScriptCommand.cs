@@ -11,7 +11,11 @@ namespace YAMLDatabase.ModScript.API
     /// </summary>
     public abstract class BaseModScriptCommand : IModScriptCommand
     {
-        private static readonly Dictionary<string, VltClassField> _fieldCache = new Dictionary<string, VltClassField>();
+        protected static readonly Dictionary<string, VltClassField>
+            FieldCache = new Dictionary<string, VltClassField>();
+
+        protected static readonly Dictionary<string, VltCollection> CollectionCache =
+            new Dictionary<string, VltCollection>();
 
         public string Line { get; set; }
         public long LineNumber { get; set; }
@@ -31,15 +35,17 @@ namespace YAMLDatabase.ModScript.API
         /// <param name="throwOnMissing">Whether to throw an exception if the collection is not found.</param>
         /// <returns>An instance of the <see cref="VltCollection" /> class.</returns>
         /// <exception cref="CommandExecutionException">if the collection cannot be found</exception>
-        protected VltCollection GetCollection(DatabaseHelper database, string className, string collectionName,
+        protected static VltCollection GetCollection(DatabaseHelper database, string className, string collectionName,
             bool throwOnMissing = true)
         {
+            var cacheKey = $"{className}_{collectionName}";
+            if (CollectionCache.TryGetValue(cacheKey, out var cachedCollection)) return cachedCollection;
+
             var collection = database.FindCollectionByName(className, collectionName);
 
             if (collection == null && throwOnMissing)
                 throw new CommandExecutionException($"Cannot find collection: {className}/{collectionName}");
-
-            return collection;
+            return CollectionCache[cacheKey] = collection;
         }
 
         /// <summary>
@@ -55,9 +61,9 @@ namespace YAMLDatabase.ModScript.API
 
             var cacheKey = $"{vltClass.Name}_{fieldName}";
 
-            if (_fieldCache.TryGetValue(cacheKey, out var cachedField)) return cachedField;
+            if (FieldCache.TryGetValue(cacheKey, out var cachedField)) return cachedField;
 
-            return _fieldCache[cacheKey] = vltClass.FindField(fieldName);
+            return FieldCache[cacheKey] = vltClass.FindField(fieldName);
         }
 
         /// <summary>
