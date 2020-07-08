@@ -54,18 +54,33 @@ namespace YAMLDatabase.Plugins.ModScript.Utils
                 .ToArray();
 
             foreach (var propertyInfo in properties)
-                if (propertyInfo.PropertyType.IsSubclassOf(typeof(VLTBaseType)))
-                    propertyInfo.SetValue(newValue, CloneObjectWithReflection(
-                        propertyInfo.GetValue(originalValue) as VLTBaseType,
-                        Activator.CreateInstance(propertyInfo.PropertyType, vltClass, vltClassField, vltCollection) as
-                            VLTBaseType,
-                        vltClass, vltClassField, vltCollection));
-                else if (propertyInfo.PropertyType == typeof(string))
-                    propertyInfo.SetValue(newValue, new string(propertyInfo.GetValue(originalValue) as string));
-                else if (propertyInfo.PropertyType.IsPrimitive || propertyInfo.PropertyType.IsEnum)
-                    propertyInfo.SetValue(newValue, propertyInfo.GetValue(originalValue));
-                else if (propertyInfo.PropertyType.IsArray && propertyInfo.GetValue(originalValue) != null)
-                    propertyInfo.SetValue(newValue, ((Array) propertyInfo.GetValue(originalValue)).Clone());
+            {
+                var value = propertyInfo.GetValue(originalValue);
+
+                switch (value)
+                {
+                    case null:
+                        propertyInfo.SetValue(newValue, null);
+                        continue;
+                    case VLTBaseType vltBaseType:
+                        propertyInfo.SetValue(newValue, CloneObjectWithReflection(
+                            vltBaseType,
+                            Activator.CreateInstance(propertyInfo.PropertyType, vltClass, vltClassField,
+                                    vltCollection) as
+                                VLTBaseType,
+                            vltClass, vltClassField, vltCollection));
+                        break;
+                    case string str:
+                        propertyInfo.SetValue(newValue, new string(str));
+                        break;
+                    default:
+                        if (propertyInfo.PropertyType.IsPrimitive || propertyInfo.PropertyType.IsEnum)
+                            propertyInfo.SetValue(newValue, value);
+                        else if (value is Array array)
+                            propertyInfo.SetValue(newValue, array.Clone());
+                        break;
+                }
+            }
 
             return newValue;
         }
