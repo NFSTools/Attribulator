@@ -65,9 +65,8 @@ namespace YAMLDatabase.Plugins.ModScript.Utils
                     case VLTBaseType vltBaseType:
                         propertyInfo.SetValue(newValue, CloneObjectWithReflection(
                             vltBaseType,
-                            Activator.CreateInstance(propertyInfo.PropertyType, vltClass, vltClassField,
-                                    vltCollection) as
-                                VLTBaseType,
+                            TypeRegistry.ConstructInstance(propertyInfo.PropertyType, vltClass, vltClassField,
+                                vltCollection),
                             vltClass, vltClassField, vltCollection));
                         break;
                     case string str:
