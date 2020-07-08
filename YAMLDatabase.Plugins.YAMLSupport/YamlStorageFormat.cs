@@ -174,6 +174,7 @@ namespace YAMLDatabase.Plugins.YAMLSupport
                     else
                     {
                         Console.WriteLine("WARN: vault {0} has no folder; looked for {1}", vaultName, vaultDirectory);
+                        tempCollectionListsDictionary[vaultName] = new List<VltCollection>();
                     }
 
                     vaultsToSaveDictionary[file.Name].Add(newVault);
