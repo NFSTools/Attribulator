@@ -85,7 +85,7 @@ namespace YAMLDatabase.Plugins.ModScript
             var overallStopwatch = Stopwatch.StartNew();
             var modScriptDatabase = new DatabaseHelper(database);
             var totalCommands = 0L;
-            var totalMilliseconds = 0L;
+            var totalMilliseconds = 0.0d;
 
             foreach (var scriptFile in scriptFiles)
             {
@@ -108,18 +108,19 @@ namespace YAMLDatabase.Plugins.ModScript
 
                 fileStopwatch.Stop();
 
-                var commandsPerSecond = (ulong) (numCommands / (fileStopwatch.ElapsedMilliseconds / 1000.0));
+                var commandsPerSecond = (ulong) (numCommands / (fileStopwatch.Elapsed.TotalMilliseconds / 1000.0));
                 _logger.LogInformation(
                     "Applied {NumCommands} command(s) from script [{FileName}] in {ElapsedMilliseconds}ms ({Duration}; ~ {NumPerSec}/sec)",
                     numCommands, scriptFile, fileStopwatch.ElapsedMilliseconds, fileStopwatch.Elapsed,
                     commandsPerSecond);
 
                 totalCommands += numCommands;
-                totalMilliseconds += fileStopwatch.ElapsedMilliseconds;
+                totalMilliseconds += fileStopwatch.Elapsed.TotalMilliseconds;
             }
 
             overallStopwatch.Stop();
-            var totalCommandsPerSecond = (ulong) (totalCommands / (overallStopwatch.ElapsedMilliseconds / 1000.0));
+            var totalCommandsPerSecond =
+                (ulong) (totalCommands / (overallStopwatch.Elapsed.TotalMilliseconds / 1000.0));
 
             _logger.LogInformation(
                 "Completed in {OverallTimeInMilliseconds}ms ({OverallDuration}).", overallStopwatch.ElapsedMilliseconds,
@@ -127,7 +128,8 @@ namespace YAMLDatabase.Plugins.ModScript
 
             _logger.LogInformation(
                 "Overall: Applied {NumCommands} command(s) from {NumScripts} script(s) (execution time: {ElapsedMilliseconds}ms / {Duration}; ~ {NumPerSec}/sec)",
-                totalCommands, scriptFiles.Count, totalMilliseconds, TimeSpan.FromMilliseconds(totalMilliseconds),
+                totalCommands, scriptFiles.Count, Math.Round(totalMilliseconds),
+                TimeSpan.FromMilliseconds(totalMilliseconds),
                 totalCommandsPerSecond);
 
             if (!DisableBackup)
