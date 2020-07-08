@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <Authors>heyitsleo/NFSTools</Authors>
+        <Company>NFSTools</Company>
+        <Description>Plugin providing support for Burnout Paradise.</Description>
+        <Platforms>x86</Platforms>
+        <Product>YAMLDatabase - Burnout Paradise Support</Product>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <Version>2.0.0-beta1</Version>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="VaultLib.Core" Version="1.1.3"/>
+        <PackageReference Include="VaultLib.ModernBase" Version="1.1.1"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\YAMLDatabase.API\YAMLDatabase.API.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="Resources\hashes.txt">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </EmbeddedResource>
+    </ItemGroup>
+
+</Project>
