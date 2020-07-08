@@ -11,6 +11,8 @@ namespace YAMLDatabase.ModScript.API
     /// </summary>
     public abstract class BaseModScriptCommand : IModScriptCommand
     {
+        private static readonly Dictionary<string, VltClassField> _fieldCache = new Dictionary<string, VltClassField>();
+
         public string Line { get; set; }
         public long LineNumber { get; set; }
 
@@ -47,13 +49,15 @@ namespace YAMLDatabase.ModScript.API
         /// <param name="fieldName">The field name.</param>
         /// <returns>An instance of the <see cref="VltClassField" /> class.</returns>
         /// <exception cref="CommandExecutionException">if the field cannot be found</exception>
-        protected VltClassField GetField(VltClass vltClass, string fieldName)
+        protected static VltClassField GetField(VltClass vltClass, string fieldName)
         {
             if (vltClass == null) throw new CommandExecutionException("GetField() was given a null VltClass!");
 
-            if (vltClass.TryGetField(fieldName, out var field)) return field;
+            var cacheKey = $"{vltClass.Name}_{fieldName}";
 
-            throw new CommandExecutionException($"Cannot find field: {vltClass.Name}[{fieldName}]");
+            if (_fieldCache.TryGetValue(cacheKey, out var cachedField)) return cachedField;
+
+            return _fieldCache[cacheKey] = vltClass.FindField(fieldName);
         }
 
         /// <summary>
