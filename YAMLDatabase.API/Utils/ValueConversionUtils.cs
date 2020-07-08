@@ -42,9 +42,7 @@ namespace YAMLDatabase.API.Utils
         private static VLTBaseType DoPrimitiveConversion(PrimitiveTypeBase primitiveTypeBase, string str,
             Type conversionType)
         {
-            if (conversionType.IsEnum)
-                primitiveTypeBase.SetValue((IConvertible) Enum.Parse(conversionType, str));
-            else
+            if (!conversionType.IsEnum)
                 try
                 {
                     primitiveTypeBase.SetValue(
@@ -55,6 +53,8 @@ namespace YAMLDatabase.API.Utils
                     throw new ValueConversionException($"Failed to parse value [{str}] as type {conversionType}",
                         e);
                 }
+            else
+                primitiveTypeBase.SetValue((IConvertible) Enum.Parse(conversionType, str));
 
             return primitiveTypeBase;
         }

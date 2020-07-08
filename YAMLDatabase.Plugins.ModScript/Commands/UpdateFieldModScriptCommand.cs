@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using VaultLib.Core;
 using VaultLib.Core.Types;
 using VaultLib.Core.Types.Abstractions;
 using VaultLib.Core.Types.Attrib.Types;
@@ -140,7 +141,7 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
                         if (newValue == null)
                         {
                             if (propertyInfo.PropertyType.IsSubclassOf(typeof(VLTBaseType)))
-                                newValue = Activator.CreateInstance(propertyInfo.PropertyType, collection.Class,
+                                newValue = TypeRegistry.ConstructInstance(propertyInfo.PropertyType, collection.Class,
                                     field, collection);
                             else
                                 newValue = Activator.CreateInstance(propertyInfo.PropertyType);

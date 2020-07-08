@@ -49,11 +49,12 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
                 throw new CommandExecutionException("failed to determine vault to insert new collection into");
 
             var newNode = databaseHelper.AddCollection(addToVault, ClassName, CollectionName, parentCollection);
+            var vltClass = newNode.Class;
 
-            foreach (var baseField in newNode.Class.BaseFields)
+            foreach (var baseField in vltClass.BaseFields)
             {
-                var vltBaseType = TypeRegistry.CreateInstance(databaseHelper.Database.Options.GameId, newNode.Class,
-                    newNode.Class[baseField.Key],
+                var vltBaseType = TypeRegistry.CreateInstance(databaseHelper.Database.Options.GameId, vltClass,
+                    baseField,
                     newNode);
 
                 if (vltBaseType is VLTArrayType array)
@@ -61,18 +62,17 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
                     array.Capacity = baseField.MaxCount;
                     array.ItemAlignment = baseField.Alignment;
                     array.FieldSize = baseField.Size;
-                    array.Items = new List<VLTBaseType>();
+                    var itemType = array.ItemType;
 
                     for (var i = 0; i < array.Capacity; i++)
-                        array.Items.Add(TypeRegistry.ConstructInstance(array.ItemType, newNode.Class, baseField,
-                            newNode));
+                        array.Items.Add(TypeRegistry.ConstructInstance(itemType, vltClass, baseField, newNode));
                 }
 
                 newNode.SetRawValue(baseField.Name,
                     vltBaseType);
             }
 
-            if (newNode.Class.HasField("CollectionName")) newNode.SetDataValue("CollectionName", CollectionName);
+            if (vltClass.HasField("CollectionName")) newNode.SetDataValue("CollectionName", CollectionName);
         }
     }
 }
