@@ -74,7 +74,8 @@ namespace YAMLDatabase.Plugins.ModScript
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError(e, "Failed to execute script command: {Line}", command.Line);
+                    _logger.LogError(e, "Failed to execute script command at line {LineNumber}: {Line}",
+                        command.LineNumber, command.Line);
                     return Task.FromResult(1);
                 }
 
