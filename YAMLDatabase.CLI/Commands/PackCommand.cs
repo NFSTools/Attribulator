@@ -121,34 +121,42 @@ namespace YAMLDatabase.CLI.Commands
                 fileNamesToCompile = new ConcurrentBag<string>(dbInfo.Files.Select(f => f.Name));
             }
 
-            var database = new Database(new DatabaseOptions(profile.GetGameId(), profile.GetDatabaseType()));
-            _logger.LogInformation("Loading database from disk...");
-            var files = (await storageFormat.DeserializeAsync(InputDirectory, database, fileNamesToCompile)).ToList();
-            _logger.LogInformation("Loaded database");
-            _logger.LogInformation("Saving files...");
-            var filesToCompile = files.Where(loadedFile => fileNamesToCompile.Contains(loadedFile.Name)).ToList();
-            profile.SaveFiles(database, OutputDirectory, filesToCompile);
-
-            if (UseCache)
+            if (fileNamesToCompile.Count > 0)
             {
-                _logger.LogInformation("Writing cache...");
-                Directory.CreateDirectory(dbInternalPath);
+                var database = new Database(new DatabaseOptions(profile.GetGameId(), profile.GetDatabaseType()));
+                _logger.LogInformation("Loading database from disk...");
+                var files =
+                    (await storageFormat.DeserializeAsync(InputDirectory, database, fileNamesToCompile)).ToList();
+                _logger.LogInformation("Loaded database");
+                _logger.LogInformation("Saving files...");
+                var filesToCompile = files.Where(loadedFile => fileNamesToCompile.Contains(loadedFile.Name)).ToList();
+                profile.SaveFiles(database, OutputDirectory, filesToCompile);
 
-                var vaultFileMap = new Dictionary<string, string>();
-
-                foreach (var file in files)
-                foreach (var vault in file.Vaults)
-                    vaultFileMap[vault.Name] = file.Name;
-
-                foreach (var f in filesToCompile)
+                if (UseCache)
                 {
-                    var cacheKey = $"{f.Group}_{f.Name}";
-                    var cacheEntry = cache.FindEntry(cacheKey);
-                    cacheEntry.Dependencies = ComputeDependencies(vaultFileMap, f, database);
-                }
+                    _logger.LogInformation("Writing cache...");
+                    Directory.CreateDirectory(dbInternalPath);
 
-                cache.LastUpdated = DateTimeOffset.Now;
-                await File.WriteAllTextAsync(cacheFilePath, JsonConvert.SerializeObject(cache));
+                    var vaultFileMap = new Dictionary<string, string>();
+
+                    foreach (var file in files)
+                    foreach (var vault in file.Vaults)
+                        vaultFileMap[vault.Name] = file.Name;
+
+                    foreach (var f in filesToCompile)
+                    {
+                        var cacheKey = $"{f.Group}_{f.Name}";
+                        var cacheEntry = cache.FindEntry(cacheKey);
+                        cacheEntry.Dependencies = ComputeDependencies(vaultFileMap, f, database);
+                    }
+
+                    cache.LastUpdated = DateTimeOffset.Now;
+                    await File.WriteAllTextAsync(cacheFilePath, JsonConvert.SerializeObject(cache));
+                }
+            }
+            else
+            {
+                _logger.LogInformation("Binaries are up-to-date.");
             }
 
             _logger.LogInformation("Done!");
