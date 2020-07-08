@@ -13,6 +13,11 @@ namespace YAMLDatabase.ModScript.API
         public string Line { get; set; }
 
         /// <summary>
+        ///     Gets or sets the command line number.
+        /// </summary>
+        public long LineNumber { get; set; }
+
+        /// <summary>
         ///     Parses the given command tokens.
         /// </summary>
         /// <param name="parts">The tokens to be parsed.</param>

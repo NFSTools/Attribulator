@@ -12,6 +12,7 @@ namespace YAMLDatabase.ModScript.API
     public abstract class BaseModScriptCommand : IModScriptCommand
     {
         public string Line { get; set; }
+        public long LineNumber { get; set; }
 
         /// <inheritdoc />
         public abstract void Parse(List<string> parts);

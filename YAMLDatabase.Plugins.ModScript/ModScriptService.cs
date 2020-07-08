@@ -12,8 +12,10 @@ namespace YAMLDatabase.Plugins.ModScript
 
         public IEnumerable<IModScriptCommand> ParseCommands(IEnumerable<string> commands)
         {
+            var lineNumber = 0L;
             foreach (var command in commands.Select(s => s.Trim()))
             {
+                lineNumber++;
                 if (string.IsNullOrEmpty(command)) continue;
                 if (command.StartsWith("#", StringComparison.Ordinal)) continue;
 
@@ -34,13 +36,14 @@ namespace YAMLDatabase.Plugins.ModScript
                 if (_commandMappings.TryGetValue(parts[0], out var creator))
                 {
                     var newCommand = creator(command);
+                    newCommand.LineNumber = lineNumber;
                     newCommand.Parse(parts);
 
                     yield return newCommand;
                 }
                 else
                 {
-                    throw new CommandParseException($"Unknown command: {parts[0]}");
+                    throw new CommandParseException($"Unknown command: {parts[0]} (line {lineNumber} [{command}])");
                 }
             }
         }
