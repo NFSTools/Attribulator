@@ -340,6 +340,7 @@ namespace YAMLDatabase.Plugins.YAMLSupport
             var files = Directory.GetFiles(path, "*.*", SearchOption.AllDirectories)
                 .OrderBy(p => p).ToList();
 
+            if (files.Count <= 0) return string.Empty;
             var md5 = MD5.Create();
 
             for (var i = 0; i < files.Count; i++)
