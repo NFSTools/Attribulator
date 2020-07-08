@@ -7,7 +7,7 @@
         <Platforms>x86</Platforms>
         <Product>YAMLDatabase - YAML Support</Product>
         <TargetFramework>netcoreapp3.1</TargetFramework>
-        <Version>2.0.0-beta1</Version>
+        <Version>2.0.0-beta2</Version>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
 
