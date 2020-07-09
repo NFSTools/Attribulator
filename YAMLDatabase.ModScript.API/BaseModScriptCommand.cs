@@ -45,9 +45,10 @@ namespace YAMLDatabase.ModScript.API
 
             var collection = database.FindCollectionByName(className, collectionName);
 
-            if (collection == null && throwOnMissing)
+            if (collection != null) return collectionDict[collectionName] = collection;
+            if (throwOnMissing)
                 throw new CommandExecutionException($"Cannot find collection: {className}/{collectionName}");
-            return collectionDict[collectionName] = collection;
+            return null;
         }
 
         /// <summary>
