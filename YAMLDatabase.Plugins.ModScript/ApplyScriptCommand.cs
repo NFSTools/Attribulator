@@ -120,7 +120,7 @@ namespace YAMLDatabase.Plugins.ModScript
 
             overallStopwatch.Stop();
             var totalCommandsPerSecond =
-                (ulong) (totalCommands / (overallStopwatch.Elapsed.TotalMilliseconds / 1000.0));
+                (ulong) (totalCommands / (totalMilliseconds / 1000.0));
 
             _logger.LogInformation(
                 "Completed in {OverallTimeInMilliseconds}ms ({OverallDuration}).", overallStopwatch.ElapsedMilliseconds,
