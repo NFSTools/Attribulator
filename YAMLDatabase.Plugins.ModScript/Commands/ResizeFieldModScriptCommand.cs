@@ -38,10 +38,6 @@ namespace YAMLDatabase.Plugins.ModScript.Commands
                 throw new CommandExecutionException(
                     $"Cannot resize field {ClassName}[{FieldName}] beyond maximum count (requested {NewCapacity} but limit is {field.MaxCount})");
 
-            if (!collection.HasEntry(FieldName))
-                throw new CommandExecutionException(
-                    $"Collection {collection.ShortPath} does not have an entry for {FieldName}.");
-
             var array = collection.GetRawValue<VLTArrayType>(FieldName);
 
             if (NewCapacity < array.Items.Count)
