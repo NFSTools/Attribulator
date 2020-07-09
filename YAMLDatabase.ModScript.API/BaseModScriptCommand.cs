@@ -11,11 +11,11 @@ namespace YAMLDatabase.ModScript.API
     /// </summary>
     public abstract class BaseModScriptCommand : IModScriptCommand
     {
-        private static readonly Dictionary<string, Dictionary<string, VltClassField>>
-            FieldCache = new Dictionary<string, Dictionary<string, VltClassField>>();
+        private static readonly Dictionary<(string, string), VltClassField>
+            FieldCache = new Dictionary<(string, string), VltClassField>();
 
-        private static readonly Dictionary<string, Dictionary<string, VltCollection>> CollectionCache =
-            new Dictionary<string, Dictionary<string, VltCollection>>();
+        private static readonly Dictionary<(string, string), VltCollection> CollectionCache =
+            new Dictionary<(string, string), VltCollection>();
 
         public string Line { get; set; }
         public long LineNumber { get; set; }
@@ -38,14 +38,12 @@ namespace YAMLDatabase.ModScript.API
         protected static VltCollection GetCollection(DatabaseHelper database, string className, string collectionName,
             bool throwOnMissing = true)
         {
-            if (!CollectionCache.TryGetValue(className, out var collectionDict))
-                collectionDict = CollectionCache[className] = new Dictionary<string, VltCollection>();
+            if (CollectionCache.TryGetValue((className, collectionName), out var collection)) return collection;
 
-            if (collectionDict.TryGetValue(collectionName, out var cachedCollection)) return cachedCollection;
+            collection = database.FindCollectionByName(className, collectionName);
 
-            var collection = database.FindCollectionByName(className, collectionName);
+            if (collection != null) return CollectionCache[(className, collectionName)] = collection;
 
-            if (collection != null) return collectionDict[collectionName] = collection;
             if (throwOnMissing)
                 throw new CommandExecutionException($"Cannot find collection: {className}/{collectionName}");
             return null;
@@ -62,12 +60,9 @@ namespace YAMLDatabase.ModScript.API
         {
             if (vltClass == null) throw new CommandExecutionException("GetField() was given a null VltClass!");
 
-            if (!FieldCache.TryGetValue(vltClass.Name, out var fieldDict))
-                fieldDict = FieldCache[vltClass.Name] = new Dictionary<string, VltClassField>();
+            if (FieldCache.TryGetValue((vltClass.Name, fieldName), out var field)) return field;
 
-            if (fieldDict.TryGetValue(fieldName, out var cachedField)) return cachedField;
-
-            return fieldDict[fieldName] = vltClass.FindField(fieldName);
+            return FieldCache[(vltClass.Name, fieldName)] = vltClass.FindField(fieldName);
         }
 
         /// <summary>
@@ -86,7 +81,7 @@ namespace YAMLDatabase.ModScript.API
 
         protected static void RemoveCollectionFromCache(VltCollection vltCollection)
         {
-            if (CollectionCache.TryGetValue(vltCollection.Class.Name, out var cache)) cache.Remove(vltCollection.Name);
+            CollectionCache.Remove((vltCollection.Class.Name, vltCollection.Name));
         }
     }
 }
