@@ -1,0 +1,61 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29728.190
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Attribulator.CLI", "Attribulator.CLI\Attribulator.CLI.csproj", "{D6E79A48-C05E-4881-8536-97260CAEF4D4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Attribulator.Plugins.ModScript", "Attribulator.Plugins.ModScript\Attribulator.Plugins.ModScript.csproj", "{37C10CE0-6137-4DF7-81FE-384F38BCE63F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Attribulator.API", "Attribulator.API\Attribulator.API.csproj", "{4498502A-E599-4E79-BB21-003D1F1858BB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Attribulator.Plugins.SpeedProfiles", "Attribulator.Plugins.SpeedProfiles\Attribulator.Plugins.SpeedProfiles.csproj", "{25144B8B-69D6-4AE9-865D-C82035F4D05D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Attribulator.Plugins.YAMLSupport", "Attribulator.Plugins.YAMLSupport\Attribulator.Plugins.YAMLSupport.csproj", "{7BA487BA-D629-4732-A5D2-F1C32BDB5882}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Attribulator.ModScript.API", "Attribulator.ModScript.API\Attribulator.ModScript.API.csproj", "{2C4AFABD-4592-4453-A7B5-092639D55707}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Attribulator.Plugins.BPSupport", "Attribulator.Plugins.BPSupport\Attribulator.Plugins.BPSupport.csproj", "{A1CACD2C-9D85-4372-89E5-A22C2D1ACCFC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D6E79A48-C05E-4881-8536-97260CAEF4D4}.Debug|x86.ActiveCfg = Debug|x86
+		{D6E79A48-C05E-4881-8536-97260CAEF4D4}.Debug|x86.Build.0 = Debug|x86
+		{D6E79A48-C05E-4881-8536-97260CAEF4D4}.Release|x86.ActiveCfg = Release|x86
+		{D6E79A48-C05E-4881-8536-97260CAEF4D4}.Release|x86.Build.0 = Release|x86
+		{4498502A-E599-4E79-BB21-003D1F1858BB}.Debug|x86.ActiveCfg = Debug|x86
+		{4498502A-E599-4E79-BB21-003D1F1858BB}.Debug|x86.Build.0 = Debug|x86
+		{4498502A-E599-4E79-BB21-003D1F1858BB}.Release|x86.ActiveCfg = Release|x86
+		{4498502A-E599-4E79-BB21-003D1F1858BB}.Release|x86.Build.0 = Release|x86
+		{37C10CE0-6137-4DF7-81FE-384F38BCE63F}.Debug|x86.ActiveCfg = Debug|x86
+		{37C10CE0-6137-4DF7-81FE-384F38BCE63F}.Debug|x86.Build.0 = Debug|x86
+		{37C10CE0-6137-4DF7-81FE-384F38BCE63F}.Release|x86.ActiveCfg = Release|x86
+		{37C10CE0-6137-4DF7-81FE-384F38BCE63F}.Release|x86.Build.0 = Release|x86
+		{25144B8B-69D6-4AE9-865D-C82035F4D05D}.Debug|x86.ActiveCfg = Debug|x86
+		{25144B8B-69D6-4AE9-865D-C82035F4D05D}.Debug|x86.Build.0 = Debug|x86
+		{25144B8B-69D6-4AE9-865D-C82035F4D05D}.Release|x86.ActiveCfg = Release|x86
+		{25144B8B-69D6-4AE9-865D-C82035F4D05D}.Release|x86.Build.0 = Release|x86
+		{7BA487BA-D629-4732-A5D2-F1C32BDB5882}.Debug|x86.ActiveCfg = Debug|x86
+		{7BA487BA-D629-4732-A5D2-F1C32BDB5882}.Debug|x86.Build.0 = Debug|x86
+		{7BA487BA-D629-4732-A5D2-F1C32BDB5882}.Release|x86.ActiveCfg = Release|x86
+		{7BA487BA-D629-4732-A5D2-F1C32BDB5882}.Release|x86.Build.0 = Release|x86
+		{2C4AFABD-4592-4453-A7B5-092639D55707}.Debug|x86.ActiveCfg = Debug|x86
+		{2C4AFABD-4592-4453-A7B5-092639D55707}.Debug|x86.Build.0 = Debug|x86
+		{2C4AFABD-4592-4453-A7B5-092639D55707}.Release|x86.ActiveCfg = Release|x86
+		{2C4AFABD-4592-4453-A7B5-092639D55707}.Release|x86.Build.0 = Release|x86
+		{A1CACD2C-9D85-4372-89E5-A22C2D1ACCFC}.Debug|x86.ActiveCfg = Debug|x86
+		{A1CACD2C-9D85-4372-89E5-A22C2D1ACCFC}.Debug|x86.Build.0 = Debug|x86
+		{A1CACD2C-9D85-4372-89E5-A22C2D1ACCFC}.Release|x86.ActiveCfg = Release|x86
+		{A1CACD2C-9D85-4372-89E5-A22C2D1ACCFC}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2FA33738-5C31-4F3F-AB6F-1C3473088D2E}
+	EndGlobalSection
+EndGlobal
