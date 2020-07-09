@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Attribulator.ModScript.API;
-using VaultLib.Core;
 
 namespace Attribulator.Plugins.ModScript.Commands
 {
@@ -25,15 +23,11 @@ namespace Attribulator.Plugins.ModScript.Commands
         public override void Execute(DatabaseHelper databaseHelper)
         {
             var collection = GetCollection(databaseHelper, ClassName, CollectionName);
-            Vault vault;
+            var vault = databaseHelper.Database.Vaults.Find(v => v.Name == VaultName);
 
-            try
+            if (vault == null)
             {
-                vault = databaseHelper.Database.FindVault(VaultName);
-            }
-            catch (InvalidOperationException e)
-            {
-                throw new CommandExecutionException($"Cannot find vault '{VaultName}'", e);
+                throw new CommandExecutionException($"Cannot find vault: {VaultName}");
             }
 
             collection.SetVault(vault);
