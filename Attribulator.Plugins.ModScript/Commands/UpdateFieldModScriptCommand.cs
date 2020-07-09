@@ -33,16 +33,24 @@ namespace Attribulator.Plugins.ModScript.Commands
             FieldName = parts[3];
             PropertyPath = new List<string>();
 
-            if (FieldName.Contains('['))
-            {
-                var split = FieldName.Split(new[] {'[', ']'}, StringSplitOptions.RemoveEmptyEntries);
-                if (split[1] == "^")
-                    ArrayIndex = -1;
-                else
-                    ArrayIndex = int.Parse(split[1]);
-                FieldName = split[0];
-            }
+            var split = FieldName.Split(new[] {'[', ']'}, StringSplitOptions.RemoveEmptyEntries);
 
+            switch (split.Length)
+            {
+                case 2:
+                    if (split[1] == "^")
+                        ArrayIndex = -1;
+                    else
+                        ArrayIndex = int.Parse(split[1]);
+                    FieldName = split[0];
+                    break;
+                case 1:
+                    FieldName = split[0];
+                    break;
+                default:
+                    throw new CommandParseException("Badly malformed update_field command...");
+            }
+ 
             FieldName = CleanHashString(FieldName);
 
             if (parts.Count > 5)
