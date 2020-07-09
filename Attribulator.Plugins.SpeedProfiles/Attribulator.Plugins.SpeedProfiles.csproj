@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <Authors>heyitsleo/NFSTools</Authors>
+        <Company>NFSTools</Company>
+        <Description>Plugin providing profiles for the Speed engine games</Description>
+        <Platforms>x86</Platforms>
+        <Product>Attribulator - Speed Profiles</Product>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <Version>2.0.0-beta2</Version>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="VaultLib.Core" Version="1.1.3" />
+        <PackageReference Include="VaultLib.Support.Carbon" Version="1.1.2" />
+        <PackageReference Include="VaultLib.Support.MostWanted" Version="1.1.2" />
+        <PackageReference Include="VaultLib.Support.ProStreet" Version="1.1.2" />
+        <PackageReference Include="VaultLib.Support.Undercover" Version="1.1.2" />
+        <PackageReference Include="VaultLib.Support.World" Version="1.1.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="Resources\hashes.txt">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Attribulator.API\Attribulator.API.csproj" />
+    </ItemGroup>
+
+</Project>

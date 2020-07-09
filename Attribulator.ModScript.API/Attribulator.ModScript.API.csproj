@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <Authors>heyitsleo/NFSTools</Authors>
+        <Company>NFSTools</Company>
+        <Description>ModScript API for Attribulator</Description>
+        <Platforms>x86</Platforms>
+        <Product>Attribulator - ModScript API</Product>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <Version>2.0.0-beta2</Version>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Attribulator.API\Attribulator.API.csproj" />
+    </ItemGroup>
+
+</Project>
