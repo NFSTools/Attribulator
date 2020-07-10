@@ -14,6 +14,15 @@ namespace Attribulator.API.Utils
     {
         private static readonly Dictionary<Type, Type> TypeCache = new Dictionary<Type, Type>();
 
+        private static readonly Dictionary<Type, Func<string, IConvertible>> ConverterMap =
+            new Dictionary<Type, Func<string, IConvertible>>
+            {
+                {typeof(int), s => int.Parse(s, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture)},
+                {typeof(uint), s => uint.Parse(s, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture)},
+                {typeof(long), s => long.Parse(s, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture)},
+                {typeof(ulong), s => ulong.Parse(s, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture)},
+            };
+
         public static VLTBaseType DoPrimitiveConversion(PrimitiveTypeBase primitiveTypeBase, string str)
         {
             var type = primitiveTypeBase.GetType();
@@ -45,8 +54,22 @@ namespace Attribulator.API.Utils
             if (!conversionType.IsEnum)
                 try
                 {
-                    primitiveTypeBase.SetValue(
-                        (IConvertible) Convert.ChangeType(str, conversionType, CultureInfo.InvariantCulture));
+                    if (str.StartsWith("0x", StringComparison.Ordinal))
+                    {
+                        primitiveTypeBase.SetValue(ConverterMap[conversionType](str.Substring(2)));
+                    }
+                    else
+                    {
+                        if (conversionType != typeof(string))
+                        {
+                            primitiveTypeBase.SetValue(
+                                (IConvertible) Convert.ChangeType(str, conversionType, CultureInfo.InvariantCulture));
+                        }
+                        else
+                        {
+                            primitiveTypeBase.SetValue(str);
+                        }
+                    }
                 }
                 catch (Exception e)
                 {
@@ -67,21 +90,25 @@ namespace Attribulator.API.Utils
 
             var type = value.GetType();
 
+            if (type == typeof(string))
+                return str;
+            
             if (type == typeof(uint))
             {
                 if (str.StartsWith("0x", StringComparison.Ordinal))
                     return uint.Parse(str.Substring(2), NumberStyles.AllowHexSpecifier);
-                if (!uint.TryParse(str, out _))
-                    return VLT32Hasher.Hash(str);
+                return !uint.TryParse(str, out var val) ? VLT32Hasher.Hash(str) : val;
             }
-            else if (type == typeof(int))
+
+            if (type == typeof(int))
             {
                 if (str.StartsWith("0x", StringComparison.Ordinal))
                     return int.Parse(str.Substring(2), NumberStyles.AllowHexSpecifier);
-                if (!uint.TryParse(str, out _))
+                if (!uint.TryParse(str, out var val))
                     return unchecked((int) VLT32Hasher.Hash(str));
+                return val;
             }
-
+            
             return type.IsEnum ? Enum.Parse(type, str) : Convert.ChangeType(str, type, CultureInfo.InvariantCulture);
         }
     }
