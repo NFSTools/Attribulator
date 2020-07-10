@@ -37,6 +37,7 @@ namespace Attribulator.Plugins.ModScript
             _modScriptService.RegisterCommand<DeleteFieldModScriptCommand>("delete_field");
             _modScriptService.RegisterCommand<RenameNodeModScriptCommand>("rename_node");
             _modScriptService.RegisterCommand<MoveNodeModScriptCommand>("move_node");
+            _modScriptService.RegisterCommand<OverwriteNodeModScriptCommand>("overwrite_node");
         }
     }
 }
