@@ -9,10 +9,7 @@ namespace Attribulator.Plugins.ModScript.Commands
         {
             var existingCollection = GetCollection(databaseHelper, ClassName, CollectionName, false);
             if (existingCollection != null)
-            {
-                databaseHelper.RemoveCollection(existingCollection);
-                RemoveCollectionFromCache(existingCollection);
-            }
+                databaseHelper.RemoveCollection(existingCollection).ForEach(RemoveCollectionFromCache);
 
             base.Execute(databaseHelper);
         }

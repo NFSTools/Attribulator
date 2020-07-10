@@ -20,8 +20,7 @@ namespace Attribulator.Plugins.ModScript.Commands
         {
             var collection = GetCollection(databaseHelper, ClassName, CollectionName);
 
-            databaseHelper.RemoveCollection(collection);
-            RemoveCollectionFromCache(collection);
+            databaseHelper.RemoveCollection(collection).ForEach(RemoveCollectionFromCache);
         }
     }
 }
