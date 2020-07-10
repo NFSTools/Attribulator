@@ -71,16 +71,21 @@ namespace Attribulator.ModScript.API
             Collections.Add(collection.ShortPath, collection);
         }
 
-        public void RemoveCollection(VltCollection collection)
+        public List<VltCollection> RemoveCollection(VltCollection collection)
         {
+            var removed = new List<VltCollection> {collection};
+
             // Disassociate children
             var hasParent = collection.Parent != null;
             collection.Parent?.RemoveChild(collection);
             Collections.Remove(collection.ShortPath);
 
-            foreach (var collectionChild in collection.Children.ToList()) RemoveCollection(collectionChild);
+            foreach (var collectionChild in collection.Children.ToList())
+                removed.AddRange(RemoveCollection(collectionChild));
 
             if (!hasParent) Database.RowManager.RemoveCollection(collection);
+
+            return removed;
         }
     }
 }
