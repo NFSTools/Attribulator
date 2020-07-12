@@ -38,6 +38,7 @@ namespace Attribulator.Plugins.ModScript
             _modScriptService.RegisterCommand<RenameNodeModScriptCommand>("rename_node");
             _modScriptService.RegisterCommand<MoveNodeModScriptCommand>("move_node");
             _modScriptService.RegisterCommand<OverwriteNodeModScriptCommand>("overwrite_node");
+            _modScriptService.RegisterCommand<CopyOverwriteModScriptCommand>("copy_overwrite");
         }
     }
 }
