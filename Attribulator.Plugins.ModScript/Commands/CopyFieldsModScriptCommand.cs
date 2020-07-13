@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Attribulator.ModScript.API;
-using Attribulator.Plugins.ModScript.Utils;
+using Attribulator.ModScript.API.Utils;
 using VaultLib.Core.Data;
 using VaultLib.Core.Types;
 

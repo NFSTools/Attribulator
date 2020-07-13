@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Reflection;
 using Attribulator.API.Utils;
 using Attribulator.ModScript.API;
-using VaultLib.Core;
+using Attribulator.ModScript.API.Utils;
 using VaultLib.Core.Types;
 using VaultLib.Core.Types.Abstractions;
 using VaultLib.Core.Types.Attrib.Types;
@@ -50,7 +49,7 @@ namespace Attribulator.Plugins.ModScript.Commands
                 default:
                     throw new CommandParseException("Badly malformed update_field command...");
             }
- 
+
             FieldName = CleanHashString(FieldName);
 
             if (parts.Count > 5)
@@ -119,50 +118,12 @@ namespace Attribulator.Plugins.ModScript.Commands
                 }
                 else
                 {
-                    object valueToEdit = itemToEdit;
-                    PropertyInfo propertyInfo = null;
-                    for (var i = 0; i < PropertyPath.Count; i++)
-                    {
-                        if (valueToEdit is BaseRefSpec)
-                            PropertyPath[i] = PropertyPath[i] switch
-                            {
-                                "Collection" => "CollectionKey",
-                                "Class" => "ClassKey",
-                                _ => PropertyPath[i]
-                            };
+                    var parsedProperties = PropertyUtils.ParsePath(PropertyPath).ToList();
+                    var modifyValue = PropertyUtils.GetValue(itemToEdit, field, collection, parsedProperties);
 
-                        propertyInfo = valueToEdit.GetType()
-                            .GetProperty(PropertyPath[i], BindingFlags.Instance | BindingFlags.Public);
-
-                        if (propertyInfo == null)
-                            throw new CommandExecutionException(
-                                $"{itemToEdit.GetType()}[{PropertyPath[i]}] does not exist");
-
-                        if (!(propertyInfo.SetMethod?.IsPublic ?? false))
-                            throw new CommandExecutionException(
-                                $"{itemToEdit.GetType()}[{PropertyPath[i]}] is read-only");
-
-                        if (i == PropertyPath.Count - 1) break;
-
-                        var newValue = propertyInfo.GetValue(valueToEdit);
-
-                        if (newValue == null)
-                        {
-                            if (propertyInfo.PropertyType.IsSubclassOf(typeof(VLTBaseType)))
-                                newValue = TypeRegistry.ConstructInstance(propertyInfo.PropertyType, collection.Class,
-                                    field, collection);
-                            else
-                                newValue = Activator.CreateInstance(propertyInfo.PropertyType);
-
-                            propertyInfo.SetValue(valueToEdit, newValue);
-                        }
-
-                        valueToEdit = newValue;
-                    }
-
-                    var value = ValueConversionUtils.DoPrimitiveConversion(propertyInfo.GetValue(valueToEdit), Value);
+                    var value = ValueConversionUtils.DoPrimitiveConversion(modifyValue, Value);
                     if (value == null) throw new Exception();
-                    propertyInfo.SetValue(valueToEdit, value);
+                    PropertyUtils.SetValue(itemToEdit, field, collection, parsedProperties, value);
                 }
             }
         }

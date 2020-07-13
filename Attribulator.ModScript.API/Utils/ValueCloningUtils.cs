@@ -7,10 +7,22 @@ using VaultLib.Core.DB;
 using VaultLib.Core.Types;
 using VaultLib.Core.Types.EA.Reflection;
 
-namespace Attribulator.Plugins.ModScript.Utils
+namespace Attribulator.ModScript.API.Utils
 {
+    /// <summary>
+    ///     Exposes a utility function to clone VLT objects
+    /// </summary>
     public static class ValueCloningUtils
     {
+        /// <summary>
+        ///     Creates a complete copy of the given <see cref="VLTBaseType" /> object.
+        /// </summary>
+        /// <param name="database">The database to resolve types from.</param>
+        /// <param name="originalValue">The object to clone.</param>
+        /// <param name="vltClass">The VLT class holding the field.</param>
+        /// <param name="vltClassField">The VLT field holding the object.</param>
+        /// <param name="vltCollection">The VLT collection.</param>
+        /// <returns>A new instance of the object with all properties copied.</returns>
         public static VLTBaseType CloneValue(Database database, VLTBaseType originalValue, VltClass vltClass,
             VltClassField vltClassField,
             VltCollection vltCollection)
