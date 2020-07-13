@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using VaultLib.Core.Types;
 using VaultLib.Core.Types.Abstractions;
+using VaultLib.Core.Types.EA.Reflection;
 
 namespace Attribulator.ModScript.API.Utils
 {
@@ -108,13 +109,19 @@ namespace Attribulator.ModScript.API.Utils
                 }
                 else
                 {
-                    if (itemToExamine is BaseRefSpec)
-                        propName = propName switch
-                        {
-                            "Collection" => "CollectionKey",
-                            "Class" => "ClassKey",
-                            _ => propName
-                        };
+                    switch (itemToExamine)
+                    {
+                        case BaseRefSpec _:
+                            propName = propName switch
+                            {
+                                "Collection" => "CollectionKey",
+                                "Class" => "ClassKey",
+                                _ => propName
+                            };
+                            break;
+                        case PrimitiveTypeBase _ when propName == "Value":
+                            continue;
+                    }
 
                     propertyInfo = itemToExamine.GetType()
                         .GetProperty(propName, BindingFlags.Instance | BindingFlags.Public);
