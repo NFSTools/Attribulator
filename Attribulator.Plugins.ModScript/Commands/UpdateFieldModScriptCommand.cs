@@ -119,11 +119,13 @@ namespace Attribulator.Plugins.ModScript.Commands
                 else
                 {
                     var parsedProperties = PropertyUtils.ParsePath(PropertyPath).ToList();
-                    var modifyValue = PropertyUtils.GetValue(itemToEdit, field, collection, parsedProperties);
+                    var retrievedProperty = PropertyUtils.GetProperty(itemToEdit, parsedProperties);
+                    var retrievedValue = retrievedProperty.GetValue();
 
-                    var value = ValueConversionUtils.DoPrimitiveConversion(modifyValue, Value);
+                    var value = ValueConversionUtils.DoPrimitiveConversion(retrievedValue, Value);
                     if (value == null) throw new Exception();
-                    PropertyUtils.SetValue(itemToEdit, field, collection, parsedProperties, value);
+
+                    retrievedProperty.SetValue(value);
                 }
             }
         }

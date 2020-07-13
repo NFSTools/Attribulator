@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using VaultLib.Core;
-using VaultLib.Core.Data;
 using VaultLib.Core.Types;
 using VaultLib.Core.Types.Abstractions;
 
@@ -62,25 +60,23 @@ namespace Attribulator.ModScript.API.Utils
         }
 
         /// <summary>
-        ///     Finds the value for the given property path in the given object.
+        ///     Retrieves the relevant property for the given property path in the given object.
         /// </summary>
         /// <param name="baseObject">The object to examine</param>
         /// <param name="propertyPath">The property path</param>
         /// <returns>The value</returns>
-        public static object GetValue(VLTBaseType baseObject, VltClassField field, VltCollection collection,
-            string propertyPath)
+        public static RetrievedProperty GetProperty(VLTBaseType baseObject, string propertyPath)
         {
-            return GetValue(baseObject, field, collection, ParsePath(propertyPath));
+            return GetProperty(baseObject, ParsePath(propertyPath));
         }
 
         /// <summary>
-        ///     Finds the value for the given property path in the given object.
+        ///     Retrieves the relevant property for the given property path in the given object.
         /// </summary>
         /// <param name="baseObject">The object to examine</param>
         /// <param name="propertyPath">The parsed property path</param>
         /// <returns>The value</returns>
-        public static object GetValue(VLTBaseType baseObject, VltClassField field, VltCollection collection,
-            IEnumerable<ParsedProperty> propertyPath)
+        public static RetrievedProperty GetProperty(VLTBaseType baseObject, IEnumerable<ParsedProperty> propertyPath)
         {
             object itemToExamine = baseObject ?? throw new ArgumentNullException(nameof(baseObject));
             PropertyInfo propertyInfo = null;
@@ -88,13 +84,15 @@ namespace Attribulator.ModScript.API.Utils
             string lastPropName = null;
             for (var i = 0; i < pathList.Count; i++)
             {
+                if (itemToExamine == null) throw new CommandExecutionException("Cannot index null object");
+
                 var parsedProperty = pathList[i];
                 var propName = parsedProperty.Name;
 
                 if (propName == null)
                 {
-                    if (propertyInfo == null || itemToExamine == null)
-                        throw new CommandExecutionException("Cannot index null object");
+                    if (propertyInfo == null)
+                        throw new CommandExecutionException("PropertyInfo is null!");
 
                     if (!propertyInfo.PropertyType.IsArray)
                         throw new CommandExecutionException(
@@ -132,18 +130,6 @@ namespace Attribulator.ModScript.API.Utils
                     if (i == pathList.Count - 1) break;
                     var newItemToExamine = propertyInfo.GetValue(itemToExamine);
 
-                    if (newItemToExamine == null)
-                    {
-                        if (propertyInfo.PropertyType.IsSubclassOf(typeof(VLTBaseType)))
-                            newItemToExamine = TypeRegistry.ConstructInstance(propertyInfo.PropertyType,
-                                collection.Class,
-                                field, collection);
-                        else
-                            newItemToExamine = Activator.CreateInstance(propertyInfo.PropertyType);
-
-                        propertyInfo.SetValue(itemToExamine, newItemToExamine);
-                    }
-
                     if (parsedProperty.HasIndex)
                     {
                         if (!propertyInfo.PropertyType.IsArray)
@@ -167,104 +153,11 @@ namespace Attribulator.ModScript.API.Utils
                 }
             }
 
-            return propertyInfo?.GetValue(itemToExamine);
-        }
-
-        /// <summary>
-        ///     Modifies the value for the given property path in the given object.
-        /// </summary>
-        /// <param name="baseObject">The object to examine</param>
-        /// <param name="propertyPath">The parsed property path</param>
-        /// <param name="newValue">The new value</param>
-        public static void SetValue(VLTBaseType baseObject, VltClassField field, VltCollection collection,
-            IEnumerable<ParsedProperty> propertyPath, object newValue)
-        {
-            object itemToExamine = baseObject ?? throw new ArgumentNullException(nameof(baseObject));
-            PropertyInfo propertyInfo = null;
-            var pathList = propertyPath.ToList();
-            string lastPropName = null;
-            for (var i = 0; i < pathList.Count; i++)
+            return new RetrievedProperty
             {
-                var parsedProperty = pathList[i];
-                var propName = parsedProperty.Name;
-
-                if (propName == null)
-                {
-                    if (propertyInfo == null || itemToExamine == null)
-                        throw new CommandExecutionException("Cannot index null object");
-
-                    if (!propertyInfo.PropertyType.IsArray)
-                        throw new CommandExecutionException(
-                            $"{itemToExamine.GetType()}[{lastPropName}] is not an array.");
-
-                    var array = (Array) itemToExamine;
-
-                    if (parsedProperty.Index >= array.Length)
-                        throw new CommandExecutionException(
-                            $"{itemToExamine.GetType()}[{lastPropName}]: index out of bounds (requested {parsedProperty.Index} but there are {array.Length} elements)");
-
-                    itemToExamine = array.GetValue(parsedProperty.Index);
-                }
-                else
-                {
-                    if (itemToExamine is BaseRefSpec)
-                        propName = propName switch
-                        {
-                            "Collection" => "CollectionKey",
-                            "Class" => "ClassKey",
-                            _ => propName
-                        };
-
-                    propertyInfo = itemToExamine.GetType()
-                        .GetProperty(propName, BindingFlags.Instance | BindingFlags.Public);
-
-                    if (propertyInfo == null)
-                        throw new CommandExecutionException(
-                            $"{itemToExamine.GetType()}[{propName}] does not exist");
-
-                    if (!(propertyInfo.SetMethod?.IsPublic ?? false))
-                        throw new CommandExecutionException(
-                            $"{itemToExamine.GetType()}[{propName}] is read-only");
-
-                    if (i == pathList.Count - 1) break;
-                    var newItemToExamine = propertyInfo.GetValue(itemToExamine);
-
-                    if (newItemToExamine == null)
-                    {
-                        if (propertyInfo.PropertyType.IsSubclassOf(typeof(VLTBaseType)))
-                            newItemToExamine = TypeRegistry.ConstructInstance(propertyInfo.PropertyType,
-                                collection.Class,
-                                field, collection);
-                        else
-                            newItemToExamine = Activator.CreateInstance(propertyInfo.PropertyType);
-
-                        propertyInfo.SetValue(itemToExamine, newItemToExamine);
-                    }
-
-                    if (parsedProperty.HasIndex)
-                    {
-                        if (!propertyInfo.PropertyType.IsArray)
-                            throw new CommandExecutionException(
-                                $"{itemToExamine.GetType()}[{propName}] is not an array.");
-
-                        var array = (Array) newItemToExamine;
-
-                        if (array == null)
-                            throw new CommandExecutionException($"{itemToExamine.GetType()}[{propName}] is null.");
-
-                        if (parsedProperty.Index >= array.Length)
-                            throw new CommandExecutionException(
-                                $"{itemToExamine.GetType()}[{propName}]: index out of bounds (requested {parsedProperty.Index} but there are {array.Length} elements)");
-
-                        newItemToExamine = array.GetValue(parsedProperty.Index);
-                    }
-
-                    itemToExamine = newItemToExamine;
-                    lastPropName = propName;
-                }
-            }
-
-            propertyInfo?.SetValue(itemToExamine, newValue);
+                PropertyInfo = propertyInfo,
+                TargetObject = itemToExamine
+            };
         }
 
         public struct ParsedProperty
@@ -272,6 +165,22 @@ namespace Attribulator.ModScript.API.Utils
             public string Name;
             public ushort Index;
             public bool HasIndex;
+        }
+
+        public struct RetrievedProperty
+        {
+            public PropertyInfo PropertyInfo;
+            public object TargetObject;
+
+            public object GetValue()
+            {
+                return PropertyInfo.GetValue(TargetObject);
+            }
+
+            public void SetValue(object value)
+            {
+                PropertyInfo.SetValue(TargetObject, value);
+            }
         }
     }
 }
