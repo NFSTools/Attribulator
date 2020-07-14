@@ -37,7 +37,16 @@ namespace Attribulator.Plugins.ModScript
                 {
                     var newCommand = creator(command);
                     newCommand.LineNumber = lineNumber;
-                    newCommand.Parse(parts);
+
+                    try
+                    {
+                        newCommand.Parse(parts);
+                    }
+                    catch (CommandParseException exception)
+                    {
+                        throw new CommandParseException($"Failed to parse command at line {lineNumber}: {command}",
+                            exception);
+                    }
 
                     yield return newCommand;
                 }
