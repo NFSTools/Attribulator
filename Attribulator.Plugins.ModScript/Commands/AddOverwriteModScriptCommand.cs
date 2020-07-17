@@ -2,8 +2,8 @@
 
 namespace Attribulator.Plugins.ModScript.Commands
 {
-    // overwrite_node class parentNode nodeName
-    public class OverwriteNodeModScriptCommand : AddNodeModScriptCommand
+    // add_overwrite class parentNode nodeName
+    public class AddOverwriteModScriptCommand : AddNodeModScriptCommand
     {
         public override void Execute(DatabaseHelper databaseHelper)
         {
