@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -11,7 +10,6 @@ using System.Threading.Tasks;
 using Attribulator.API.Data;
 using Attribulator.API.Serialization;
 using Attribulator.API.Utils;
-using CoreLibraries.GameUtilities;
 using VaultLib.Core;
 using VaultLib.Core.Data;
 using VaultLib.Core.DB;
@@ -26,7 +24,6 @@ namespace Attribulator.Plugins.YAMLSupport
     /// <summary>
     ///     Implements the YAML storage format.
     /// </summary>
-    /// TODO: This is in DESPERATE need of refactoring. Storage code needs to be as unified as possible.
     public class YamlStorageFormat : BaseStorageFormat
     {
         public override SerializedDatabaseInfo LoadInfo(string sourceDirectory)
@@ -35,206 +32,6 @@ namespace Attribulator.Plugins.YAMLSupport
 
             using var dbs = new StreamReader(Path.Combine(sourceDirectory, "info.yml"));
             return deserializer.Deserialize<SerializedDatabaseInfo>(dbs);
-        }
-
-        public override async Task<IEnumerable<LoadedFile>> DeserializeAsync(string sourceDirectory,
-            Database destinationDatabase,
-            IEnumerable<string> fileNames = null)
-        {
-            var loadedFiles = new List<LoadedFile>();
-            var loadedDatabase = LoadInfo(sourceDirectory);
-            var isX86 = destinationDatabase.Options.Type == DatabaseType.X86Database;
-            var fileNameList = fileNames?.ToList() ?? new List<string>();
-
-            if (string.IsNullOrEmpty(loadedDatabase.PrimaryVaultName))
-                throw new Exception("No primary vault name has been specified.");
-
-            foreach (var loadedDatabaseClass in loadedDatabase.Classes)
-            {
-                var vltClass = new VltClass(loadedDatabaseClass.Name);
-
-                foreach (var loadedDatabaseClassField in loadedDatabaseClass.Fields)
-                {
-                    var field = new VltClassField(
-                        isX86
-                            ? VLT32Hasher.Hash(loadedDatabaseClassField.Name)
-                            : VLT64Hasher.Hash(loadedDatabaseClassField.Name),
-                        loadedDatabaseClassField.Name,
-                        loadedDatabaseClassField.TypeName,
-                        loadedDatabaseClassField.Flags,
-                        loadedDatabaseClassField.Alignment,
-                        loadedDatabaseClassField.Size,
-                        loadedDatabaseClassField.MaxCount,
-                        loadedDatabaseClassField.Offset);
-                    // Handle static value
-                    if (loadedDatabaseClassField.StaticValue != null)
-                        field.StaticValue = ConvertSerializedValueToDataValue(destinationDatabase,
-                            destinationDatabase.Options.GameId, sourceDirectory,
-                            vltClass, field, null,
-                            loadedDatabaseClassField.StaticValue);
-
-                    vltClass.Fields.Add(field.Key, field);
-                }
-
-                destinationDatabase.AddClass(vltClass);
-            }
-
-            foreach (var loadedDatabaseType in loadedDatabase.Types)
-                destinationDatabase.Types.Add(new DatabaseTypeInfo
-                    {Name = loadedDatabaseType.Name, Size = loadedDatabaseType.Size});
-
-            var collectionParentDictionary = new ConcurrentDictionary<string, string>();
-            var collectionDictionary = new ConcurrentDictionary<string, VltCollection>();
-            var vaultsToSaveDictionary = new ConcurrentDictionary<string, List<Vault>>();
-            var tempCollectionListsDictionary = new ConcurrentDictionary<string, List<VltCollection>>();
-            var seenCollections = new ConcurrentDictionary<string, bool>();
-
-            void AddCollectionsToList(Vault newVault, VltClass vltClass, string vaultDirectory,
-                ICollection<VltCollection> collectionList,
-                IEnumerable<SerializedCollection> collectionsToAdd)
-            {
-                if (collectionList == null)
-                    throw new Exception("collectionList should not be null!");
-                collectionsToAdd ??= new List<SerializedCollection>();
-
-                foreach (var loadedCollection in collectionsToAdd)
-                {
-                    var newVltCollection = new VltCollection(newVault, vltClass, loadedCollection.Name);
-
-                    if (!seenCollections.TryAdd(newVltCollection.ShortPath, true))
-                        throw new Exception("Duplicate collection detected: " + newVltCollection.ShortPath);
-
-                    foreach (var (key, value) in loadedCollection.Data)
-                    {
-                        if (!vltClass.TryGetField(key, out var field))
-                            throw new Exception(
-                                $"Cannot find field: {vltClass.Name}/{key}");
-
-                        newVltCollection.SetRawValue(key,
-                            ConvertSerializedValueToDataValue(destinationDatabase,
-                                destinationDatabase.Options.GameId, vaultDirectory,
-                                vltClass, field,
-                                newVltCollection, value));
-                    }
-
-                    collectionParentDictionary[newVltCollection.ShortPath] =
-                        loadedCollection.ParentName;
-                    collectionList.Add(newVltCollection);
-                    collectionDictionary[newVltCollection.ShortPath] = newVltCollection;
-                }
-            }
-
-
-            foreach (var file in loadedDatabase.Files.Where(f => fileNames == null || fileNameList.Contains(f.Name)))
-            {
-                var baseDirectory = Path.Combine(sourceDirectory, file.Group, file.Name);
-                vaultsToSaveDictionary[file.Name] = new List<Vault>();
-
-                foreach (var vaultName in file.Vaults)
-                {
-                    var deserializer = new DeserializerBuilder().Build();
-                    var vaultDirectory = Path.Combine(baseDirectory, vaultName).Trim();
-                    var newVault = new Vault(vaultName)
-                        {Database = destinationDatabase, IsPrimaryVault = vaultName == loadedDatabase.PrimaryVaultName};
-                    if (Directory.Exists(vaultDirectory))
-                    {
-                        var collectionsToBeAdded = new List<VltCollection>();
-
-                        foreach (var dataFile in Directory.GetFiles(vaultDirectory, "*.yml"))
-                        {
-                            var className = Path.GetFileNameWithoutExtension(dataFile);
-                            var vltClass = destinationDatabase.FindClass(className);
-
-                            if (vltClass == null)
-                                throw new InvalidDataException($"Unknown class: {className} ({dataFile})");
-
-                            var collections =
-                                deserializer.Deserialize<List<SerializedCollection>>(
-                                    await File.ReadAllTextAsync(dataFile));
-
-                            foreach (var loadedCollection in collections)
-                            {
-                                loadedCollection.Name ??= "null";
-
-                                foreach (var k in loadedCollection.Data.Keys.ToList()
-                                    .Where(k => loadedCollection.Data[k] == null))
-                                    loadedCollection.Data[k] = "null";
-                            }
-
-                            var newCollections = new List<VltCollection>();
-                            AddCollectionsToList(newVault, vltClass, vaultDirectory, newCollections, collections);
-
-                            collectionsToBeAdded.AddRange(newCollections);
-                        }
-
-                        tempCollectionListsDictionary[newVault.Name] = collectionsToBeAdded;
-                    }
-                    else
-                    {
-                        Console.WriteLine("WARN: vault {0} has no folder; looked for {1}", vaultName, vaultDirectory);
-                        tempCollectionListsDictionary[vaultName] = new List<VltCollection>();
-                    }
-
-                    vaultsToSaveDictionary[file.Name].Add(newVault);
-                    destinationDatabase.Vaults.Add(newVault);
-                }
-
-                loadedFiles.Add(new LoadedFile(file.Name, file.Group, vaultsToSaveDictionary[file.Name]));
-            }
-
-            // dependency resolution
-            var resolved = new List<VaultDependencyNode>();
-            var unresolved = new List<VaultDependencyNode>();
-
-            foreach (var vault in destinationDatabase.Vaults)
-            {
-                var vaultCollections = tempCollectionListsDictionary[vault.Name];
-                var node = new VaultDependencyNode(vault);
-
-                foreach (var parentCollection in from vaultCollection in vaultCollections
-                    let parentKey = collectionParentDictionary[vaultCollection.ShortPath]
-                    where !string.IsNullOrEmpty(parentKey)
-                    select collectionDictionary[$"{vaultCollection.Class.Name}/{parentKey}"]
-                    into parentCollection
-                    where parentCollection.Vault.Name != vault.Name
-                    select parentCollection)
-                    node.AddEdge(new VaultDependencyNode(parentCollection.Vault));
-
-                ResolveDependencies(node, resolved, unresolved);
-
-                Debug.WriteLine("Vault {0}: {1} collections", vault.Name, vaultCollections.Count);
-            }
-
-            resolved = resolved.Distinct(VaultDependencyNode.VaultComparer).ToList();
-            unresolved = unresolved.Distinct(VaultDependencyNode.VaultComparer).ToList();
-
-            if (unresolved.Count != 0) throw new Exception("Cannot continue loading - unresolved vault dependencies");
-
-            foreach (var node in resolved)
-            {
-                var vault = node.Vault;
-                var vaultCollections = tempCollectionListsDictionary[vault.Name];
-
-                Debug.WriteLine("Loading collections for vault {0} ({1})", vault.Name, vaultCollections.Count);
-
-                foreach (var collection in vaultCollections)
-                {
-                    var parentKey = collectionParentDictionary[collection.ShortPath];
-
-                    if (string.IsNullOrEmpty(parentKey))
-                    {
-                        // Add collection directly
-                        destinationDatabase.RowManager.AddCollection(collection);
-                    }
-                    else
-                    {
-                        var parentCollection = collectionDictionary[$"{collection.Class.Name}/{parentKey}"];
-                        parentCollection.AddChild(collection);
-                    }
-                }
-            }
-
-            return loadedFiles;
         }
 
         public override void Serialize(Database sourceDatabase, string destinationDirectory,
@@ -332,6 +129,31 @@ namespace Attribulator.Plugins.YAMLSupport
             return File.Exists(Path.Combine(sourceDirectory, "info.yml"));
         }
 
+        protected override IEnumerable<string> GetDataFilePaths(string directory)
+        {
+            return Directory.GetFiles(directory, "*.yml");
+        }
+
+        protected override async Task<IEnumerable<SerializedCollection>> LoadDataFileAsync(string path)
+        {
+            var deserializer = new DeserializerBuilder().Build();
+            var collections =
+                deserializer.Deserialize<List<SerializedCollection>>(
+                    await File.ReadAllTextAsync(path));
+
+            // Fix false null values
+            foreach (var loadedCollection in collections)
+            {
+                loadedCollection.Name ??= "null";
+
+                foreach (var k in loadedCollection.Data.Keys.ToList()
+                    .Where(k => loadedCollection.Data[k] == null))
+                    loadedCollection.Data[k] = "null";
+            }
+
+            return collections;
+        }
+
         private void AddLoadedCollections(string directory, ICollection<SerializedCollection> loadedVaultCollections,
             IEnumerable<VltCollection> vltCollections)
         {
@@ -369,6 +191,8 @@ namespace Attribulator.Plugins.YAMLSupport
                     var listGenericType = ResolveType(array.ItemType);
                     var constructedListType = listType.MakeGenericType(listGenericType);
                     var instance = (IList) Activator.CreateInstance(constructedListType);
+
+                    if (instance == null) throw new Exception("Activator.CreateInstance returned null");
 
                     foreach (var arrayItem in array.Items)
                         instance.Add(listGenericType.IsPrimitive || listGenericType.IsEnum ||
@@ -420,20 +244,7 @@ namespace Attribulator.Plugins.YAMLSupport
             return type;
         }
 
-        private void ResolveDependencies(VaultDependencyNode node, List<VaultDependencyNode> resolved,
-            List<VaultDependencyNode> unresolved)
-        {
-            unresolved.Add(node);
-
-            foreach (var edge in node.Edges)
-                if (!resolved.Contains(edge))
-                    ResolveDependencies(edge, resolved, unresolved);
-
-            resolved.Add(node);
-            unresolved.Remove(node);
-        }
-
-        private VLTBaseType ConvertSerializedValueToDataValue(Database database, string gameId, string dir,
+        protected override VLTBaseType ConvertSerializedValueToDataValue(Database database, string gameId, string dir,
             VltClass vltClass,
             VltClassField field,
             VltCollection vltCollection, object serializedValue, bool createInstance = true)
@@ -499,7 +310,7 @@ namespace Attribulator.Plugins.YAMLSupport
             VltClassField field,
             VltCollection vltCollection, VLTArrayType array, Dictionary<object, object> dictionary)
         {
-            var capacity = ushort.Parse(dictionary["Capacity"].ToString());
+            var capacity = ushort.Parse(dictionary["Capacity"].ToString()!);
             var rawItemList = (List<object>) dictionary["Data"];
 
             if (capacity < rawItemList.Count)
@@ -617,46 +428,11 @@ namespace Attribulator.Plugins.YAMLSupport
             return value;
         }
 
+        [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
         public class SerializedArrayWrapper
         {
             public ushort Capacity { get; set; }
             public IList Data { get; set; }
-        }
-
-        public class VaultDependencyNode
-        {
-            public VaultDependencyNode(Vault vault)
-            {
-                Vault = vault;
-                Edges = new List<VaultDependencyNode>();
-            }
-
-            public static IEqualityComparer<VaultDependencyNode> VaultComparer { get; } = new VaultEqualityComparer();
-
-            public List<VaultDependencyNode> Edges { get; }
-            public Vault Vault { get; }
-
-            public void AddEdge(VaultDependencyNode node)
-            {
-                Edges.Add(node);
-            }
-
-            private sealed class VaultEqualityComparer : IEqualityComparer<VaultDependencyNode>
-            {
-                public bool Equals(VaultDependencyNode x, VaultDependencyNode y)
-                {
-                    if (ReferenceEquals(x, y)) return true;
-                    if (ReferenceEquals(x, null)) return false;
-                    if (ReferenceEquals(y, null)) return false;
-                    if (x.GetType() != y.GetType()) return false;
-                    return x.Vault.Name == y.Vault.Name;
-                }
-
-                public int GetHashCode(VaultDependencyNode obj)
-                {
-                    return obj.Vault != null ? obj.Vault.GetHashCode() : 0;
-                }
-            }
         }
     }
 }
