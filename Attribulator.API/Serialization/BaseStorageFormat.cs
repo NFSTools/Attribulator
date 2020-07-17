@@ -266,20 +266,19 @@ namespace Attribulator.API.Serialization
             VltCollection vltCollection, object serializedValue, bool createInstance = true);
 
 
-        private void ResolveDependencies(VaultDependencyNode node, List<VaultDependencyNode> resolved,
-            List<VaultDependencyNode> unresolved)
+        private static void ResolveDependencies(VaultDependencyNode node, ICollection<VaultDependencyNode> resolved,
+            ICollection<VaultDependencyNode> unresolved)
         {
             unresolved.Add(node);
 
-            foreach (var edge in node.Edges)
-                if (!resolved.Contains(edge))
-                    ResolveDependencies(edge, resolved, unresolved);
+            foreach (var edge in node.Edges.Where(edge => !resolved.Contains(edge)))
+                ResolveDependencies(edge, resolved, unresolved);
 
             resolved.Add(node);
             unresolved.Remove(node);
         }
 
-        public class VaultDependencyNode
+        private class VaultDependencyNode
         {
             public VaultDependencyNode(Vault vault)
             {
