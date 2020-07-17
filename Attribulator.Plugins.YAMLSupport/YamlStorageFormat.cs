@@ -7,8 +7,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
 using Attribulator.API.Data;
 using Attribulator.API.Serialization;
@@ -29,9 +27,9 @@ namespace Attribulator.Plugins.YAMLSupport
     ///     Implements the YAML storage format.
     /// </summary>
     /// TODO: This is in DESPERATE need of refactoring. Storage code needs to be as unified as possible.
-    public class YamlStorageFormat : IDatabaseStorageFormat
+    public class YamlStorageFormat : BaseStorageFormat
     {
-        public SerializedDatabaseInfo LoadInfo(string sourceDirectory)
+        public override SerializedDatabaseInfo LoadInfo(string sourceDirectory)
         {
             var deserializer = new DeserializerBuilder().Build();
 
@@ -39,7 +37,7 @@ namespace Attribulator.Plugins.YAMLSupport
             return deserializer.Deserialize<SerializedDatabaseInfo>(dbs);
         }
 
-        public async Task<IEnumerable<LoadedFile>> DeserializeAsync(string sourceDirectory,
+        public override async Task<IEnumerable<LoadedFile>> DeserializeAsync(string sourceDirectory,
             Database destinationDatabase,
             IEnumerable<string> fileNames = null)
         {
@@ -239,7 +237,8 @@ namespace Attribulator.Plugins.YAMLSupport
             return loadedFiles;
         }
 
-        public void Serialize(Database sourceDatabase, string destinationDirectory, IEnumerable<LoadedFile> loadedFiles)
+        public override void Serialize(Database sourceDatabase, string destinationDirectory,
+            IEnumerable<LoadedFile> loadedFiles)
         {
             var loadedFileList = loadedFiles.ToList();
             var loadedDatabase = new SerializedDatabaseInfo
@@ -318,50 +317,19 @@ namespace Attribulator.Plugins.YAMLSupport
             }
         }
 
-        public string GetFormatId()
+        public override string GetFormatId()
         {
             return "yml";
         }
 
-        public string GetFormatName()
+        public override string GetFormatName()
         {
             return "YAML";
         }
 
-        public bool CanDeserializeFrom(string sourceDirectory)
+        public override bool CanDeserializeFrom(string sourceDirectory)
         {
             return File.Exists(Path.Combine(sourceDirectory, "info.yml"));
-        }
-
-        public async ValueTask<string> ComputeHashAsync(string sourceDirectory, SerializedDatabaseFile loadedFile)
-        {
-            var path = Path.Combine(sourceDirectory, loadedFile.Group, loadedFile.Name);
-
-            // assuming you want to include nested folders
-            var files = Directory.GetFiles(path, "*.*", SearchOption.AllDirectories)
-                .OrderBy(p => p).ToList();
-
-            if (files.Count <= 0) return string.Empty;
-            var md5 = MD5.Create();
-
-            for (var i = 0; i < files.Count; i++)
-            {
-                var file = files[i];
-
-                // hash path
-                var relativePath = file.Substring(path.Length + 1);
-                var pathBytes = Encoding.UTF8.GetBytes(relativePath.ToLower());
-                md5.TransformBlock(pathBytes, 0, pathBytes.Length, pathBytes, 0);
-
-                // hash contents
-                var contentBytes = await File.ReadAllBytesAsync(file);
-                if (i == files.Count - 1)
-                    md5.TransformFinalBlock(contentBytes, 0, contentBytes.Length);
-                else
-                    md5.TransformBlock(contentBytes, 0, contentBytes.Length, contentBytes, 0);
-            }
-
-            return BitConverter.ToString(md5.Hash).Replace("-", "").ToLower();
         }
 
         private void AddLoadedCollections(string directory, ICollection<SerializedCollection> loadedVaultCollections,
