@@ -36,9 +36,13 @@ namespace Attribulator.CLI.Commands
         [UsedImplicitly]
         public string ProfileName { get; set; }
 
-        [Option('c', "cache", HelpText = "Whether to use the build cache")]
+        [Option('c', "cache", HelpText = "Enable the build cache")]
         [UsedImplicitly]
         public bool UseCache { get; set; }
+
+        [Option('b', "backup", HelpText = "Make a backup of BIN files")]
+        [UsedImplicitly]
+        public bool MakeBackup { get; set; }
 
         public override void SetServiceProvider(IServiceProvider serviceProvider)
         {
@@ -130,6 +134,15 @@ namespace Attribulator.CLI.Commands
                 _logger.LogInformation("Loaded database");
                 _logger.LogInformation("Saving files...");
                 var filesToCompile = files.Where(loadedFile => fileNamesToCompile.Contains(loadedFile.Name)).ToList();
+
+                if (MakeBackup)
+                {
+                    _logger.LogInformation("Generating backup");
+                    Directory.Move(OutputDirectory,
+                        $"{OutputDirectory.TrimEnd('/', '\\')}_{DateTimeOffset.Now.ToUnixTimeSeconds()}");
+                    Directory.CreateDirectory(OutputDirectory);
+                }
+
                 profile.SaveFiles(database, OutputDirectory, filesToCompile);
 
                 if (UseCache)
