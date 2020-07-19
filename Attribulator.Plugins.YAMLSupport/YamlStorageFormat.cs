@@ -26,6 +26,8 @@ namespace Attribulator.Plugins.YAMLSupport
     /// </summary>
     public class YamlStorageFormat : BaseStorageFormat
     {
+        private static readonly IDeserializer Deserializer = new DeserializerBuilder().Build();
+
         public override SerializedDatabaseInfo LoadInfo(string sourceDirectory)
         {
             var deserializer = new DeserializerBuilder().Build();
@@ -136,9 +138,8 @@ namespace Attribulator.Plugins.YAMLSupport
 
         protected override async Task<IEnumerable<SerializedCollection>> LoadDataFileAsync(string path)
         {
-            var deserializer = new DeserializerBuilder().Build();
             var collections =
-                deserializer.Deserialize<List<SerializedCollection>>(
+                Deserializer.Deserialize<List<SerializedCollection>>(
                     await File.ReadAllTextAsync(path));
 
             // Fix false null values
