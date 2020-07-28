@@ -42,7 +42,7 @@ namespace Attribulator.Plugins.ModScript
                     {
                         newCommand.Parse(parts);
                     }
-                    catch (CommandParseException exception)
+                    catch (Exception exception)
                     {
                         throw new CommandParseException($"Failed to parse command at line {lineNumber}: {command}",
                             exception);
