@@ -20,6 +20,9 @@ namespace Attribulator.API.Serialization
     /// </summary>
     public abstract class BaseStorageFormat : IDatabaseStorageFormat
     {
+        private static readonly Dictionary<(string, string), VltClassField> _fieldCache =
+            new Dictionary<(string, string), VltClassField>();
+
         /// <inheritdoc />
         public abstract SerializedDatabaseInfo LoadInfo(string sourceDirectory);
 
@@ -59,6 +62,8 @@ namespace Attribulator.API.Serialization
                             loadedDatabaseClassField.StaticValue);
 
                     vltClass.Fields.Add(field.Key, field);
+
+                    _fieldCache[(vltClass.Name, field.Name)] = field;
                 }
 
                 destinationDatabase.AddClass(vltClass);
@@ -92,7 +97,7 @@ namespace Attribulator.API.Serialization
 
                     foreach (var (key, value) in loadedCollection.Data)
                     {
-                        if (!vltClass.TryGetField(key, out var field))
+                        if (!_fieldCache.TryGetValue((vltClass.Name, key), out var field))
                             throw new Exception(
                                 $"Cannot find field: {vltClass.Name}/{key}");
 
