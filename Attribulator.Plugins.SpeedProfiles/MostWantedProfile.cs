@@ -63,6 +63,11 @@ namespace Attribulator.Plugins.SpeedProfiles
             return "MOST_WANTED";
         }
 
+        public string GetProfileId()
+        {
+            return "MOST_WANTED";
+        }
+
         public DatabaseType GetDatabaseType()
         {
             return DatabaseType.X86Database;

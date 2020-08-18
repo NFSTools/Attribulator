@@ -31,13 +31,13 @@ namespace Attribulator.CLI.Services
             return _profiles;
         }
 
-        public IProfile GetProfile(string gameId)
+        public IProfile GetProfile(string profileId)
         {
             foreach (var profile in _profiles)
-                if (profile.GetGameId() == gameId)
+                if (profile.GetProfileId() == profileId)
                     return profile;
 
-            throw new KeyNotFoundException($"Cannot find profile for game: {gameId}");
+            throw new KeyNotFoundException($"Cannot find profile: {profileId}");
         }
     }
 }

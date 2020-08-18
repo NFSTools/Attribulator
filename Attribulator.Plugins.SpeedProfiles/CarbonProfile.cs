@@ -63,6 +63,11 @@ namespace Attribulator.Plugins.SpeedProfiles
             return "CARBON";
         }
 
+        public string GetProfileId()
+        {
+            return "CARBON";
+        }
+
         public DatabaseType GetDatabaseType()
         {
             return DatabaseType.X86Database;

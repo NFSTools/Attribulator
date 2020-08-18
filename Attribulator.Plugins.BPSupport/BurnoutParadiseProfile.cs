@@ -47,6 +47,11 @@ namespace Attribulator.Plugins.BPSupport
             return "BURNOUT_PARADISE";
         }
 
+        public string GetProfileId()
+        {
+            return "BURNOUT_PARADISE";
+        }
+
         public DatabaseType GetDatabaseType()
         {
             return DatabaseType.X64Database;

@@ -63,6 +63,11 @@ namespace Attribulator.Plugins.SpeedProfiles
             return "PROSTREET";
         }
 
+        public string GetProfileId()
+        {
+            return "PROSTREET";
+        }
+
         public DatabaseType GetDatabaseType()
         {
             return DatabaseType.X86Database;

@@ -63,6 +63,11 @@ namespace Attribulator.Plugins.SpeedProfiles
             return "UNDERCOVER";
         }
 
+        public string GetProfileId()
+        {
+            return "UNDERCOVER";
+        }
+
         public DatabaseType GetDatabaseType()
         {
             return DatabaseType.X86Database;

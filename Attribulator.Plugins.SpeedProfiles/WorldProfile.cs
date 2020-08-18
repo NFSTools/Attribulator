@@ -68,6 +68,11 @@ namespace Attribulator.Plugins.SpeedProfiles
             return "WORLD";
         }
 
+        public string GetProfileId()
+        {
+            return "WORLD";
+        }
+
         public DatabaseType GetDatabaseType()
         {
             return DatabaseType.X86Database;
