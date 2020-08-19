@@ -30,8 +30,8 @@ namespace Attribulator.CLI.Commands
 
             _logger.LogInformation("Profiles ({NumProfiles}):", profiles.Count);
             foreach (var profile in profiles)
-                _logger.LogInformation("{Name} - ID: {Id}; DB Type: {DbType}", profile.GetName(),
-                    profile.GetGameId(), profile.GetDatabaseType());
+                _logger.LogInformation("{Name} - ID: {Id} (Game: {GameId}); DB Type: {DbType}", profile.GetName(),
+                    profile.GetProfileId(), profile.GetGameId(), profile.GetDatabaseType());
 
             return Task.FromResult(0);
         }
