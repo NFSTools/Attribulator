@@ -38,17 +38,7 @@ namespace Attribulator.ModScript.API
                     $"A collection in the class '{className}' with the name '{collectionName}' already exists.");
 
             var collection = new VltCollection(addToVault, Database.FindClass(className), collectionName);
-
-            if (parentCollection != null)
-                // Make the new collection a child of the parent
-                parentCollection.AddChild(collection);
-            else
-                // Just add the collection
-                Database.RowManager.Rows.Add(collection);
-
-            Collections[collection.ShortPath] = collection;
-
-            return collection;
+            return AddCollection(collection, parentCollection);
         }
 
         public VltCollection AddCollection(VltCollection collection, VltCollection parentCollection = null)
