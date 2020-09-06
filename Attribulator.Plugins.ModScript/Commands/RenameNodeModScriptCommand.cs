@@ -27,8 +27,8 @@ namespace Attribulator.Plugins.ModScript.Commands
                 throw new CommandExecutionException(
                     $"rename_node failed because there is already a collection called '{NewName}'");
 
-            databaseHelper.RenameCollection(collection, NewName);
             RemoveCollectionFromCache(collection);
+            databaseHelper.RenameCollection(collection, NewName);
         }
     }
 }
