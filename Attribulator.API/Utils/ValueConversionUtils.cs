@@ -12,12 +12,12 @@ namespace Attribulator.API.Utils
 {
     public static class ValueConversionUtils
     {
-        private static readonly Dictionary<Type, Type> _typeCache = new Dictionary<Type, Type>();
+        private static readonly Dictionary<Type, Type> TypeCache = new Dictionary<Type, Type>();
 
         public static VLTBaseType DoPrimitiveConversion(PrimitiveTypeBase primitiveTypeBase, string str)
         {
             var type = primitiveTypeBase.GetType();
-            if (_typeCache.TryGetValue(type, out var conversionType))
+            if (TypeCache.TryGetValue(type, out var conversionType))
                 return DoPrimitiveConversion(primitiveTypeBase, str, conversionType);
 
             // Do primitive conversion
@@ -35,7 +35,7 @@ namespace Attribulator.API.Utils
             }
 
             var primitiveType = primitiveInfoAttribute.PrimitiveType;
-            _typeCache[type] = primitiveType;
+            TypeCache[type] = primitiveType;
             return DoPrimitiveConversion(primitiveTypeBase, str, primitiveType);
         }
 
