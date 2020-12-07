@@ -137,11 +137,18 @@ namespace Attribulator.API.Serialization
                             if (vltClass == null)
                                 throw new InvalidDataException($"Unknown class: {className} ({dataFilePath})");
 
-                            var collections = (await LoadDataFileAsync(dataFilePath)).ToList();
-                            var newCollections = new List<VltCollection>();
-                            AddCollectionsToList(newVault, vltClass, vaultDirectory, newCollections, collections);
+                            try
+                            {
+                                var collections = (await LoadDataFileAsync(dataFilePath)).ToList();
+                                var newCollections = new List<VltCollection>();
+                                AddCollectionsToList(newVault, vltClass, vaultDirectory, newCollections, collections);
 
-                            collectionsToBeAdded.AddRange(newCollections);
+                                collectionsToBeAdded.AddRange(newCollections);
+                            }
+                            catch (Exception e)
+                            {
+                                throw new InvalidDataException($"Error when loading file {dataFilePath}", e);
+                            }
                         }
 
                         tempCollectionListsDictionary[newVault.Name] = collectionsToBeAdded;
