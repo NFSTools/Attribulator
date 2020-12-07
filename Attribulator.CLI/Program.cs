@@ -100,6 +100,7 @@ namespace Attribulator.CLI
             commandService.RegisterCommand<FormatListCommand>();
             commandService.RegisterCommand<PackCommand>();
             commandService.RegisterCommand<UnpackCommand>();
+            commandService.RegisterCommand<GenerateHashListCommand>();
 
             // Then register plugin commands
             foreach (var commandType in commandTypes) commandService.RegisterCommand(commandType);
