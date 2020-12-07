@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using Attribulator.ModScript.API.Utils;
 using VaultLib.Core;
 using VaultLib.Core.Data;
 using VaultLib.Core.DB;
@@ -76,6 +77,16 @@ namespace Attribulator.ModScript.API
             if (!hasParent) Database.RowManager.RemoveCollection(collection);
 
             return removed;
+        }
+
+        public void CopyCollection(Database database, VltCollection from, VltCollection to)
+        {
+            foreach (var dataPair in from.GetData())
+            {
+                var field = from.Class[dataPair.Key];
+                to.SetRawValue(dataPair.Key,
+                    ValueCloningUtils.CloneValue(database, dataPair.Value, to.Class, field, to));
+            }
         }
     }
 }

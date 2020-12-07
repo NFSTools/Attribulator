@@ -51,26 +51,29 @@ namespace Attribulator.Plugins.ModScript.Commands
             var newNode = databaseHelper.AddCollection(addToVault, ClassName, CollectionName, parentCollection);
             var vltClass = newNode.Class;
 
-            foreach (var baseField in vltClass.BaseFields)
-            {
-                var vltBaseType = TypeRegistry.CreateInstance(databaseHelper.Database.Options.GameId, vltClass,
-                    baseField,
-                    newNode);
-
-                if (vltBaseType is VLTArrayType array)
+            if (parentCollection != null)
+                databaseHelper.CopyCollection(databaseHelper.Database, parentCollection, newNode);
+            else
+                foreach (var baseField in vltClass.BaseFields)
                 {
-                    array.Capacity = baseField.MaxCount;
-                    array.ItemAlignment = baseField.Alignment;
-                    array.FieldSize = baseField.Size;
-                    var itemType = array.ItemType;
+                    var vltBaseType = TypeRegistry.CreateInstance(databaseHelper.Database.Options.GameId, vltClass,
+                        baseField,
+                        newNode);
 
-                    for (var i = 0; i < array.Capacity; i++)
-                        array.Items.Add(TypeRegistry.ConstructInstance(itemType, vltClass, baseField, newNode));
+                    if (vltBaseType is VLTArrayType array)
+                    {
+                        array.Capacity = baseField.MaxCount;
+                        array.ItemAlignment = baseField.Alignment;
+                        array.FieldSize = baseField.Size;
+                        var itemType = array.ItemType;
+
+                        for (var i = 0; i < array.Capacity; i++)
+                            array.Items.Add(TypeRegistry.ConstructInstance(itemType, vltClass, baseField, newNode));
+                    }
+
+                    newNode.SetRawValue(baseField.Name,
+                        vltBaseType);
                 }
-
-                newNode.SetRawValue(baseField.Name,
-                    vltBaseType);
-            }
 
             if (vltClass.HasField("CollectionName")) newNode.SetDataValue("CollectionName", CollectionName);
         }

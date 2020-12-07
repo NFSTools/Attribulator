@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
 using Attribulator.ModScript.API;
-using Attribulator.ModScript.API.Utils;
 using VaultLib.Core.Data;
-using VaultLib.Core.DB;
 
 namespace Attribulator.Plugins.ModScript.Commands
 {
@@ -49,22 +47,12 @@ namespace Attribulator.Plugins.ModScript.Commands
             }
 
             var newCollection = new VltCollection(collection.Vault, collection.Class, DestinationCollectionName);
-            CopyCollection(databaseHelper.Database, collection, newCollection);
+            databaseHelper.CopyCollection(databaseHelper.Database, collection, newCollection);
 
             if (newCollection.Class.HasField("CollectionName"))
                 newCollection.SetDataValue("CollectionName", DestinationCollectionName);
 
             databaseHelper.AddCollection(newCollection, parentCollection);
-        }
-
-        private void CopyCollection(Database database, VltCollection from, VltCollection to)
-        {
-            foreach (var dataPair in from.GetData())
-            {
-                var field = from.Class[dataPair.Key];
-                to.SetRawValue(dataPair.Key,
-                    ValueCloningUtils.CloneValue(database, dataPair.Value, to.Class, field, to));
-            }
         }
     }
 }
