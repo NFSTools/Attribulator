@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <Authors>heyitsleo/NFSTools</Authors>
+        <Company>NFSTools</Company>
+        <Description>Plugin providing ModScript support for Attribulator</Description>
+        <Platforms>x86</Platforms>
+        <Product>Attribulator - ModScript Support</Product>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <Version>2.0.0</Version>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Attribulator.API\Attribulator.API.csproj"/>
+        <ProjectReference Include="..\Attribulator.ModScript.API\Attribulator.ModScript.API.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CommandLineParser" Version="2.8.0"/>
+        <PackageReference Include="JetBrains.Annotations" Version="2020.1.0"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.0.0"/>
+    </ItemGroup>
+
+</Project>
