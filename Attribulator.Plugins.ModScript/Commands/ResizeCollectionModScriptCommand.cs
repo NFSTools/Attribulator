@@ -85,6 +85,7 @@ namespace Attribulator.Plugins.ModScript.Commands
                 newArray.SetValue(retrievedArray.GetValue(i), i);
 
             retrievedProperty.SetValue(newArray);
+            databaseHelper.MarkVaultAsModified(collection.Vault);
         }
     }
 }

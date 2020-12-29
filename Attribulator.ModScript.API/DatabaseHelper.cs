@@ -10,10 +10,13 @@ namespace Attribulator.ModScript.API
 {
     public class DatabaseHelper
     {
+        private readonly Dictionary<Vault, bool> _vaultsModified = new Dictionary<Vault, bool>();
+
         public DatabaseHelper(Database database)
         {
             Database = database;
             Collections = database.RowManager.GetFlattenedCollections().ToDictionary(c => c.ShortPath, c => c);
+            database.Vaults.ForEach(v => _vaultsModified[v] = false);
         }
 
         public Dictionary<string, VltCollection> Collections { get; }
@@ -50,7 +53,7 @@ namespace Attribulator.ModScript.API
                 Database.RowManager.Rows.Add(collection);
 
             Collections[collection.ShortPath] = collection;
-
+            MarkVaultAsModified(collection.Vault);
             return collection;
         }
 
@@ -60,6 +63,7 @@ namespace Attribulator.ModScript.API
             collection.SetName(newName);
             if (collection.Class.HasField("CollectionName")) collection.SetDataValue("CollectionName", newName);
             Collections.Add(collection.ShortPath, collection);
+            MarkVaultAsModified(collection.Vault);
         }
 
         public List<VltCollection> RemoveCollection(VltCollection collection)
@@ -75,6 +79,7 @@ namespace Attribulator.ModScript.API
                 removed.AddRange(RemoveCollection(collectionChild));
 
             if (!hasParent) Database.RowManager.RemoveCollection(collection);
+            MarkVaultAsModified(collection.Vault);
 
             return removed;
         }
@@ -87,6 +92,26 @@ namespace Attribulator.ModScript.API
                 to.SetRawValue(dataPair.Key,
                     ValueCloningUtils.CloneValue(database, dataPair.Value, to.Class, field, to));
             }
+
+            MarkVaultAsModified(to.Vault);
+        }
+
+        public void MarkVaultAsModified(Vault vault)
+        {
+            _vaultsModified[vault] = true;
+        }
+
+        public void ChangeVault(VltCollection collection, Vault newVault)
+        {
+            var oldVault = collection.Vault;
+            collection.SetVault(newVault);
+            MarkVaultAsModified(oldVault);
+            MarkVaultAsModified(newVault);
+        }
+
+        public IEnumerable<string> GetModifiedVaults()
+        {
+            return _vaultsModified.Where(v => v.Value).Select(v => v.Key.Name);
         }
     }
 }

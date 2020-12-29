@@ -48,7 +48,12 @@ namespace Attribulator.Plugins.ModScript.Commands
                     array.Items.Add(TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field,
                         collection));
 
-            if (!field.IsInLayout) array.Capacity = NewCapacity;
+            if (!field.IsInLayout)
+                if (array.Capacity != NewCapacity)
+                {
+                    array.Capacity = NewCapacity;
+                    databaseHelper.MarkVaultAsModified(collection.Vault);
+                }
         }
     }
 }

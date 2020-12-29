@@ -77,6 +77,7 @@ namespace Attribulator.Plugins.ModScript.Commands
             array.Items.Add(itemToEdit);
 
             if (!field.IsInLayout) array.Capacity++;
+            databaseHelper.MarkVaultAsModified(collection.Vault);
         }
     }
 }

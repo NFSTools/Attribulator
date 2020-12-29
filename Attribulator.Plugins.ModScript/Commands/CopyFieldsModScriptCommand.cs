@@ -78,6 +78,7 @@ namespace Attribulator.Plugins.ModScript.Commands
                     if (!field.IsInLayout && (!dstCollection.HasEntry(field.Name) ||
                                               (Options & CopyOptions.OverwriteOptional) != 0))
                         dstCollection.SetRawValue(field.Name, value);
+            databaseHelper.MarkVaultAsModified(dstCollection.Vault);
         }
     }
 }

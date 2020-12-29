@@ -26,13 +26,17 @@ namespace Attribulator.Plugins.ModScript.Commands
             if (collection.HasEntry(FieldName))
             {
                 collection.RemoveValue(FieldName);
+                databaseHelper.MarkVaultAsModified(collection.Vault);
             }
             else
             {
                 var hashed = $"0x{VLT32Hasher.Hash(FieldName):X8}";
 
                 if (collection.HasEntry(hashed))
+                {
                     collection.RemoveValue(hashed);
+                    databaseHelper.MarkVaultAsModified(collection.Vault);
+                }
             }
         }
     }

@@ -42,6 +42,8 @@ namespace Attribulator.Plugins.ModScript.Commands
             // Did the parent change?
             if (ReferenceEquals(newParentCollection, collectionToMove.Parent)) return;
 
+            var oldVault = collectionToMove.Vault;
+
             // Disassociated from parent? Add to DB
             if (newParentCollection == null)
             {
@@ -53,6 +55,12 @@ namespace Attribulator.Plugins.ModScript.Commands
                 // Handle new parent
                 newParentCollection.AddChild(collectionToMove);
                 databaseHelper.Database.RowManager.RemoveCollection(collectionToMove);
+            }
+
+            if (collectionToMove.Vault != oldVault)
+            {
+                databaseHelper.MarkVaultAsModified(oldVault);
+                databaseHelper.MarkVaultAsModified(collectionToMove.Vault);
             }
         }
 

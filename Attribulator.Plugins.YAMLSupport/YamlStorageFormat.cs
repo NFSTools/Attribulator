@@ -37,15 +37,17 @@ namespace Attribulator.Plugins.YAMLSupport
         }
 
         public override void Serialize(Database sourceDatabase, string destinationDirectory,
-            IEnumerable<LoadedFile> loadedFiles)
+            IEnumerable<LoadedFile> loadedFiles, Func<Vault, bool> filterFunc = null)
         {
+            filterFunc ??= _ => true;
+
             var loadedFileList = loadedFiles.ToList();
             var loadedDatabase = new SerializedDatabaseInfo
             {
                 Classes = new List<SerializedDatabaseClass>(),
                 Files = new List<SerializedDatabaseFile>(),
                 Types = new List<SerializedTypeInfo>(),
-                PrimaryVaultName = loadedFileList.SelectMany(f => f.Vaults).First(v => v.IsPrimaryVault).Name
+                PrimaryVaultName = sourceDatabase.Vaults.First(v => v.IsPrimaryVault).Name
             };
 
             loadedDatabase.Files.AddRange(loadedFileList.Select(f => new SerializedDatabaseFile
@@ -95,7 +97,7 @@ namespace Attribulator.Plugins.YAMLSupport
                     Path.Combine(destinationDirectory, loadedDatabaseFile.Group, loadedDatabaseFile.Name);
                 Directory.CreateDirectory(baseDirectory);
 
-                foreach (var vault in loadedDatabaseFile.Vaults)
+                foreach (var vault in loadedDatabaseFile.Vaults.Where(filterFunc))
                 {
                     var vaultDirectory = Path.Combine(baseDirectory, vault.Name).Trim();
                     Directory.CreateDirectory(vaultDirectory);
@@ -113,6 +115,23 @@ namespace Attribulator.Plugins.YAMLSupport
                         serializer.Serialize(vw, loadedCollections);
                     }
                 }
+            }
+        }
+
+        public override void Backup(string srcDirectory, string destinationDirectory,
+            LoadedFile file,
+            IEnumerable<Vault> vaults)
+        {
+            var srcFileBaseDir =
+                Path.Combine(srcDirectory, file.Group, file.Name);
+            var destinationFileBaseDir =
+                Path.Combine(destinationDirectory, file.Group, file.Name);
+            Directory.CreateDirectory(destinationFileBaseDir);
+            foreach (var vault in vaults)
+            {
+                var srcVaultDir = Path.Combine(srcFileBaseDir, vault.Name);
+                var dstVaultDir = Path.Combine(destinationFileBaseDir, vault.Name);
+                if (Directory.Exists(srcVaultDir)) DirectoryCopy(srcVaultDir, dstVaultDir, true);
             }
         }
 
@@ -427,6 +446,38 @@ namespace Attribulator.Plugins.YAMLSupport
                     return uint.Parse(s.Substring(2), NumberStyles.AllowHexSpecifier);
 
             return value;
+        }
+
+        private static void DirectoryCopy(string sourceDirName, string destDirName, bool copySubDirs)
+        {
+            // Get the subdirectories for the specified directory.
+            var dir = new DirectoryInfo(sourceDirName);
+
+            if (!dir.Exists)
+                throw new DirectoryNotFoundException(
+                    "Source directory does not exist or could not be found: "
+                    + sourceDirName);
+
+            var dirs = dir.GetDirectories();
+
+            // If the destination directory doesn't exist, create it.       
+            Directory.CreateDirectory(destDirName);
+
+            // Get the files in the directory and copy them to the new location.
+            var files = dir.GetFiles();
+            foreach (var file in files)
+            {
+                var tempPath = Path.Combine(destDirName, file.Name);
+                file.CopyTo(tempPath, false);
+            }
+
+            // If copying subdirectories, copy them and their contents to new location.
+            if (copySubDirs)
+                foreach (var subdir in dirs)
+                {
+                    var tempPath = Path.Combine(destDirName, subdir.Name);
+                    DirectoryCopy(subdir.FullName, tempPath, true);
+                }
         }
 
         [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]

@@ -57,6 +57,7 @@ namespace Attribulator.Plugins.ModScript.Commands
             }
 
             collection.SetRawValue(field.Name, vltBaseType);
+            databaseHelper.MarkVaultAsModified(collection.Vault);
         }
     }
 }

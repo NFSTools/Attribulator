@@ -223,7 +223,11 @@ namespace Attribulator.API.Serialization
 
         /// <inheritdoc />
         public abstract void Serialize(Database sourceDatabase, string destinationDirectory,
-            IEnumerable<LoadedFile> loadedFiles);
+            IEnumerable<LoadedFile> loadedFiles, Func<Vault, bool> filterFunc = null);
+
+        public abstract void Backup(string srcDirectory, string destinationDirectory,
+            LoadedFile file,
+            IEnumerable<Vault> vaults);
 
         /// <inheritdoc />
         public abstract string GetFormatId();

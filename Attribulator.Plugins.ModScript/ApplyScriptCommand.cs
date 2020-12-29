@@ -12,6 +12,7 @@ using CommandLine;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using VaultLib.Core;
 using VaultLib.Core.DB;
 
 namespace Attribulator.Plugins.ModScript
@@ -132,23 +133,42 @@ namespace Attribulator.Plugins.ModScript
                 TimeSpan.FromMilliseconds(totalMilliseconds),
                 totalCommandsPerSecond);
 
-            if (!DisableBackup)
+            var modifiedVaultNames = modScriptDatabase.GetModifiedVaults().ToList();
+
+            if (modifiedVaultNames.Count > 0)
             {
-                _logger.LogInformation("Generating backup");
-                Directory.Move(InputDirectory,
-                    $"{InputDirectory.TrimEnd('/', '\\')}_{DateTimeOffset.Now.ToUnixTimeSeconds()}");
-                Directory.CreateDirectory(InputDirectory);
+                _logger.LogInformation("Saving database");
+
+                bool VaultFilter(Vault vault)
+                {
+                    return modifiedVaultNames.Contains(vault.Name);
+                }
+
+                var modifiedFiles = files.Where(f => f.Vaults.Any(VaultFilter)).ToList();
+
+                if (!DisableBackup)
+                {
+                    var backupDir = Path.Combine(InputDirectory, $"backup_{DateTimeOffset.Now.ToUnixTimeSeconds()}");
+                    Directory.CreateDirectory(backupDir);
+                    foreach (var modifiedFile in modifiedFiles)
+                        storageFormat.Backup(InputDirectory, backupDir, modifiedFile,
+                            modifiedFile.Vaults.Where(v => modifiedVaultNames.Contains(v.Name)));
+                }
+
+                storageFormat.Serialize(database, InputDirectory, files, VaultFilter);
+
+                // TODO: should build cache be updated?
+
+                if (!DisableBinGeneration)
+                {
+                    _logger.LogInformation("Saving binaries");
+                    profile.SaveFiles(database, OutputDirectory, modifiedFiles);
+                }
             }
-
-            _logger.LogInformation("Saving database");
-            storageFormat.Serialize(database, InputDirectory, files);
-
-            // TODO: should build cache be updated?
-
-            if (!DisableBinGeneration)
+            else
             {
-                _logger.LogInformation("Saving binaries");
-                profile.SaveFiles(database, OutputDirectory, files);
+                // TODO: Currently this can't happen unless the script is empty. We need actual change detection.
+                _logger.LogInformation("No changes detected.");
             }
 
             _logger.LogInformation("Done!");

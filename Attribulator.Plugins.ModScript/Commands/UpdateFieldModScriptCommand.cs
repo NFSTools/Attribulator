@@ -128,6 +128,8 @@ namespace Attribulator.Plugins.ModScript.Commands
                     retrievedProperty.SetValue(value);
                 }
             }
+
+            databaseHelper.MarkVaultAsModified(collection.Vault);
         }
     }
 }

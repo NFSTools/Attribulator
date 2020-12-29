@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Attribulator.API.Data;
+using VaultLib.Core;
 using VaultLib.Core.DB;
 
 namespace Attribulator.API.Serialization
@@ -35,7 +37,18 @@ namespace Attribulator.API.Serialization
         /// <param name="sourceDatabase">The <see cref="Database" /> instance to load data from.</param>
         /// <param name="destinationDirectory">The path to the directory to write data to.</param>
         /// <param name="loadedFiles">The loaded files</param>
-        void Serialize(Database sourceDatabase, string destinationDirectory, IEnumerable<LoadedFile> loadedFiles);
+        /// <param name="filterFunc"></param>
+        void Serialize(Database sourceDatabase, string destinationDirectory, IEnumerable<LoadedFile> loadedFiles,
+            Func<Vault, bool> filterFunc = null);
+
+        /// <summary>
+        ///     Generates backups of the given files.
+        /// </summary>
+        /// <param name="srcDirectory"></param>
+        /// <param name="destinationDirectory">The path to the directory to write backups to.</param>
+        /// <param name="file"></param>
+        /// <param name="vaults"></param>
+        void Backup(string srcDirectory, string destinationDirectory, LoadedFile file, IEnumerable<Vault> vaults);
 
         /// <summary>
         ///     Gets the identifier of the storage format.

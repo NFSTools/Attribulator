@@ -25,12 +25,9 @@ namespace Attribulator.Plugins.ModScript.Commands
             var collection = GetCollection(databaseHelper, ClassName, CollectionName);
             var vault = databaseHelper.Database.Vaults.Find(v => v.Name == VaultName);
 
-            if (vault == null)
-            {
-                throw new CommandExecutionException($"Cannot find vault: {VaultName}");
-            }
+            if (vault == null) throw new CommandExecutionException($"Cannot find vault: {VaultName}");
 
-            collection.SetVault(vault);
+            databaseHelper.ChangeVault(collection, vault);
         }
     }
 }

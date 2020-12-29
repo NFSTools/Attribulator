@@ -15,7 +15,7 @@ namespace Attribulator.CLI.Commands
     public class UnpackCommand : BaseCommand
     {
         private ILogger<UnpackCommand> _logger;
-        
+
         [Option('i', HelpText = "Directory to read BIN files from", Required = true)]
         [UsedImplicitly]
         public string InputDirectory { get; set; }
