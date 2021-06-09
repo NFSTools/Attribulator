@@ -48,6 +48,12 @@ namespace Attribulator.Plugins.ModScript
         [UsedImplicitly]
         public bool DisableBinGeneration { get; set; }
 
+        [Option("dry-run",
+            HelpText =
+                "Perform a \"dry run\", which will attempt to execute every script command, record errors, and not save new files.")]
+        [UsedImplicitly]
+        public bool DryRun { get; set; }
+
         public override void SetServiceProvider(IServiceProvider serviceProvider)
         {
             base.SetServiceProvider(serviceProvider);
@@ -95,12 +101,14 @@ namespace Attribulator.Plugins.ModScript
             var modScriptDatabase = new DatabaseHelper(database);
             var totalCommands = 0L;
             var totalMilliseconds = 0.0d;
+            var errorsDict = new Dictionary<string, List<(long, string, Exception)>>();
 
             foreach (var scriptFile in scriptFiles)
             {
                 _logger.LogInformation("Processing script: {FileName}", scriptFile);
                 var fileStopwatch = Stopwatch.StartNew();
                 var numCommands = 0L;
+                var errors = new List<(long, string, Exception)>();
 
                 foreach (var command in _modScriptService.ParseCommands(File.ReadLines(scriptFile)))
                     try
@@ -110,73 +118,110 @@ namespace Attribulator.Plugins.ModScript
                     }
                     catch (Exception e)
                     {
-                        _logger.LogError(e, "Failed to execute script command at line {LineNumber}: {Line}",
-                            command.LineNumber, command.Line);
-                        return 1;
+                        if (DryRun)
+                        {
+                            errors.Add((command.LineNumber, command.Line, e));
+                        }
+                        else
+                        {
+                            _logger.LogError(e, "Failed to execute script command at line {LineNumber}: {Line}",
+                                command.LineNumber, command.Line);
+                            return 1;
+                        }
                     }
 
                 fileStopwatch.Stop();
 
                 var commandsPerSecond = (ulong) (numCommands / (fileStopwatch.Elapsed.TotalMilliseconds / 1000.0));
                 _logger.LogInformation(
-                    "Applied {NumCommands} command(s) from script [{FileName}] in {ElapsedMilliseconds}ms ({Duration}; ~ {NumPerSec}/sec)",
-                    numCommands, scriptFile, fileStopwatch.ElapsedMilliseconds, fileStopwatch.Elapsed,
+                    "Applied {NumCommands} command(s){ErrorsDescription} from script [{FileName}] in {ElapsedMilliseconds}ms ({Duration}; ~ {NumPerSec}/sec)",
+                    numCommands,
+                    GetErrorsBrief(errors.Count),
+                    scriptFile, fileStopwatch.ElapsedMilliseconds, fileStopwatch.Elapsed,
                     commandsPerSecond);
 
                 totalCommands += numCommands;
                 totalMilliseconds += fileStopwatch.Elapsed.TotalMilliseconds;
+                errorsDict.Add(scriptFile, errors);
             }
 
             var totalCommandsPerSecond =
                 (ulong) (totalCommands / (totalMilliseconds / 1000.0));
 
             _logger.LogInformation(
-                "Overall: Applied {NumCommands} command(s) from {NumScripts} script(s) (execution time: {ElapsedMilliseconds}ms / {Duration}; ~ {NumPerSec}/sec)",
-                totalCommands, scriptFiles.Count, Math.Round(totalMilliseconds),
+                "Overall: Applied {NumCommands} command(s){ErrorsDescription} from {NumScripts} script(s) (execution time: {ElapsedMilliseconds}ms / {Duration}; ~ {NumPerSec}/sec)",
+                totalCommands, GetErrorsBrief(errorsDict.Sum(e => e.Value.Count)), scriptFiles.Count,
+                Math.Round(totalMilliseconds),
                 TimeSpan.FromMilliseconds(totalMilliseconds),
                 totalCommandsPerSecond);
 
-            var modifiedVaultNames = modScriptDatabase.GetModifiedVaults().ToList();
-
-            if (modifiedVaultNames.Count > 0)
+            if (DryRun)
             {
-                _logger.LogInformation("Saving database");
-
-                bool VaultFilter(Vault vault)
+                foreach (var scriptFile in scriptFiles)
                 {
-                    return modifiedVaultNames.Contains(vault.Name);
-                }
+                    var errors = errorsDict[scriptFile];
 
-                var modifiedFiles = files.Where(f => f.Vaults.Any(VaultFilter)).ToList();
-
-                if (!DisableBackup)
-                {
-                    var backupDir = Path.Combine(InputDirectory, $"backup_{DateTimeOffset.Now.ToUnixTimeSeconds()}");
-                    Directory.CreateDirectory(backupDir);
-                    foreach (var modifiedFile in modifiedFiles)
-                        storageFormat.Backup(InputDirectory, backupDir, modifiedFile,
-                            modifiedFile.Vaults.Where(v => modifiedVaultNames.Contains(v.Name)));
-                }
-
-                storageFormat.Serialize(database, InputDirectory, files, VaultFilter);
-
-                // TODO: should build cache be updated?
-
-                if (!DisableBinGeneration)
-                {
-                    _logger.LogInformation("Saving binaries");
-                    profile.SaveFiles(database, OutputDirectory, modifiedFiles);
+                    _logger.LogError("{FileName}: {ErrorCount} error(s)", scriptFile, errors.Count);
+                    foreach (var (lineNumber, lineContents, exception) in errors)
+                        _logger.LogError(exception, "\tFailed to execute script command at line {LineNumber}: {Line}",
+                            lineNumber, lineContents);
                 }
             }
             else
             {
-                // TODO: Currently this can't happen unless the script is empty. We need actual change detection.
-                _logger.LogInformation("No changes detected");
+                var modifiedVaultNames = modScriptDatabase.GetModifiedVaults().ToList();
+
+                if (modifiedVaultNames.Count > 0)
+                {
+                    _logger.LogInformation("Saving database");
+
+                    bool VaultFilter(Vault vault)
+                    {
+                        return modifiedVaultNames.Contains(vault.Name);
+                    }
+
+                    var modifiedFiles = files.Where(f => f.Vaults.Any(VaultFilter)).ToList();
+
+                    if (!DisableBackup)
+                    {
+                        var backupDir = Path.Combine(InputDirectory,
+                            $"backup_{DateTimeOffset.Now.ToUnixTimeSeconds()}");
+                        Directory.CreateDirectory(backupDir);
+                        foreach (var modifiedFile in modifiedFiles)
+                            storageFormat.Backup(InputDirectory, backupDir, modifiedFile,
+                                modifiedFile.Vaults.Where(v => modifiedVaultNames.Contains(v.Name)));
+                    }
+
+                    storageFormat.Serialize(database, InputDirectory, files, VaultFilter);
+
+                    // TODO: should build cache be updated?
+
+                    if (!DisableBinGeneration)
+                    {
+                        _logger.LogInformation("Saving binaries");
+                        profile.SaveFiles(database, OutputDirectory, modifiedFiles);
+                    }
+                }
+                else
+                {
+                    // TODO: Currently this can't happen unless the script is empty. We need actual change detection.
+                    _logger.LogInformation("No changes detected");
+                }
             }
 
             _logger.LogInformation("Done!");
 
             return 0;
+        }
+
+        private static string GetErrorsBrief(long num)
+        {
+            return num switch
+            {
+                0 => string.Empty,
+                1 => " (with 1 error)",
+                _ => $" (with {num} errors)"
+            };
         }
     }
 }
