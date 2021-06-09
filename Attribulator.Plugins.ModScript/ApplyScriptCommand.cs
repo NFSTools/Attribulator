@@ -92,7 +92,6 @@ namespace Attribulator.Plugins.ModScript
             var files = (await storageFormat.DeserializeAsync(InputDirectory, database)).ToList();
             _logger.LogInformation("Loaded database");
 
-            var overallStopwatch = Stopwatch.StartNew();
             var modScriptDatabase = new DatabaseHelper(database);
             var totalCommands = 0L;
             var totalMilliseconds = 0.0d;
@@ -128,13 +127,8 @@ namespace Attribulator.Plugins.ModScript
                 totalMilliseconds += fileStopwatch.Elapsed.TotalMilliseconds;
             }
 
-            overallStopwatch.Stop();
             var totalCommandsPerSecond =
                 (ulong) (totalCommands / (totalMilliseconds / 1000.0));
-
-            _logger.LogInformation(
-                "Completed in {OverallTimeInMilliseconds}ms ({OverallDuration}).", overallStopwatch.ElapsedMilliseconds,
-                overallStopwatch.Elapsed);
 
             _logger.LogInformation(
                 "Overall: Applied {NumCommands} command(s) from {NumScripts} script(s) (execution time: {ElapsedMilliseconds}ms / {Duration}; ~ {NumPerSec}/sec)",
@@ -177,7 +171,7 @@ namespace Attribulator.Plugins.ModScript
             else
             {
                 // TODO: Currently this can't happen unless the script is empty. We need actual change detection.
-                _logger.LogInformation("No changes detected.");
+                _logger.LogInformation("No changes detected");
             }
 
             _logger.LogInformation("Done!");
