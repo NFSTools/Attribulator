@@ -113,8 +113,8 @@ namespace Attribulator.Plugins.ModScript
                 foreach (var command in _modScriptService.ParseCommands(File.ReadLines(scriptFile)))
                     try
                     {
-                        command.Execute(modScriptDatabase);
                         numCommands++;
+                        command.Execute(modScriptDatabase);
                     }
                     catch (Exception e)
                     {
@@ -161,10 +161,18 @@ namespace Attribulator.Plugins.ModScript
                 {
                     var errors = errorsDict[scriptFile];
 
-                    _logger.LogError("{FileName}: {ErrorCount} error(s)", scriptFile, errors.Count);
-                    foreach (var (lineNumber, lineContents, exception) in errors)
-                        _logger.LogError(exception, "\tFailed to execute script command at line {LineNumber}: {Line}",
-                            lineNumber, lineContents);
+                    if (errors.Count == 0)
+                    {
+                        _logger.LogInformation("{FileName}: no errors", scriptFile);
+                    }
+                    else
+                    {
+                        _logger.LogError("{FileName}: {ErrorCount} error(s)", scriptFile, errors.Count);
+                        foreach (var (lineNumber, lineContents, exception) in errors)
+                            _logger.LogError(exception,
+                                "\tFailed to execute script command at line {LineNumber}: {Line}",
+                                lineNumber, lineContents);
+                    }
                 }
             }
             else
