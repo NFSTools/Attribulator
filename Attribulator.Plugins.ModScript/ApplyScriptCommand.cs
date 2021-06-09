@@ -61,11 +61,20 @@ namespace Attribulator.Plugins.ModScript
             if (!Directory.Exists(InputDirectory))
                 throw new DirectoryNotFoundException($"Cannot find input directory: {InputDirectory}");
 
-            var scriptFiles = ModScriptPaths.ToList();
+            var scriptFiles = new List<string>();
 
-            foreach (var scriptFile in scriptFiles)
+            foreach (var scriptFile in ModScriptPaths)
                 if (!File.Exists(scriptFile))
-                    throw new FileNotFoundException($"Cannot find ModScript file: {scriptFile}");
+                {
+                    if (!Directory.Exists(scriptFile))
+                        throw new FileNotFoundException($"Cannot find ModScript file or folder: {scriptFile}");
+
+                    scriptFiles.AddRange(Directory.GetFiles(scriptFile, "*.nfsms"));
+                }
+                else
+                {
+                    scriptFiles.Add(scriptFile);
+                }
 
             if (!Directory.Exists(OutputDirectory)) Directory.CreateDirectory(OutputDirectory);
 
