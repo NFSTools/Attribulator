@@ -103,6 +103,7 @@ namespace Attribulator.CLI
             commandService.RegisterCommand<GenerateHashListCommand>();
             commandService.RegisterCommand<ResolveHashesCommand>();
             commandService.RegisterCommand<DumpCommand>();
+            commandService.RegisterCommand<HashCommand>();
 
             // Then register plugin commands
             foreach (var commandType in commandTypes) commandService.RegisterCommand(commandType);
@@ -160,7 +161,7 @@ namespace Attribulator.CLI
                 where typeof(IPluginFactory).IsAssignableFrom(pluginType) && !pluginType.IsAbstract
                 select pluginType)
             {
-                var pluginFactory = (IPluginFactory) Activator.CreateInstance(pluginType);
+                var pluginFactory = (IPluginFactory)Activator.CreateInstance(pluginType);
 
                 if (pluginFactory == null)
                     throw new Exception("Activator.CreateInstance returned null while trying to load plugin");
