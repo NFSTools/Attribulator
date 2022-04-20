@@ -5,12 +5,11 @@ using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
 using VaultLib.Core.Types;
-using VaultLib.Core.Types.Abstractions;
 
 namespace Attribulator.ModScript.API.Utils
 {
     /// <summary>
-    ///     Exposes utility functions to parse property paths.
+    ///     Exposes utility functions for property paths.
     /// </summary>
     /// <example>CollectionKey</example>
     /// <example>ShiftPattern[1] XValues[0]</example>
@@ -19,131 +18,93 @@ namespace Attribulator.ModScript.API.Utils
     public static class PropertyUtils
     {
         /// <summary>
-        ///     Parses the given property path and returns a stream of <see cref="ParsedProperty" /> objects
+        ///     Parses a property path and produces a stream of <see cref="ParsedProperty"/> structures.
         /// </summary>
-        /// <param name="path">The property path to parse.</param>
-        /// <returns>An enumerable stream of <see cref="ParsedProperty" /> objects representing the property path.</returns>
-        public static IEnumerable<ParsedProperty> ParsePath(string path)
+        /// <param name="path">The path to parse.</param>
+        /// <returns>A stream of <see cref="ParsedProperty"/> structures.</returns>
+        public static IEnumerable<ParsedProperty> ParsePath(IEnumerable<string> path)
         {
-            return ParsePath(path.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+            return from pathSegment in path
+                let split = pathSegment.Split(new[] { '[', ']' }, StringSplitOptions.RemoveEmptyEntries)
+                select split.Length switch
+                {
+                    1 => new ParsedProperty { Name = split[0] },
+                    2 => new ParsedProperty { Name = split[0], Index = ushort.Parse(split[1]) },
+                    _ => throw new InvalidDataException($"Cannot parse segment: {pathSegment}")
+                };
         }
 
         /// <summary>
-        ///     Parses the given property path and returns a stream of <see cref="ParsedProperty" /> objects
+        /// Generates a property access proxy for an object given a property path.
         /// </summary>
-        /// <param name="path">The property path to parse.</param>
-        /// <returns>An enumerable stream of <see cref="ParsedProperty" /> objects representing the property path.</returns>
-        public static IEnumerable<ParsedProperty> ParsePath(IEnumerable<string> path)
+        /// <param name="baseObject">The initial object to descend into.</param>
+        /// <param name="propertyPath">The property path to follow.</param>
+        /// <returns>A property access proxy that can be used to get/set the property value.</returns>
+        /// <exception cref="NullReferenceException">if an unexpected NULL reference is encountered</exception>
+        /// <exception cref="MissingFieldException">if a property cannot be found on the data being examined</exception>
+        /// <exception cref="FieldAccessException">if a property exists but is not both readable and writable</exception>
+        /// <exception cref="IndexOutOfRangeException">if an attempted array access is determined to be out of bounds</exception>
+        /// <exception cref="MemberAccessException">if an array is accessed without an index</exception>
+        public static RetrievedProperty GetProperty([NotNull] VLTBaseType baseObject,
+            [NotNull] IEnumerable<ParsedProperty> propertyPath)
         {
-            foreach (var pathSegment in path)
-                if (!ushort.TryParse(pathSegment, out var index))
-                {
-                    // Do full parse
-                    var split = pathSegment.Split(new[] {'[', ']'}, StringSplitOptions.RemoveEmptyEntries);
+            object examining = baseObject;
+            RetrievedProperty retrievedProperty = null;
 
-                    switch (split.Length)
+            foreach (var parsedProperty in propertyPath)
+            {
+                if (examining == null)
+                    throw new NullReferenceException(
+                        "Ran into an unexpected NULL value - cannot access further properties");
+
+                var pi = examining.GetType()
+                    .GetProperty(parsedProperty.Name, BindingFlags.Public | BindingFlags.Instance);
+
+                if (pi == null)
+                    throw new MissingFieldException(
+                        $"Could not find property [{parsedProperty.Name}] in type {examining.GetType()}");
+
+                if (!pi.CanRead || !pi.CanWrite)
+                    throw new FieldAccessException(
+                        $"Property [{parsedProperty.Name}] of type {examining.GetType()} is not accessible");
+
+                var pv = pi.GetValue(examining);
+                var pt = pi.PropertyType;
+
+                if (!pt.IsArray)
+                {
+                    retrievedProperty = new ReflectedProperty(pi, examining);
+                    examining = pv;
+                }
+                else if (pv is Array arr)
+                {
+                    if (parsedProperty.Index is { } idx)
                     {
-                        case 1:
-                            yield return new ParsedProperty {Name = split[0], HasIndex = false};
-                            break;
-                        case 2:
-                            yield return new ParsedProperty
-                                {Name = split[0], Index = ushort.Parse(split[1]), HasIndex = true};
-                            break;
-                        default:
-                            throw new InvalidDataException($"Cannot parse segment: {pathSegment}");
+                        if (idx >= arr.Length)
+                            throw new IndexOutOfRangeException(
+                                $"Attempted access to item at index {idx}, but that's out of range: 0 <= {idx} < {arr.Length} not satisfied");
+
+                        retrievedProperty = new ArrayProperty(arr, idx, pt.GetElementType());
+                        examining = arr.GetValue(idx);
+                    }
+                    else
+                    {
+                        throw new MemberAccessException("Array access must include index");
                     }
                 }
                 else
                 {
-                    yield return new ParsedProperty {Index = index, Name = null, HasIndex = true};
-                }
-        }
-
-        /// <summary>
-        ///     Retrieves the relevant property for the given property path in the given object.
-        /// </summary>
-        /// <param name="baseObject">The object to examine</param>
-        /// <param name="propertyPath">The property path</param>
-        /// <returns>The value</returns>
-        public static RetrievedProperty GetProperty([NotNull] VLTBaseType baseObject, [NotNull] string propertyPath)
-        {
-            return GetProperty(baseObject, ParsePath(propertyPath));
-        }
-
-        /// <summary>
-        ///     Retrieves the relevant property for the given property path in the given object.
-        /// </summary>
-        /// <param name="baseObject">The object to examine</param>
-        /// <param name="propertyPath">The parsed property path</param>
-        /// <returns>The value</returns>
-        public static RetrievedProperty GetProperty([NotNull] VLTBaseType baseObject,
-            [NotNull] IEnumerable<ParsedProperty> propertyPath)
-        {
-            object itemToExamine = baseObject;
-            var pathList = propertyPath.ToList();
-            PropertyInfo propertyInfo = null;
-
-            for (var index = 0; index < pathList.Count; index++)
-            {
-                if (itemToExamine == null) throw new CommandExecutionException("Cannot manipulate null object");
-
-                var parsedProperty = pathList[index];
-                if (parsedProperty.Name != null)
-                {
-                    var propName = parsedProperty.Name;
-                    if (itemToExamine is BaseRefSpec)
-                        propName = propName switch
-                        {
-                            "Collection" => "CollectionKey",
-                            "Class" => "ClassKey",
-                            _ => propName
-                        };
-
-                    propertyInfo = itemToExamine.GetType()
-                        .GetProperty(propName, BindingFlags.Public | BindingFlags.Instance);
-
-                    if (propertyInfo == null)
-                        throw new CommandExecutionException(
-                            $"Property not found on type {itemToExamine.GetType()}: {propName}");
-
-                    if (!(propertyInfo.SetMethod?.IsPublic ?? false))
-                        throw new CommandExecutionException(
-                            $"{itemToExamine.GetType()}[{propName}] is read-only");
-
-                    if (index == pathList.Count - 1) break;
-                    itemToExamine = propertyInfo.GetValue(itemToExamine);
-                }
-
-                if (parsedProperty.HasIndex)
-                {
-                    if (!(itemToExamine is Array array))
-                        throw new CommandExecutionException("Not working with an array!");
-
-                    if (parsedProperty.Index >= array.Length)
-                        throw new CommandExecutionException(
-                            $"Array index out of bounds (requested {parsedProperty.Index} but there are {array.Length} elements)");
-
-                    itemToExamine = array.GetValue(parsedProperty.Index);
-
-                    if (itemToExamine == null) throw new CommandExecutionException("Cannot manipulate null object");
-
-                    var elementType = itemToExamine.GetType();
-
-                    if (elementType.IsPrimitive || elementType == typeof(string))
-                        return new ArrayProperty(array, parsedProperty.Index,
-                            propertyInfo!.PropertyType.GetElementType());
+                    throw new NullReferenceException("Can't index into NULL array");
                 }
             }
 
-            return new ReflectedProperty(propertyInfo, itemToExamine);
+            return retrievedProperty;
         }
 
         public struct ParsedProperty
         {
             public string Name;
-            public ushort Index;
-            public bool HasIndex;
+            public ushort? Index;
         }
 
         public abstract class RetrievedProperty
