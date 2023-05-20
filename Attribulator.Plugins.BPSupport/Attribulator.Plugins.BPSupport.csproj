@@ -4,16 +4,17 @@
         <Authors>heyitsleo/NFSTools</Authors>
         <Company>NFSTools</Company>
         <Description>Plugin providing support for Burnout Paradise.</Description>
-        <Platforms>x86</Platforms>
         <Product>Attribulator - Burnout Paradise Support</Product>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
-        <Version>2.0.0</Version>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <TargetFramework>net6.0</TargetFramework>
+        <Version>3.0.0-dev</Version>
+        <Configurations>Debug;Release</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="VaultLib.Core" Version="1.2.0"/>
-        <PackageReference Include="VaultLib.ModernBase" Version="1.2.0"/>
+        <PackageReference Include="VaultLib.Core" Version="2.0.0-dev"/>
+        <PackageReference Include="VaultLib.ModernBase" Version="2.0.0-dev"/>
     </ItemGroup>
 
     <ItemGroup>

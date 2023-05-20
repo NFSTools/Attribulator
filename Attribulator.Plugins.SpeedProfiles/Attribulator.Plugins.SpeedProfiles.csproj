@@ -4,20 +4,21 @@
         <Authors>heyitsleo/NFSTools</Authors>
         <Company>NFSTools</Company>
         <Description>Plugin providing profiles for the Speed engine games</Description>
-        <Platforms>x86</Platforms>
         <Product>Attribulator - Speed Profiles</Product>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
-        <Version>2.0.0</Version>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <TargetFramework>net6.0</TargetFramework>
+        <Version>3.0.0-dev</Version>
+        <Configurations>Debug;Release</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="VaultLib.Core" Version="1.2.0"/>
-        <PackageReference Include="VaultLib.Support.Carbon" Version="1.2.0"/>
-        <PackageReference Include="VaultLib.Support.MostWanted" Version="1.2.0"/>
-        <PackageReference Include="VaultLib.Support.ProStreet" Version="1.2.0"/>
-        <PackageReference Include="VaultLib.Support.Undercover" Version="1.2.0"/>
-        <PackageReference Include="VaultLib.Support.World" Version="1.2.0"/>
+        <PackageReference Include="VaultLib.Core" Version="2.0.0-dev"/>
+        <PackageReference Include="VaultLib.Support.Carbon" Version="2.0.0-dev"/>
+        <PackageReference Include="VaultLib.Support.MostWanted" Version="2.0.0-dev"/>
+        <PackageReference Include="VaultLib.Support.ProStreet" Version="2.0.0-dev"/>
+        <PackageReference Include="VaultLib.Support.Undercover" Version="2.0.0-dev"/>
+        <PackageReference Include="VaultLib.Support.World" Version="2.0.0-dev"/>
     </ItemGroup>
 
     <ItemGroup>
