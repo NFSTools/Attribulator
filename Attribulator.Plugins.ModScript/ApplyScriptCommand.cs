@@ -75,7 +75,7 @@ namespace Attribulator.Plugins.ModScript
                     if (!Directory.Exists(scriptFile))
                         throw new FileNotFoundException($"Cannot find ModScript file or folder: {scriptFile}");
 
-                    scriptFiles.AddRange(Directory.GetFiles(scriptFile, "*.nfsms"));
+                    scriptFiles.AddRange(Directory.GetFiles(scriptFile, "*.nfsms", SearchOption.AllDirectories));
                 }
                 else
                 {
