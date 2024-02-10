@@ -14,7 +14,7 @@
 
     <ItemGroup>
         <PackageReference Include="AsyncEnumerator" Version="4.0.2"/>
-        <PackageReference Include="YamlDotNet" Version="8.1.0"/>
+        <PackageReference Include="YamlDotNet" Version="13.7.1"/>
     </ItemGroup>
 
     <ItemGroup>
