@@ -57,11 +57,9 @@ namespace Attribulator.Plugins.ModScript.Commands
                 newParentCollection.AddChild(collectionToMove);
             }
 
-            if (collectionToMove.Vault != oldVault)
-            {
-                databaseHelper.MarkVaultAsModified(oldVault);
+            databaseHelper.MarkVaultAsModified(oldVault);
+            if (oldVault != collectionToMove.Vault)
                 databaseHelper.MarkVaultAsModified(collectionToMove.Vault);
-            }
         }
 
         private bool IsChild(DatabaseHelper databaseHelper, VltCollection root, VltCollection test)
