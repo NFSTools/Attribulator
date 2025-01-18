@@ -127,7 +127,7 @@ namespace Attribulator.CLI.Commands
 
             if (fileNamesToCompile.Count > 0)
             {
-                var database = new Database(new DatabaseOptions(profile.GetGameId(), profile.GetDatabaseType()));
+                var database = profile.CreateDatabase();
                 _logger.LogInformation("Loading database from disk...");
                 var files =
                     (await storageFormat.DeserializeAsync(InputDirectory, database, fileNamesToCompile)).ToList();

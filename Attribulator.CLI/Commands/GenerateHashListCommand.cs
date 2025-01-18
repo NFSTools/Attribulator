@@ -52,7 +52,7 @@ namespace Attribulator.CLI.Commands
                 throw new CommandException(
                     $"Cannot find storage format that is compatible with directory [{InputDirectory}].");
 
-            var database = new Database(new DatabaseOptions(profile.GetGameId(), profile.GetDatabaseType()));
+            var database = profile.CreateDatabase();
             _logger.LogInformation("Loading database from disk...");
             await storageFormat.DeserializeAsync(InputDirectory, database);
             _logger.LogInformation("Loaded database");

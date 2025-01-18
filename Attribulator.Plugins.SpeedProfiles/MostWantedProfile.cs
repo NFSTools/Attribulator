@@ -13,6 +13,15 @@ namespace Attribulator.Plugins.SpeedProfiles
     /// </summary>
     public class MostWantedProfile : IProfile
     {
+        public Database CreateDatabase()
+        {
+            var module = new VaultLib.Support.MostWanted.ModuleDef();
+            var database = new Database(new DatabaseOptions(GetGameId(), GetDatabaseType()),
+                module.CreateExportFactory());
+            module.RegisterTypes(database.TypeRegistry);
+            return database;
+        }
+
         public IEnumerable<LoadedFile> LoadFiles(Database database, string directory)
         {
             return (from file in GetFilesToLoad()
@@ -43,11 +52,11 @@ namespace Attribulator.Plugins.SpeedProfiles
                     using var inStream = new FileStream(outPath, FileMode.Open, FileAccess.Read);
                     using var outWriter = new BinaryWriter(outStream);
                     outWriter.Write(0x57574152); // RAWW
-                    outWriter.Write((byte) 0x01);
-                    outWriter.Write((byte) 0x10);
-                    outWriter.Write((ushort) 0);
-                    outWriter.Write((int) inStream.Length);
-                    outWriter.Write((int) (inStream.Length + 16));
+                    outWriter.Write((byte)0x01);
+                    outWriter.Write((byte)0x10);
+                    outWriter.Write((ushort)0);
+                    outWriter.Write((int)inStream.Length);
+                    outWriter.Write((int)(inStream.Length + 16));
                     inStream.CopyTo(outStream);
                 }
             }
@@ -75,7 +84,7 @@ namespace Attribulator.Plugins.SpeedProfiles
 
         private static IEnumerable<string> GetFilesToLoad()
         {
-            return new[] {"attributes.bin", "fe_attrib.bin", "gameplay.bin"};
+            return new[] { "attributes.bin", "fe_attrib.bin", "gameplay.bin" };
         }
     }
 }

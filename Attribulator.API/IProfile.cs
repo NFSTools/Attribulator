@@ -9,6 +9,8 @@ namespace Attribulator.API
     /// </summary>
     public interface IProfile
     {
+        Database CreateDatabase();
+        
         /// <summary>
         ///     Loads VLT files from the given directory into the given <see cref="Database" /> object.
         /// </summary>

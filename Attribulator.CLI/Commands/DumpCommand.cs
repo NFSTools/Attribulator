@@ -48,7 +48,7 @@ namespace Attribulator.CLI.Commands
             if (!Directory.Exists(OutputDirectory)) Directory.CreateDirectory(OutputDirectory);
 
             var profile = ServiceProvider.GetRequiredService<IProfileService>().GetProfile(ProfileName);
-            var database = new Database(new DatabaseOptions(profile.GetGameId(), profile.GetDatabaseType()));
+            var database = profile.CreateDatabase();
             _logger.LogInformation("Loading database from disk...");
             profile.LoadFiles(database, InputDirectory);
             database.CompleteLoad();

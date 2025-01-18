@@ -50,7 +50,7 @@ namespace Attribulator.CLI.Commands
             var profile = ServiceProvider.GetRequiredService<IProfileService>().GetProfile(ProfileName);
             var storageFormat = ServiceProvider.GetRequiredService<IStorageFormatService>()
                 .GetStorageFormat(StorageFormatName);
-            var database = new Database(new DatabaseOptions(profile.GetGameId(), profile.GetDatabaseType()));
+            var database = profile.CreateDatabase();
             _logger.LogInformation("Loading database from disk...");
             var files = profile.LoadFiles(database, InputDirectory);
             database.CompleteLoad();

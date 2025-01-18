@@ -45,7 +45,7 @@ namespace Attribulator.Plugins.ModScript.Commands
                     array.Items.RemoveAt(array.Items.Count - 1);
             else if (NewCapacity > array.Items.Count)
                 while (NewCapacity > array.Items.Count)
-                    array.Items.Add(TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field,
+                    array.Items.Add(databaseHelper.Database.TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field,
                         collection));
 
             if (!field.IsInLayout)

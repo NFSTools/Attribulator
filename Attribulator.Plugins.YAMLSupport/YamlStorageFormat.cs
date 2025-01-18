@@ -51,7 +51,7 @@ namespace Attribulator.Plugins.YAMLSupport
             };
 
             loadedDatabase.Files.AddRange(loadedFileList.Select(f => new SerializedDatabaseFile
-                {Name = f.Name, Group = f.Group, Vaults = f.Vaults.Select(v => v.Name).ToList()}));
+                { Name = f.Name, Group = f.Group, Vaults = f.Vaults.Select(v => v.Name).ToList() }));
 
             foreach (var databaseType in sourceDatabase.Types)
                 loadedDatabase.Types.Add(new SerializedTypeInfo
@@ -106,7 +106,7 @@ namespace Attribulator.Plugins.YAMLSupport
                     // Solution: Store the name of the parent node instead of having an array of children.
 
                     foreach (var collectionGroup in sourceDatabase.RowManager.GetCollectionsInVault(vault)
-                        .GroupBy(v => v.Class.Name))
+                                 .GroupBy(v => v.Class.Name))
                     {
                         var loadedCollections = new List<SerializedCollection>();
                         AddLoadedCollections(vaultDirectory, loadedCollections, collectionGroup);
@@ -167,7 +167,7 @@ namespace Attribulator.Plugins.YAMLSupport
                 loadedCollection.Name ??= "null";
 
                 foreach (var k in loadedCollection.Data.Keys.ToList()
-                    .Where(k => loadedCollection.Data[k] == null))
+                             .Where(k => loadedCollection.Data[k] == null))
                     loadedCollection.Data[k] = "null";
             }
 
@@ -210,7 +210,7 @@ namespace Attribulator.Plugins.YAMLSupport
                     var listType = typeof(List<>);
                     var listGenericType = ResolveType(array.ItemType);
                     var constructedListType = listType.MakeGenericType(listGenericType);
-                    var instance = (IList) Activator.CreateInstance(constructedListType);
+                    var instance = (IList)Activator.CreateInstance(constructedListType);
 
                     if (instance == null) throw new Exception("Activator.CreateInstance returned null");
 
@@ -279,8 +279,9 @@ namespace Attribulator.Plugins.YAMLSupport
 
             // Create a new data instance
             var instance = createInstance
-                ? TypeRegistry.CreateInstance(database.Options.GameId, vltClass, field, vltCollection)
-                : TypeRegistry.ConstructInstance(TypeRegistry.ResolveType(gameId, field.TypeName), vltClass, field,
+                ? database.TypeRegistry.CreateInstance(vltClass, field, vltCollection)
+                : database.TypeRegistry.ConstructInstance(database.TypeRegistry.ResolveType(field.TypeName), vltClass,
+                    field,
                     vltCollection);
 
             return DoValueConversion(database, gameId, dir, vltClass, field, vltCollection, serializedValue, instance);
@@ -298,7 +299,7 @@ namespace Attribulator.Plugins.YAMLSupport
                     {
                         case IStringValue stringValue:
                             stringValue.SetString(str);
-                            return (VLTBaseType) instance;
+                            return (VLTBaseType)instance;
                         case PrimitiveTypeBase primitiveTypeBase:
                             return ValueConversionUtils.DoPrimitiveConversion(primitiveTypeBase, str);
                         case BaseBlob blob:
@@ -318,9 +319,9 @@ namespace Attribulator.Plugins.YAMLSupport
 
                     break;
                 case Dictionary<object, object> dictionary:
-                    return (VLTBaseType) (instance is VLTArrayType array
+                    return (VLTBaseType)(instance is VLTArrayType array
                         ? DoArrayConversion(database, gameId, dir, vltClass, field, vltCollection, array, dictionary)
-                        : DoDictionaryConversion(vltClass, field, vltCollection, instance, dictionary));
+                        : DoDictionaryConversion(database, vltClass, field, vltCollection, instance, dictionary));
             }
 
             throw new InvalidDataException("Could not convert serialized value of type: " + serializedValue.GetType());
@@ -331,7 +332,7 @@ namespace Attribulator.Plugins.YAMLSupport
             VltCollection vltCollection, VLTArrayType array, Dictionary<object, object> dictionary)
         {
             var capacity = ushort.Parse(dictionary["Capacity"].ToString()!);
-            var rawItemList = (List<object>) dictionary["Data"];
+            var rawItemList = (List<object>)dictionary["Data"];
 
             if (capacity < rawItemList.Count)
                 throw new InvalidDataException(
@@ -355,12 +356,12 @@ namespace Attribulator.Plugins.YAMLSupport
             return array;
         }
 
-        private static object DoDictionaryConversion(VltClass vltClass, VltClassField field,
+        private static object DoDictionaryConversion(Database database, VltClass vltClass, VltClassField field,
             VltCollection vltCollection, object instance, Dictionary<object, object> dictionary)
         {
             foreach (var (key, value) in dictionary)
             {
-                var propName = (string) key;
+                var propName = (string)key;
                 var propertyInfo =
                     instance.GetType().GetProperty(propName, BindingFlags.Public | BindingFlags.Instance);
 
@@ -388,7 +389,7 @@ namespace Attribulator.Plugins.YAMLSupport
                     {
                         case List<object> objects:
                         {
-                            var newList = (IList) Activator.CreateInstance(propType, objects.Count);
+                            var newList = (IList)Activator.CreateInstance(propType, objects.Count);
                             var elemType = propType.GetElementType() ?? throw new Exception();
 
                             for (var index = 0; index < objects.Count; index++)
@@ -418,11 +419,11 @@ namespace Attribulator.Plugins.YAMLSupport
                         case Dictionary<object, object> objectDictionary:
                         {
                             var propInstance = propType.IsSubclassOf(typeof(VLTBaseType))
-                                ? TypeRegistry.ConstructInstance(propType, vltClass, field, vltCollection)
+                                ? database.TypeRegistry.ConstructInstance(propType, vltClass, field, vltCollection)
                                 : Activator.CreateInstance(propType);
 
                             propertyInfo.SetValue(instance,
-                                DoDictionaryConversion(vltClass, field, vltCollection, propInstance,
+                                DoDictionaryConversion(database, vltClass, field, vltCollection, propInstance,
                                     objectDictionary));
                             break;
                         }

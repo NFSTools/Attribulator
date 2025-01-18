@@ -57,7 +57,7 @@ namespace Attribulator.Plugins.ModScript
 
             var profile = ServiceProvider.GetRequiredService<IProfileService>().GetProfile(ProfileName);
             _logger.LogInformation("Loading database from disk...");
-            var database = new Database(new DatabaseOptions(profile.GetGameId(), profile.GetDatabaseType()));
+            var database = profile.CreateDatabase();
             var files = profile.LoadFiles(database, InputDirectory);
             database.CompleteLoad();
             _logger.LogInformation("Loaded database");

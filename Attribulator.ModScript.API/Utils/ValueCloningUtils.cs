@@ -28,14 +28,14 @@ namespace Attribulator.ModScript.API.Utils
             VltCollection vltCollection)
         {
             var newValue = originalValue is VLTArrayType
-                ? TypeRegistry.CreateInstance(database.Options.GameId, vltClass, vltClassField, vltCollection)
-                : TypeRegistry.ConstructInstance(
-                    TypeRegistry.ResolveType(database.Options.GameId, vltClassField.TypeName), vltClass,
+                ? database.TypeRegistry.CreateInstance(vltClass, vltClassField, vltCollection)
+                : database.TypeRegistry.ConstructInstance(
+                    database.TypeRegistry.ResolveType(vltClassField.TypeName), vltClass,
                     vltClassField, vltCollection);
 
             if (originalValue is VLTArrayType array)
             {
-                var newArray = (VLTArrayType) newValue;
+                var newArray = (VLTArrayType)newValue;
                 newArray.Capacity = array.Capacity;
                 newArray.ItemAlignment = vltClassField.Alignment;
                 newArray.FieldSize = vltClassField.Size;
@@ -49,14 +49,16 @@ namespace Attribulator.ModScript.API.Utils
             {
                 case PrimitiveTypeBase primitiveTypeBase:
                     var convertible = primitiveTypeBase.GetValue();
-                    if (convertible != null) ((PrimitiveTypeBase) newValue).SetValue(convertible);
+                    if (convertible != null) ((PrimitiveTypeBase)newValue).SetValue(convertible);
                     return newValue;
                 default:
-                    return CloneObjectWithReflection(originalValue, newValue, vltClass, vltClassField, vltCollection);
+                    return CloneObjectWithReflection(database, originalValue, newValue, vltClass, vltClassField,
+                        vltCollection);
             }
         }
 
-        private static VLTBaseType CloneObjectWithReflection(VLTBaseType originalValue, VLTBaseType newValue,
+        private static VLTBaseType CloneObjectWithReflection(Database database, VLTBaseType originalValue,
+            VLTBaseType newValue,
             VltClass vltClass, VltClassField vltClassField,
             VltCollection vltCollection)
         {
@@ -76,8 +78,9 @@ namespace Attribulator.ModScript.API.Utils
                         continue;
                     case VLTBaseType vltBaseType:
                         propertyInfo.SetValue(newValue, CloneObjectWithReflection(
+                            database,
                             vltBaseType,
-                            TypeRegistry.ConstructInstance(propertyInfo.PropertyType, vltClass, vltClassField,
+                            database.TypeRegistry.ConstructInstance(propertyInfo.PropertyType, vltClass, vltClassField,
                                 vltCollection),
                             vltClass, vltClassField, vltCollection));
                         break;

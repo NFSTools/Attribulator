@@ -12,6 +12,15 @@ namespace Attribulator.Plugins.SpeedProfiles
 {
     public class WorldProfile : IProfile
     {
+        public Database CreateDatabase()
+        {
+            var module = new VaultLib.Support.World.ModuleDef();
+            var database = new Database(new DatabaseOptions(GetGameId(), GetDatabaseType()),
+                module.CreateExportFactory());
+            module.RegisterTypes(database.TypeRegistry);
+            return database;
+        }
+
         public IEnumerable<LoadedFile> LoadFiles(Database database, string directory)
         {
             var files = new List<LoadedFile>();
@@ -85,7 +94,7 @@ namespace Attribulator.Plugins.SpeedProfiles
             yield return Path.Combine(directory, "fe_attrib.bin");
 
             foreach (var file in Directory.GetFiles(Path.Combine(directory, "gc.vaults"), "*.bin",
-                SearchOption.TopDirectoryOnly))
+                         SearchOption.TopDirectoryOnly))
                 yield return file;
         }
     }

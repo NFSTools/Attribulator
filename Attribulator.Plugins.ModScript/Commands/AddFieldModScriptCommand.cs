@@ -37,7 +37,7 @@ namespace Attribulator.Plugins.ModScript.Commands
                 return;
 
             var vltBaseType =
-                TypeRegistry.CreateInstance(databaseHelper.Database.Options.GameId, collection.Class, field,
+                databaseHelper.Database.TypeRegistry.CreateInstance(collection.Class, field,
                     collection);
 
             if (vltBaseType is VLTArrayType array)
@@ -52,7 +52,7 @@ namespace Attribulator.Plugins.ModScript.Commands
                 array.Items = new List<VLTBaseType>();
 
                 for (var i = 0; i < ArrayCapacity; i++)
-                    array.Items.Add(TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field,
+                    array.Items.Add(databaseHelper.Database.TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field,
                         collection));
             }
 

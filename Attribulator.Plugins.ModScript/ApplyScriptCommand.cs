@@ -93,7 +93,7 @@ namespace Attribulator.Plugins.ModScript
                 throw new CommandException(
                     $"Cannot find storage format that is compatible with directory [{InputDirectory}].");
 
-            var database = new Database(new DatabaseOptions(profile.GetGameId(), profile.GetDatabaseType()));
+            var database = profile.CreateDatabase();
             _logger.LogInformation("Loading database from disk...");
             var files = (await storageFormat.DeserializeAsync(InputDirectory, database)).ToList();
             _logger.LogInformation("Loaded database");

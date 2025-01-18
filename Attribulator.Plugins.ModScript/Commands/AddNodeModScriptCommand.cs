@@ -56,7 +56,7 @@ namespace Attribulator.Plugins.ModScript.Commands
             else
                 foreach (var baseField in vltClass.BaseFields)
                 {
-                    var vltBaseType = TypeRegistry.CreateInstance(databaseHelper.Database.Options.GameId, vltClass,
+                    var vltBaseType = databaseHelper.Database.TypeRegistry.CreateInstance(vltClass,
                         baseField,
                         newNode);
 
@@ -68,7 +68,7 @@ namespace Attribulator.Plugins.ModScript.Commands
                         var itemType = array.ItemType;
 
                         for (var i = 0; i < array.Capacity; i++)
-                            array.Items.Add(TypeRegistry.ConstructInstance(itemType, vltClass, baseField, newNode));
+                            array.Items.Add(databaseHelper.Database.TypeRegistry.ConstructInstance(itemType, vltClass, baseField, newNode));
                     }
 
                     newNode.SetRawValue(baseField.Name,

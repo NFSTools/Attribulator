@@ -54,7 +54,7 @@ namespace Attribulator.Plugins.ModScript.Commands
                 throw new CommandExecutionException(
                     "Appending to this array would cause it to exceed the maximum number of allowed elements.");
 
-            var itemToEdit = TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field, collection);
+            var itemToEdit = databaseHelper.Database.TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field, collection);
 
             if (_hasValue)
                 switch (itemToEdit)
