@@ -155,21 +155,8 @@ namespace Attribulator.Plugins.YAMLSupport
 
         protected override async Task<IEnumerable<SerializedCollection>> LoadDataFileAsync(string path)
         {
-            var collections =
-                Deserializer.Deserialize<List<SerializedCollection>>(
-                    await File.ReadAllTextAsync(path));
-
-            // Fix false null values
-            foreach (var loadedCollection in collections)
-            {
-                loadedCollection.Name ??= "null";
-
-                foreach (var k in loadedCollection.Data.Keys.ToList()
-                             .Where(k => loadedCollection.Data[k] == null))
-                    loadedCollection.Data[k] = "null";
-            }
-
-            return collections;
+            return Deserializer.Deserialize<List<SerializedCollection>>(
+                await File.ReadAllTextAsync(path));
         }
 
         private void AddLoadedCollections(string directory, ICollection<SerializedCollection> loadedVaultCollections,
