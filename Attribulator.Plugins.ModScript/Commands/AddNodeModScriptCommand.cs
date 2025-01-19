@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Attribulator.API.Utils;
 using Attribulator.ModScript.API;
 using VaultLib.Core;
 using VaultLib.Core.Data;
@@ -56,26 +57,21 @@ namespace Attribulator.Plugins.ModScript.Commands
             else
                 foreach (var baseField in vltClass.BaseFields)
                 {
-                    var vltBaseType = databaseHelper.Database.TypeRegistry.CreateInstance(vltClass,
-                        baseField,
-                        newNode);
+                    var vltBaseType = FieldUtils.CreateFieldValue(databaseHelper.Database.TypeRegistry, baseField);
 
-                    if (vltBaseType is VLTArrayType array)
+                    if (vltBaseType is VltArrayType array)
                     {
                         array.Capacity = baseField.MaxCount;
-                        array.ItemAlignment = baseField.Alignment;
-                        array.FieldSize = baseField.Size;
-                        var itemType = array.ItemType;
-
                         for (var i = 0; i < array.Capacity; i++)
-                            array.Items.Add(databaseHelper.Database.TypeRegistry.ConstructInstance(itemType, vltClass, baseField, newNode));
+                            array.Items.Add(FieldUtils.ConstructFieldType(databaseHelper.Database.TypeRegistry,
+                                baseField));
                     }
 
                     newNode.SetRawValue(baseField.Name,
                         vltBaseType);
                 }
 
-            if (vltClass.HasField("CollectionName")) newNode.SetDataValue("CollectionName", CollectionName);
+            if (vltClass.HasField("CollectionName")) newNode.SetRawValue("CollectionName", CollectionName);
         }
     }
 }

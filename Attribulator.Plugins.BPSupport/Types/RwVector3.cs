@@ -5,22 +5,13 @@ using VaultLib.Core.Types;
 
 namespace Attribulator.Plugins.BPSupport.Types
 {
-    public class RwVector3 : VLTBaseType
+    public class RwVector3 : VltBaseType
     {
-        public RwVector3(VltClass @class, VltClassField field, VltCollection collection) : base(@class, field,
-            collection)
-        {
-        }
-
-        public RwVector3(VltClass @class, VltClassField field) : base(@class, field)
-        {
-        }
-
         public float X { get; set; }
         public float Y { get; set; }
         public float Z { get; set; }
 
-        public override void Read(Vault vault, BinaryReader br)
+        public override void Read(VaultReadContext context, FieldReadWriteContext fieldContext, BinaryReader br)
         {
             X = br.ReadSingle();
             Y = br.ReadSingle();
@@ -28,7 +19,7 @@ namespace Attribulator.Plugins.BPSupport.Types
             br.ReadUInt32();
         }
 
-        public override void Write(Vault vault, BinaryWriter bw)
+        public override void Write(VaultWriteContext context, FieldReadWriteContext fieldContext, BinaryWriter bw)
         {
             bw.Write(X);
             bw.Write(Y);

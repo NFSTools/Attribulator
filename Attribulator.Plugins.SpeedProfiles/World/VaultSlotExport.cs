@@ -7,19 +7,19 @@ namespace Attribulator.Plugins.SpeedProfiles.World
 {
     public class VaultSlotExport : BaseExport
     {
-        public override void Read(Vault vault, BinaryReader br)
+        public override void Read(VaultReadContext context, BinaryReader br)
         {
             br.ReadUInt32();
         }
 
-        public override void Write(Vault vault, BinaryWriter bw)
+        public override void Write(VaultWriteContext context, BinaryWriter bw)
         {
             bw.Write(0);
         }
 
-        public override ulong GetExportID()
+        public override ulong GetExportId()
         {
-            return VLT32Hasher.Hash("VaultData");
+            return Vlt32Hasher.Hash("VaultData");
         }
 
         public override string GetTypeId()

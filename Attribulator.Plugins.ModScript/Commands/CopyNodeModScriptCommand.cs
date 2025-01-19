@@ -50,7 +50,7 @@ namespace Attribulator.Plugins.ModScript.Commands
             databaseHelper.CopyCollection(databaseHelper.Database, collection, newCollection);
 
             if (newCollection.Class.HasField("CollectionName"))
-                newCollection.SetDataValue("CollectionName", DestinationCollectionName);
+                newCollection.SetRawValue("CollectionName", DestinationCollectionName);
 
             databaseHelper.AddCollection(newCollection, parentCollection);
         }

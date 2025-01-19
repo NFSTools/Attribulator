@@ -57,14 +57,14 @@ namespace Attribulator.CLI.Commands
             foreach (var vltClass in database.Classes)
             {
                 var dumpedClassData = new DumpedClassData
-                    {Class = vltClass, Collections = new List<DumpedCollection>()};
+                    { Class = vltClass, Collections = new List<DumpedCollection>() };
                 foreach (var vltCollection in database.RowManager.GetFlattenedCollections(vltClass.Name))
                     dumpedClassData.Collections.Add(new DumpedCollection
                     {
                         Name = vltCollection.Name,
                         ParentName = vltCollection.Parent?.Name,
                         Data = vltCollection.GetData()
-                            .ToDictionary(e => e.Key, e => vltCollection.GetDataValue<object>(e.Key))
+                            .ToDictionary(e => e.Key, e => e.Value)
                     });
 
                 File.WriteAllText(Path.Combine(OutputDirectory, $"{vltClass.Name}.json"),

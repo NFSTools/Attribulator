@@ -45,8 +45,8 @@ namespace Attribulator.API.Serialization
                 {
                     var field = new VltClassField(
                         destinationDatabase.Options.Type == DatabaseType.X86Database
-                            ? VLT32Hasher.Hash(loadedDatabaseClassField.Name)
-                            : VLT64Hasher.Hash(loadedDatabaseClassField.Name),
+                            ? Vlt32Hasher.Hash(loadedDatabaseClassField.Name)
+                            : Vlt64Hasher.Hash(loadedDatabaseClassField.Name),
                         loadedDatabaseClassField.Name,
                         loadedDatabaseClassField.TypeName,
                         loadedDatabaseClassField.Flags,
@@ -276,11 +276,10 @@ namespace Attribulator.API.Serialization
         protected abstract Task<IEnumerable<SerializedCollection>> LoadDataFileAsync(string path);
 
         // TODO: rework value deserialization
-        protected abstract VLTBaseType ConvertSerializedValueToDataValue(Database database, string gameId, string dir,
+        protected abstract object ConvertSerializedValueToDataValue(Database database, string gameId, string dir,
             VltClass vltClass,
             VltClassField field,
             VltCollection vltCollection, object serializedValue, bool createInstance = true);
-
 
         private static void ResolveDependencies(VaultDependencyNode node, ICollection<VaultDependencyNode> resolved,
             ICollection<VaultDependencyNode> unresolved)

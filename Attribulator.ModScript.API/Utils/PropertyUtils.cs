@@ -45,7 +45,7 @@ namespace Attribulator.ModScript.API.Utils
         /// <exception cref="FieldAccessException">if a property exists but is not both readable and writable</exception>
         /// <exception cref="IndexOutOfRangeException">if an attempted array access is determined to be out of bounds</exception>
         /// <exception cref="MemberAccessException">if an array is accessed without an index</exception>
-        public static RetrievedProperty GetProperty([NotNull] VLTBaseType baseObject,
+        public static RetrievedProperty GetProperty([NotNull] object baseObject,
             [NotNull] IEnumerable<ParsedProperty> propertyPath)
         {
             object examining = baseObject;
@@ -111,6 +111,7 @@ namespace Attribulator.ModScript.API.Utils
         {
             public abstract object GetValue();
             public abstract void SetValue(object value);
+            public abstract Type GetPropertyType();
         }
 
         public class ReflectedProperty : RetrievedProperty
@@ -134,7 +135,7 @@ namespace Attribulator.ModScript.API.Utils
                 _propertyInfo.SetValue(_targetObject, value);
             }
 
-            public Type GetPropertyType()
+            public override Type GetPropertyType()
             {
                 return _propertyInfo.PropertyType;
             }
@@ -163,7 +164,7 @@ namespace Attribulator.ModScript.API.Utils
                 _array.SetValue(value, _index);
             }
 
-            public Type GetElementType()
+            public override Type GetPropertyType()
             {
                 return _elementType;
             }

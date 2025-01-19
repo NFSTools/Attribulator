@@ -53,10 +53,10 @@ namespace Attribulator.CLI.Commands
 
                 if (parsedHash <= uint.MaxValue)
                     _logger.LogInformation("Hash32 {HashValue:X8} -> {ResolvedValue}", parsedHash,
-                        HashManager.ResolveVLT((uint) parsedHash));
+                        HashManager.ResolveVlt((uint) parsedHash));
                 else
                     _logger.LogInformation("Hash64 {HashValue:X16} -> {ResolvedValue}", parsedHash,
-                        HashManager.ResolveVLT(parsedHash));
+                        HashManager.ResolveVlt(parsedHash));
             }
 
             return Task.FromResult(0);

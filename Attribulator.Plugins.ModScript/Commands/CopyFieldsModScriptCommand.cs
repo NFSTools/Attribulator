@@ -45,7 +45,7 @@ namespace Attribulator.Plugins.ModScript.Commands
         {
             var srcCollection = GetCollection(databaseHelper, ClassName, SourceCollectionName);
             var dstCollection = GetCollection(databaseHelper, ClassName, DestinationCollectionName);
-            var values = new Dictionary<VltClassField, VLTBaseType>();
+            var values = new Dictionary<VltClassField, object>();
 
             if ((Options & CopyOptions.Base) != 0)
                 foreach (var baseField in srcCollection.Class.BaseFields)

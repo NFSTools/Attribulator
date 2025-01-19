@@ -46,7 +46,7 @@ namespace Attribulator.Plugins.BPSupport
                 VltStream = new MemoryStream(vltData)
             };
 
-            using (var loadingWrapper = new VaultLoadingWrapper(vault, loadingOptions?.ByteOrder ?? ByteOrder.Little))
+            using (var loadingWrapper = new VaultReadWrapper(vault, loadingOptions?.ByteOrder ?? ByteOrder.Little))
             {
                 database.LoadVault(vault, loadingWrapper);
             }
@@ -58,7 +58,7 @@ namespace Attribulator.Plugins.BPSupport
         {
             bw.Write(0x10);
             var vault = vaults[0];
-            var vw = new VaultWriter(vault, new VaultSaveOptions {HashMode = VaultHashMode.Hash64});
+            var vw = new VaultWriter(vault, new VaultWriteOptions() {HashMode = VaultHashMode.Hash64});
             var streamInfo = vw.BuildVault();
             bw.Write((uint) streamInfo.VltStream.Length);
             bw.Write(0);

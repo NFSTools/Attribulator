@@ -24,7 +24,7 @@ namespace Attribulator.Plugins.SpeedProfiles.World
             var nameChars = new char[0x2C];
             _name.CopyTo(0, nameChars, 0, _name.Length);
 
-            var vaultWriter = new VaultWriter(vaults[0], new VaultSaveOptions());
+            var vaultWriter = new VaultWriter(vaults[0], new VaultWriteOptions());
             vaultWriter.ExportManager.AddExport(new VaultSlotExport());
             var vaultStreamInfo = vaultWriter.BuildVault();
 
@@ -84,7 +84,7 @@ namespace Attribulator.Plugins.SpeedProfiles.World
                 throw new Exception($"Failed to read {vltBuffer.Length} bytes of VLT data");
             vault.BinStream = new MemoryStream(binBuffer);
             vault.VltStream = new MemoryStream(vltBuffer);
-            using (var loadingWrapper = new VaultLoadingWrapper(vault, byteOrder))
+            using (var loadingWrapper = new VaultReadWrapper(vault, byteOrder))
             {
                 database.LoadVault(vault, loadingWrapper);
             }

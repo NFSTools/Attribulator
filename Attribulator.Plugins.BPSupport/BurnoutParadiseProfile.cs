@@ -23,9 +23,8 @@ namespace Attribulator.Plugins.BPSupport
                     () => new ExportEntry64(), () => new PtrRef64()));
             database.TypeRegistry.Register<RwVector2>("Attrib::Types::RwVector2");
             database.TypeRegistry.Register<RwVector3>("Attrib::Types::RwVector3");
-            database.TypeRegistry.Register<Int32>("AttribSys::Enums::eSongHint::eSongHint");
-            database.TypeRegistry.Register<Int32>("AttribSys::Enums::eCollisionMixerSliders::eCollisionMixerSliders");
-            database.TypeRegistry.Register<UInt64>("EA::Reflection::UInt64");
+            database.TypeRegistry.Map<int>("AttribSys::Enums::eSongHint::eSongHint");
+            database.TypeRegistry.Map<int>("AttribSys::Enums::eCollisionMixerSliders::eCollisionMixerSliders");
 
             return database;
         }

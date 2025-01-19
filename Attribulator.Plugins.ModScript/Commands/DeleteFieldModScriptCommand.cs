@@ -30,7 +30,7 @@ namespace Attribulator.Plugins.ModScript.Commands
             }
             else
             {
-                var hashed = $"0x{VLT32Hasher.Hash(FieldName):X8}";
+                var hashed = $"0x{Vlt32Hasher.Hash(FieldName):X8}";
 
                 if (collection.HasEntry(hashed))
                 {

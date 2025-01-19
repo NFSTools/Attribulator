@@ -32,7 +32,7 @@ namespace Attribulator.Plugins.ModScript.Commands
             FieldName = parts[3];
             PropertyPath = new List<string>();
 
-            var split = FieldName.Split(new[] {'[', ']'}, StringSplitOptions.RemoveEmptyEntries);
+            var split = FieldName.Split(new[] { '[', ']' }, StringSplitOptions.RemoveEmptyEntries);
 
             switch (split.Length)
             {
@@ -70,7 +70,7 @@ namespace Attribulator.Plugins.ModScript.Commands
             var data = collection.GetRawValue(field.Name);
             var itemToEdit = data;
 
-            if (data is VLTArrayType array)
+            if (data is VltArrayType array)
             {
                 if (ArrayIndex == -1)
                     ArrayIndex = array.Items.Count - 1;
@@ -83,22 +83,39 @@ namespace Attribulator.Plugins.ModScript.Commands
 
             if (PropertyPath.Count == 0)
             {
-                switch (itemToEdit)
+                if (TypeUtils.IsPrimitiveValue(itemToEdit))
                 {
-                    case PrimitiveTypeBase primitiveTypeBase:
-                        ValueConversionUtils.DoPrimitiveConversion(primitiveTypeBase, Value);
-                        break;
-                    case IStringValue stringValue:
-                        stringValue.SetString(Value);
-                        break;
-                    case BaseRefSpec refSpec:
-                        // NOTE: This is a compatibility feature for certain types, such as GCollectionKey, which are technically a RefSpec.
-                        refSpec.CollectionKey = Value;
-                        break;
-                    default:
-                        throw new CommandExecutionException(
-                            $"cannot handle update for {collection.Class.Name}[{field.Name}]");
+                    itemToEdit = ValueConversionUtils.ConvertPrimitiveToNewPrimitive(itemToEdit.GetType(), Value);
                 }
+                else if (itemToEdit is IStringValue stringValue)
+                {
+                    stringValue.SetString(Value);
+                }
+                else if (itemToEdit is BaseRefSpec refSpec)
+                {
+                    refSpec.CollectionKey = Value;
+                }
+                else
+                {
+                    throw new CommandExecutionException(
+                        $"Object stored in {collection.Class.Name}[{field.Name}] is not a simple type and cannot be used in a value-update command");
+                }
+                // switch (itemToEdit)
+                // {
+                //     case PrimitiveTypeBase primitiveTypeBase:
+                //         ValueConversionUtils.DoPrimitiveConversion(primitiveTypeBase, Value);
+                //         break;
+                //     case IStringValue stringValue:
+                //         stringValue.SetString(Value);
+                //         break;
+                //     case BaseRefSpec refSpec:
+                //         // NOTE: This is a compatibility feature for certain types, such as GCollectionKey, which are technically a RefSpec.
+                //         refSpec.CollectionKey = Value;
+                //         break;
+                //     default:
+                //         throw new CommandExecutionException(
+                //             $"cannot handle update for {collection.Class.Name}[{field.Name}]");
+                // }
             }
             else
             {
@@ -106,7 +123,7 @@ namespace Attribulator.Plugins.ModScript.Commands
                 if (itemToEdit is Matrix matrix && PropertyPath.Count == 1)
                 {
                     var matrixPath =
-                        PropertyPath[0].Split(new[] {'[', ']'}, StringSplitOptions.RemoveEmptyEntries)[1];
+                        PropertyPath[0].Split(new[] { '[', ']' }, StringSplitOptions.RemoveEmptyEntries)[1];
                     var indices = matrixPath.Split(',', StringSplitOptions.RemoveEmptyEntries)
                         .Select(int.Parse)
                         .ToArray();
@@ -120,14 +137,16 @@ namespace Attribulator.Plugins.ModScript.Commands
                 {
                     var parsedProperties = PropertyUtils.ParsePath(PropertyPath).ToList();
                     var retrievedProperty = PropertyUtils.GetProperty(itemToEdit, parsedProperties);
-                    var retrievedValue = retrievedProperty.GetValue();
 
-                    var value = ValueConversionUtils.DoPrimitiveConversion(retrievedValue, Value);
+                    var value = ValueConversionUtils.ConvertPrimitiveToNewPrimitive(retrievedProperty.GetPropertyType(),
+                        Value);
                     if (value == null) throw new Exception();
 
                     retrievedProperty.SetValue(value);
                 }
             }
+
+            collection.SetRawValue(field.Name, itemToEdit);
 
             databaseHelper.MarkVaultAsModified(collection.Vault);
         }

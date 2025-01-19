@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Attribulator.API.Utils;
 using Attribulator.ModScript.API;
 using VaultLib.Core;
 using VaultLib.Core.Types;
@@ -38,15 +39,14 @@ namespace Attribulator.Plugins.ModScript.Commands
                 throw new CommandExecutionException(
                     $"Cannot resize field {ClassName}[{FieldName}] beyond maximum count (requested {NewCapacity} but limit is {field.MaxCount})");
 
-            var array = collection.GetRawValue<VLTArrayType>(FieldName);
+            var array = collection.GetRawValue<VltArrayType>(FieldName);
 
             if (NewCapacity < array.Items.Count)
                 while (NewCapacity < array.Items.Count)
                     array.Items.RemoveAt(array.Items.Count - 1);
             else if (NewCapacity > array.Items.Count)
                 while (NewCapacity > array.Items.Count)
-                    array.Items.Add(databaseHelper.Database.TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field,
-                        collection));
+                    array.Items.Add(FieldUtils.ConstructFieldType(databaseHelper.Database.TypeRegistry, field));
 
             if (!field.IsInLayout)
                 if (array.Capacity != NewCapacity)

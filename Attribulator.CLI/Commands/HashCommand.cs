@@ -34,10 +34,10 @@ namespace Attribulator.CLI.Commands
             foreach (var stringToHash in Strings)
                 if (GenerateHash64)
                     _logger.LogInformation("{HashInput} -> 0x{HashOutput:X16}", stringToHash,
-                        VLT64Hasher.Hash(stringToHash));
+                        Vlt64Hasher.Hash(stringToHash));
                 else
                     _logger.LogInformation("{HashInput} -> 0x{HashOutput:X8}", stringToHash,
-                        VLT32Hasher.Hash(stringToHash));
+                        Vlt32Hasher.Hash(stringToHash));
 
             return Task.FromResult(0);
         }

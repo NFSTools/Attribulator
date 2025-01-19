@@ -56,7 +56,7 @@ namespace Attribulator.Plugins.ModScript.Commands
             var data = collection.GetRawValue(field.Name);
             var itemToEdit = data;
 
-            if (data is VLTArrayType array)
+            if (data is VltArrayType array)
             {
                 if (ArrayIndex == -1)
                     ArrayIndex = array.Items.Count - 1;

@@ -61,7 +61,7 @@ namespace Attribulator.ModScript.API
         {
             Collections.Remove(collection.ShortPath);
             collection.SetName(newName);
-            if (collection.Class.HasField("CollectionName")) collection.SetDataValue("CollectionName", newName);
+            if (collection.Class.HasField("CollectionName")) collection.SetRawValue("CollectionName", newName);
             Collections.Add(collection.ShortPath, collection);
             MarkVaultAsModified(collection.Vault);
         }

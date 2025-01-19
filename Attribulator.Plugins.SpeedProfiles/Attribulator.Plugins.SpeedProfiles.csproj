@@ -13,12 +13,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="VaultLib.Core" Version="2.0.0-dev"/>
-        <PackageReference Include="VaultLib.Support.Carbon" Version="2.0.0-dev"/>
-        <PackageReference Include="VaultLib.Support.MostWanted" Version="2.0.0-dev"/>
-        <PackageReference Include="VaultLib.Support.ProStreet" Version="2.0.0-dev"/>
-        <PackageReference Include="VaultLib.Support.Undercover" Version="2.0.0-dev"/>
-        <PackageReference Include="VaultLib.Support.World" Version="2.0.0-dev"/>
+        <PackageReference Include="VaultLib.Core" Version="3.0.0-dev"/>
+        <PackageReference Include="VaultLib.Support.Carbon" Version="3.0.0-dev"/>
+        <PackageReference Include="VaultLib.Support.MostWanted" Version="3.0.0-dev"/>
+        <PackageReference Include="VaultLib.Support.ProStreet" Version="3.0.0-dev"/>
+        <PackageReference Include="VaultLib.Support.Undercover" Version="3.0.0-dev"/>
+        <PackageReference Include="VaultLib.Support.World" Version="3.0.0-dev"/>
     </ItemGroup>
 
     <ItemGroup>

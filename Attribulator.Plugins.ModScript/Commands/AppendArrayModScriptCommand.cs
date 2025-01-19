@@ -45,7 +45,7 @@ namespace Attribulator.Plugins.ModScript.Commands
                 throw new CommandExecutionException(
                     $"Collection {collection.ShortPath} does not have an entry for {FieldName}.");
 
-            var array = collection.GetRawValue<VLTArrayType>(FieldName);
+            var array = collection.GetRawValue<VltArrayType>(FieldName);
 
             if (array.Items.Count == array.Capacity && field.IsInLayout)
                 throw new CommandExecutionException("Cannot append to a full array when it is a layout field");
@@ -54,25 +54,28 @@ namespace Attribulator.Plugins.ModScript.Commands
                 throw new CommandExecutionException(
                     "Appending to this array would cause it to exceed the maximum number of allowed elements.");
 
-            var itemToEdit = databaseHelper.Database.TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field, collection);
+            var itemToEdit = FieldUtils.ConstructFieldType(databaseHelper.Database.TypeRegistry, field);
 
             if (_hasValue)
-                switch (itemToEdit)
+            {
+                if (TypeUtils.IsPrimitiveValue(itemToEdit))
                 {
-                    case PrimitiveTypeBase primitiveTypeBase:
-                        ValueConversionUtils.DoPrimitiveConversion(primitiveTypeBase, Value);
-                        break;
-                    case IStringValue stringValue:
-                        stringValue.SetString(Value);
-                        break;
-                    case BaseRefSpec refSpec:
-                        // NOTE: This is a compatibility feature for certain types, such as GCollectionKey, which are technically a RefSpec.
-                        refSpec.CollectionKey = Value;
-                        break;
-                    default:
-                        throw new CommandExecutionException(
-                            $"Object stored in {collection.Class.Name}[{field.Name}] is not a simple type and cannot be used in a value-append command");
+                    itemToEdit = ValueConversionUtils.ConvertPrimitiveToNewPrimitive(itemToEdit.GetType(), Value);
                 }
+                else if (itemToEdit is IStringValue stringValue)
+                {
+                    stringValue.SetString(Value);
+                }
+                else if (itemToEdit is BaseRefSpec refSpec)
+                {
+                    refSpec.CollectionKey = Value;
+                }
+                else
+                {
+                    throw new CommandExecutionException(
+                        $"Object stored in {collection.Class.Name}[{field.Name}] is not a simple type and cannot be used in a value-append command");
+                }
+            }
 
             array.Items.Add(itemToEdit);
 

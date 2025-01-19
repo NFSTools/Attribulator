@@ -74,7 +74,7 @@ namespace Attribulator.ModScript.API
         {
             if (hashString.StartsWith("0x", StringComparison.Ordinal))
                 hashString =
-                    HashManager.ResolveVLT(uint.Parse(hashString.Substring(2), NumberStyles.AllowHexSpecifier));
+                    HashManager.ResolveVlt(uint.Parse(hashString.Substring(2), NumberStyles.AllowHexSpecifier));
 
             return hashString;
         }

@@ -13,7 +13,7 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0"/>
-        <PackageReference Include="VaultLib.Core" Version="2.0.0-dev"/>
+        <PackageReference Include="VaultLib.Core" Version="3.0.0-dev"/>
     </ItemGroup>
 
 </Project>

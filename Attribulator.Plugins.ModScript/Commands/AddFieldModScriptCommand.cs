@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Attribulator.API.Utils;
 using Attribulator.ModScript.API;
 using VaultLib.Core;
 using VaultLib.Core.Types;
@@ -36,24 +37,19 @@ namespace Attribulator.Plugins.ModScript.Commands
             if (collection.HasEntry(field.Name))
                 return;
 
-            var vltBaseType =
-                databaseHelper.Database.TypeRegistry.CreateInstance(collection.Class, field,
-                    collection);
+            var vltBaseType = FieldUtils.CreateFieldValue(databaseHelper.Database.TypeRegistry, field);
 
-            if (vltBaseType is VLTArrayType array)
+            if (vltBaseType is VltArrayType array)
             {
                 if (ArrayCapacity > field.MaxCount)
                     throw new CommandExecutionException(
                         $"Cannot add field {ClassName}[{FieldName}] with capacity beyond maximum (requested {ArrayCapacity} but limit is {field.MaxCount})");
 
                 array.Capacity = ArrayCapacity;
-                array.ItemAlignment = field.Alignment;
-                array.FieldSize = field.Size;
-                array.Items = new List<VLTBaseType>();
+                array.Items = new List<object>();
 
                 for (var i = 0; i < ArrayCapacity; i++)
-                    array.Items.Add(databaseHelper.Database.TypeRegistry.ConstructInstance(array.ItemType, collection.Class, field,
-                        collection));
+                    array.Items.Add(FieldUtils.ConstructFieldType(databaseHelper.Database.TypeRegistry, field));
             }
 
             collection.SetRawValue(field.Name, vltBaseType);
