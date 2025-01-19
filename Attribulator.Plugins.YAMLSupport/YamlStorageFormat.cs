@@ -84,8 +84,7 @@ namespace Attribulator.Plugins.YAMLSupport
                 loadedDatabase.Classes.Add(loadedDatabaseClass);
             }
 
-            var serializerBuilder = new SerializerBuilder();
-            var serializer = serializerBuilder.Build();
+            var serializer = new SerializerBuilder().WithQuotingNecessaryStrings(true).Build();
 
             using var sw = new StreamWriter(Path.Combine(destinationDirectory, "info.yml"));
             serializer.Serialize(sw, loadedDatabase);
