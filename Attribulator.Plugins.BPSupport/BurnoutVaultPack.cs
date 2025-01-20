@@ -40,29 +40,25 @@ namespace Attribulator.Plugins.BPSupport
 
             if (br.Read(binData) != binData.Length) throw new InvalidDataException();
 
-            var vault = new Vault(_vaultName)
-            {
-                BinStream = new MemoryStream(binData),
-                VltStream = new MemoryStream(vltData)
-            };
+            var byteOrder = loadingOptions?.ByteOrder ?? ByteOrder.Little;
 
-            using (var loadingWrapper = new VaultReadWrapper(vault, loadingOptions?.ByteOrder ?? ByteOrder.Little))
-            {
-                database.LoadVault(vault, loadingWrapper);
-            }
-
-            return new ReadOnlyCollection<Vault>(new List<Vault>(new[] {vault}));
+            var binStream = new MemoryStream(binData);
+            var vltStream = new MemoryStream(vltData);
+            using var loadingWrapper = new VaultReadWrapper(_vaultName, binStream, vltStream,
+                byteOrder);
+            var vault = database.LoadVault(loadingWrapper);
+            return new ReadOnlyCollection<Vault>(new List<Vault>(new[] { vault }));
         }
 
         public void Save(BinaryWriter bw, IList<Vault> vaults, PackSavingOptions savingOptions)
         {
             bw.Write(0x10);
             var vault = vaults[0];
-            var vw = new VaultWriter(vault, new VaultWriteOptions() {HashMode = VaultHashMode.Hash64});
+            var vw = new VaultWriter(vault, new VaultWriteOptions() { HashMode = VaultHashMode.Hash64 });
             var streamInfo = vw.BuildVault();
-            bw.Write((uint) streamInfo.VltStream.Length);
+            bw.Write((uint)streamInfo.VltStream.Length);
             bw.Write(0);
-            bw.Write((uint) streamInfo.BinStream.Length);
+            bw.Write((uint)streamInfo.BinStream.Length);
 
             streamInfo.VltStream.CopyTo(bw.BaseStream);
             bw.AlignWriter(0x10);
@@ -71,7 +67,7 @@ namespace Attribulator.Plugins.BPSupport
             var endOffset = bw.BaseStream.Position;
 
             bw.BaseStream.Position = 8;
-            bw.Write((uint) binOffset);
+            bw.Write((uint)binOffset);
             bw.BaseStream.Position = endOffset;
         }
     }

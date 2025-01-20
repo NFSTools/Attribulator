@@ -32,10 +32,10 @@ namespace Attribulator.Plugins.SpeedProfiles.World
 
             var binOffsetPos = bw.BaseStream.Position;
             bw.Write(0);
-            bw.Write((uint) vaultStreamInfo.BinStream.Length);
+            bw.Write((uint)vaultStreamInfo.BinStream.Length);
             var vltOffsetPos = bw.BaseStream.Position;
             bw.Write(0);
-            bw.Write((uint) vaultStreamInfo.VltStream.Length);
+            bw.Write((uint)vaultStreamInfo.VltStream.Length);
             var fileSizePos = bw.BaseStream.Position;
             bw.Write(0);
 
@@ -49,13 +49,13 @@ namespace Attribulator.Plugins.SpeedProfiles.World
             //bw.AlignWriter(0x80);
 
             bw.BaseStream.Position = binOffsetPos;
-            bw.Write((uint) binOffset);
+            bw.Write((uint)binOffset);
 
             bw.BaseStream.Position = vltOffsetPos;
-            bw.Write((uint) vltOffset);
+            bw.Write((uint)vltOffset);
 
             bw.BaseStream.Position = fileSizePos;
-            bw.Write((uint) bw.BaseStream.Length);
+            bw.Write((uint)bw.BaseStream.Length);
 
             bw.BaseStream.Position = bw.BaseStream.Length;
         }
@@ -72,7 +72,6 @@ namespace Attribulator.Plugins.SpeedProfiles.World
 
             if (fileSize != br.BaseStream.Length) throw new InvalidDataException("Corrupted file");
 
-            var vault = new Vault(name);
             var byteOrder = loadingOptions?.ByteOrder ?? ByteOrder.Little;
             br.BaseStream.Seek(binOffset, SeekOrigin.Begin);
             var binBuffer = new byte[binSize];
@@ -82,14 +81,12 @@ namespace Attribulator.Plugins.SpeedProfiles.World
             var vltBuffer = new byte[vltSize];
             if (br.Read(vltBuffer, 0, vltBuffer.Length) != vltBuffer.Length)
                 throw new Exception($"Failed to read {vltBuffer.Length} bytes of VLT data");
-            vault.BinStream = new MemoryStream(binBuffer);
-            vault.VltStream = new MemoryStream(vltBuffer);
-            using (var loadingWrapper = new VaultReadWrapper(vault, byteOrder))
-            {
-                database.LoadVault(vault, loadingWrapper);
-            }
+            var binStream = new MemoryStream(binBuffer);
+            var vltStream = new MemoryStream(vltBuffer);
+            using var loadingWrapper = new VaultReadWrapper(name, binStream, vltStream, byteOrder);
+            var vault = database.LoadVault(loadingWrapper);
 
-            return new List<Vault>(new[] {vault});
+            return new List<Vault>(new[] { vault });
         }
     }
 }
