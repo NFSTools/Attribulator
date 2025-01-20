@@ -2,13 +2,12 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Numerics;
 using Attribulator.API.Utils;
 using Attribulator.ModScript.API;
 using Attribulator.ModScript.API.Utils;
 using VaultLib.Core.Types;
 using VaultLib.Core.Types.Abstractions;
-using VaultLib.Core.Types.Attrib.Types;
-using VaultLib.Core.Types.EA.Reflection;
 using VaultLib.Core.Utils;
 
 namespace Attribulator.Plugins.ModScript.Commands
@@ -120,7 +119,7 @@ namespace Attribulator.Plugins.ModScript.Commands
             else
             {
                 // TODO for VaultLib: change Matrix to be multiple floats instead of 1 array
-                if (itemToEdit is Matrix matrix && PropertyPath.Count == 1)
+                if (itemToEdit is Matrix4x4 matrix && PropertyPath.Count == 1)
                 {
                     var matrixPath =
                         PropertyPath[0].Split(new[] { '[', ']' }, StringSplitOptions.RemoveEmptyEntries)[1];
@@ -129,9 +128,60 @@ namespace Attribulator.Plugins.ModScript.Commands
                         .ToArray();
                     if (indices.Length != 2) throw new CommandExecutionException("invalid matrix access");
 
-                    matrix.Data ??= new float[16];
-                    matrix.Data[4 * (indices[0] - 1) + (indices[1] - 1)] =
-                        float.Parse(Value, CultureInfo.InvariantCulture);
+                    var value = float.Parse(Value, CultureInfo.InvariantCulture);
+                    switch ((indices[0], indices[1]))
+                    {
+                        case (1, 1):
+                            matrix.M11 = value;
+                            break;
+                        case (1, 2):
+                            matrix.M12 = value;
+                            break;
+                        case (1, 3):
+                            matrix.M13 = value;
+                            break;
+                        case (1, 4):
+                            matrix.M14 = value;
+                            break;
+                        case (2, 1):
+                            matrix.M21 = value;
+                            break;
+                        case (2, 2):
+                            matrix.M22 = value;
+                            break;
+                        case (2, 3):
+                            matrix.M23 = value;
+                            break;
+                        case (2, 4):
+                            matrix.M24 = value;
+                            break;
+                        case (3, 1):
+                            matrix.M31 = value;
+                            break;
+                        case (3, 2):
+                            matrix.M32 = value;
+                            break;
+                        case (3, 3):
+                            matrix.M33 = value;
+                            break;
+                        case (3, 4):
+                            matrix.M34 = value;
+                            break;
+                        case (4, 1):
+                            matrix.M41 = value;
+                            break;
+                        case (4, 2):
+                            matrix.M42 = value;
+                            break;
+                        case (4, 3):
+                            matrix.M43 = value;
+                            break;
+                        case (4, 4):
+                            matrix.M44 = value;
+                            break;
+                    }
+                    
+                    itemToEdit = matrix;
                 }
                 else
                 {

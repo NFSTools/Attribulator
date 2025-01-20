@@ -24,14 +24,14 @@ namespace Attribulator.API.Serialization
             new Dictionary<(string, string), VltClassField>();
 
         /// <inheritdoc />
-        public abstract SerializedDatabaseInfo LoadInfo(string sourceDirectory);
+        public abstract SerializedDatabaseInfo LoadInfo(string sourceDirectory, Database destinationDatabase);
 
         /// <inheritdoc />
         public async Task<IEnumerable<LoadedFile>> DeserializeAsync(string sourceDirectory,
             Database destinationDatabase, IEnumerable<string> fileNames = null)
         {
             var loadedFiles = new List<LoadedFile>();
-            var loadedDatabase = LoadInfo(sourceDirectory);
+            var loadedDatabase = LoadInfo(sourceDirectory, destinationDatabase);
             var fileNameList = fileNames?.ToList() ?? new List<string>();
 
             if (string.IsNullOrEmpty(loadedDatabase.PrimaryVaultName))
@@ -71,7 +71,7 @@ namespace Attribulator.API.Serialization
 
             foreach (var loadedDatabaseType in loadedDatabase.Types)
                 destinationDatabase.Types.Add(new DatabaseTypeInfo
-                    {Name = loadedDatabaseType.Name, Size = loadedDatabaseType.Size});
+                    { Name = loadedDatabaseType.Name, Size = loadedDatabaseType.Size });
 
 
             var collectionParentDictionary = new Dictionary<string, string>();
@@ -124,7 +124,9 @@ namespace Attribulator.API.Serialization
                 {
                     var vaultDirectory = Path.Combine(baseDirectory, vaultName).Trim();
                     var newVault = new Vault(vaultName)
-                        {Database = destinationDatabase, IsPrimaryVault = vaultName == loadedDatabase.PrimaryVaultName};
+                    {
+                        Database = destinationDatabase, IsPrimaryVault = vaultName == loadedDatabase.PrimaryVaultName
+                    };
                     if (Directory.Exists(vaultDirectory))
                     {
                         var collectionsToBeAdded = new List<VltCollection>();
@@ -139,7 +141,8 @@ namespace Attribulator.API.Serialization
 
                             try
                             {
-                                var collections = (await LoadDataFileAsync(dataFilePath)).ToList();
+                                var collections = (await LoadDataFileAsync(dataFilePath, destinationDatabase, vltClass))
+                                    .ToList();
                                 var newCollections = new List<VltCollection>();
                                 AddCollectionsToList(newVault, vltClass, vaultDirectory, newCollections, collections);
 
@@ -176,12 +179,12 @@ namespace Attribulator.API.Serialization
                 var node = new VaultDependencyNode(vault);
 
                 foreach (var parentCollection in from vaultCollection in vaultCollections
-                    let parentKey = collectionParentDictionary[vaultCollection.ShortPath]
-                    where !string.IsNullOrEmpty(parentKey)
-                    select collectionDictionary[$"{vaultCollection.Class.Name}/{parentKey}"]
-                    into parentCollection
-                    where parentCollection.Vault.Name != vault.Name
-                    select parentCollection)
+                         let parentKey = collectionParentDictionary[vaultCollection.ShortPath]
+                         where !string.IsNullOrEmpty(parentKey)
+                         select collectionDictionary[$"{vaultCollection.Class.Name}/{parentKey}"]
+                         into parentCollection
+                         where parentCollection.Vault.Name != vault.Name
+                         select parentCollection)
                     node.AddEdge(new VaultDependencyNode(parentCollection.Vault));
 
                 ResolveDependencies(node, resolved, unresolved);
@@ -273,7 +276,8 @@ namespace Attribulator.API.Serialization
 
         protected abstract IEnumerable<string> GetDataFilePaths(string directory);
 
-        protected abstract Task<IEnumerable<SerializedCollection>> LoadDataFileAsync(string path);
+        protected abstract Task<IEnumerable<SerializedCollection>> LoadDataFileAsync(string path, Database database,
+            VltClass vltClass);
 
         // TODO: rework value deserialization
         protected abstract object ConvertSerializedValueToDataValue(Database database, string gameId, string dir,

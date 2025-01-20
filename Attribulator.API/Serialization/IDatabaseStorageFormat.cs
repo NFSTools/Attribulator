@@ -16,8 +16,9 @@ namespace Attribulator.API.Serialization
         ///     Deserializes and returns the INFORMATION about the database stored in the given directory.
         /// </summary>
         /// <param name="sourceDirectory">The path to the directory to read data from.</param>
+        /// <param name="destinationDatabase"></param>
         /// <returns>A new instance of the <see cref="SerializedDatabaseInfo" /> object containing information about the database.</returns>
-        SerializedDatabaseInfo LoadInfo(string sourceDirectory);
+        SerializedDatabaseInfo LoadInfo(string sourceDirectory, Database destinationDatabase);
 
         /// <summary>
         ///     Deserializes data in the given directory and loads it into the given database.

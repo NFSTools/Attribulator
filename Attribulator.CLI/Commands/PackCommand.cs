@@ -67,6 +67,7 @@ namespace Attribulator.CLI.Commands
                 throw new CommandException(
                     $"Cannot find storage format that is compatible with directory [{InputDirectory}].");
 
+            var database = profile.CreateDatabase();
 
             // Parallel hash check
             // TODO refactor build cache system to be reusable
@@ -75,7 +76,7 @@ namespace Attribulator.CLI.Commands
             var dbInternalPath = Path.Combine(InputDirectory, ".db");
             var cacheFilePath = Path.Combine(dbInternalPath, ".cache.json");
 
-            var dbInfo = storageFormat.LoadInfo(InputDirectory);
+            var dbInfo = storageFormat.LoadInfo(InputDirectory, database);
 
             if (UseCache)
             {
@@ -127,7 +128,6 @@ namespace Attribulator.CLI.Commands
 
             if (fileNamesToCompile.Count > 0)
             {
-                var database = profile.CreateDatabase();
                 _logger.LogInformation("Loading database from disk...");
                 var files =
                     (await storageFormat.DeserializeAsync(InputDirectory, database, fileNamesToCompile)).ToList();

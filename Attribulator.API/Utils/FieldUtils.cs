@@ -11,11 +11,11 @@ public static class FieldUtils
         var resolvedType = typeRegistry.ResolveType(field.TypeName);
         return field.IsArray
             ? new VltArrayType(field, resolvedType)
-            : typeRegistry.ConstructTypeInstance(resolvedType, field);
+            : typeRegistry.ConstructTypeInstance(resolvedType);
     }
 
     public static object ConstructFieldType(TypeRegistry typeRegistry, VltClassField field)
     {
-        return typeRegistry.ConstructTypeInstance(typeRegistry.ResolveType(field.TypeName), field);
+        return typeRegistry.ConstructTypeInstance(typeRegistry.ResolveType(field.TypeName));
     }
 }

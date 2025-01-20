@@ -83,7 +83,7 @@ namespace Attribulator.ModScript.API.Utils
                         propertyInfo.SetValue(newValue, CloneObjectWithReflection(
                             database,
                             vltBaseType,
-                            database.TypeRegistry.ConstructTypeInstance(propertyInfo.PropertyType, vltClassField),
+                            database.TypeRegistry.ConstructTypeInstance(propertyInfo.PropertyType),
                             vltClass, vltClassField, vltCollection));
                         break;
                     case string str:

@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
+using System.Numerics;
 using System.Threading.Tasks;
 using Attribulator.API.Data;
 using Attribulator.API.Serialization;
-using Attribulator.API.Utils;
+using Attribulator.Plugins.YAMLSupport.Helpers;
 using VaultLib.Core;
 using VaultLib.Core.Data;
 using VaultLib.Core.DB;
@@ -25,14 +24,49 @@ namespace Attribulator.Plugins.YAMLSupport
     /// </summary>
     public class YamlStorageFormat : BaseStorageFormat
     {
-        private static readonly IDeserializer Deserializer = new DeserializerBuilder().Build();
-
-        public override SerializedDatabaseInfo LoadInfo(string sourceDirectory)
+        public override SerializedDatabaseInfo LoadInfo(string sourceDirectory, Database destinationDatabase)
         {
-            var deserializer = new DeserializerBuilder().Build();
-
             using var dbs = new StreamReader(Path.Combine(sourceDirectory, "info.yml"));
-            return deserializer.Deserialize<SerializedDatabaseInfo>(dbs);
+
+            var deserializer = new DeserializerBuilder().Build();
+            var serializer = new SerializerBuilder().Build();
+
+            // Insane strategy to get proper static values:
+            // 1. Read the schema with StaticValue as an object. Complex types turn into dictionaries.
+            // 2. Once we know the type of every field (after reading the schema the first time), re-serialize all the
+            //    static values and deserialize them AGAIN, this time with their proper types. (Except for the special cases.)
+            // 3. Replace the original StaticValues with the new, (almost) properly typed ones.
+            // 4. Profit.
+            var serializedDatabaseInfo = deserializer.Deserialize<SerializedDatabaseInfo>(dbs);
+
+            foreach (var serializedDatabaseClass in serializedDatabaseInfo.Classes)
+            {
+                foreach (var serializedDatabaseClassField in serializedDatabaseClass.Fields)
+                {
+                    if ((serializedDatabaseClassField.Flags & DefinitionFlags.IsStatic) == 0)
+                    {
+                        continue;
+                    }
+
+                    var fieldUnderlyingType =
+                        destinationDatabase.TypeRegistry.ResolveType(serializedDatabaseClassField.TypeName);
+
+                    var effectiveFieldUnderlyingType = CloakingHelper.IsTypeAStringInDisguise(fieldUnderlyingType)
+                        ? typeof(string)
+                        : fieldUnderlyingType;
+
+                    var staticType = (serializedDatabaseClassField.Flags & DefinitionFlags.Array) != 0
+                        ? typeof(CustomSerializedArray<>).MakeGenericType(fieldUnderlyingType)
+                        : effectiveFieldUnderlyingType;
+
+                    var serializedStaticValue = serializer.Serialize(serializedDatabaseClassField.StaticValue);
+
+                    serializedDatabaseClassField.StaticValue =
+                        deserializer.Deserialize(serializedStaticValue, staticType);
+                }
+            }
+
+            return serializedDatabaseInfo;
         }
 
         public override void Serialize(Database sourceDatabase, string destinationDirectory,
@@ -53,11 +87,13 @@ namespace Attribulator.Plugins.YAMLSupport
                 { Name = f.Name, Group = f.Group, Vaults = f.Vaults.Select(v => v.Name).ToList() }));
 
             foreach (var databaseType in sourceDatabase.Types)
+            {
                 loadedDatabase.Types.Add(new SerializedTypeInfo
                 {
                     Name = databaseType.Name,
                     Size = databaseType.Size
                 });
+            }
 
             foreach (var databaseClass in sourceDatabase.Classes)
             {
@@ -78,16 +114,29 @@ namespace Attribulator.Plugins.YAMLSupport
                         Size = field.Size,
                         Offset = field.Offset,
                         StaticValue =
-                            ConvertDataValueToSerializedValue(destinationDirectory, null, field, field.StaticValue)
+                            ConvertVltValueToSerializedValue(destinationDirectory, null, field, field.StaticValue)
                     }));
 
                 loadedDatabase.Classes.Add(loadedDatabaseClass);
             }
 
-            var serializer = new SerializerBuilder().WithQuotingNecessaryStrings(true).Build();
+            var infoSerializer = new SerializerBuilder().WithQuotingNecessaryStrings(true).Build();
 
             using var sw = new StreamWriter(Path.Combine(destinationDirectory, "info.yml"));
-            serializer.Serialize(sw, loadedDatabase);
+            infoSerializer.Serialize(sw, loadedDatabase);
+
+            var classSpecificSerializers = sourceDatabase.Classes.ToDictionary(c => c.Name, c =>
+            {
+                return new SerializerBuilder()
+                    .WithQuotingNecessaryStrings(true)
+                    .DisableAliases()
+                    .WithTypeInspector(
+                        inspector => new VltClassSchemaTypeInspector(inspector, sourceDatabase, c))
+                    // add YamlIgnore to some annoying matrix properties
+                    .WithAttributeOverride<Matrix4x4>(m => m.Translation, new YamlIgnoreAttribute())
+                    .WithAttributeOverride<Matrix4x4>(m => m.IsIdentity, new YamlIgnoreAttribute())
+                    .Build();
+            });
 
             foreach (var loadedDatabaseFile in loadedFileList)
             {
@@ -106,11 +155,12 @@ namespace Attribulator.Plugins.YAMLSupport
                     foreach (var collectionGroup in sourceDatabase.RowManager.GetCollectionsInVault(vault)
                                  .GroupBy(v => v.Class.Name))
                     {
-                        var loadedCollections = new List<SerializedCollection>();
-                        AddLoadedCollections(vaultDirectory, loadedCollections, collectionGroup);
+                        var serializedCollections = new List<CustomSerializedCollection>();
+                        ConvertVltCollectionsToSerializedCollections(vaultDirectory, collectionGroup,
+                            serializedCollections);
 
                         using var vw = new StreamWriter(Path.Combine(vaultDirectory, collectionGroup.Key + ".yml"));
-                        serializer.Serialize(vw, loadedCollections);
+                        classSpecificSerializers[collectionGroup.Key].Serialize(vw, serializedCollections);
                     }
                 }
             }
@@ -153,101 +203,98 @@ namespace Attribulator.Plugins.YAMLSupport
             return Directory.GetFiles(directory, "*.yml");
         }
 
-        protected override async Task<IEnumerable<SerializedCollection>> LoadDataFileAsync(string path)
+        protected override async Task<IEnumerable<SerializedCollection>> LoadDataFileAsync(string path,
+            Database database, VltClass vltClass)
         {
-            return Deserializer.Deserialize<List<SerializedCollection>>(
+            var deserializer = new DeserializerBuilder()
+                .WithTypeInspector(inspector => new VltClassSchemaTypeInspector(inspector, database, vltClass))
+                .Build();
+
+            var results = deserializer.Deserialize<List<CustomSerializedCollection>>(
                 await File.ReadAllTextAsync(path));
+
+            return results.Select(ConvertFromCustomSerializedCollection);
         }
 
-        private void AddLoadedCollections(string directory, ICollection<SerializedCollection> loadedVaultCollections,
-            IEnumerable<VltCollection> vltCollections)
+        private static SerializedCollection ConvertFromCustomSerializedCollection(CustomSerializedCollection data)
+        {
+            return new SerializedCollection
+            {
+                ParentName = data.ParentName,
+                Name = data.Name,
+                Data = data.Data.GetEntries()
+            };
+        }
+
+        private static void ConvertVltCollectionsToSerializedCollections(string directory,
+            IEnumerable<VltCollection> vltCollections, ICollection<CustomSerializedCollection> serializedCollections)
         {
             foreach (var vltCollection in vltCollections)
             {
-                var loadedCollection = new SerializedCollection
+                var serializedCollection = new CustomSerializedCollection()
                 {
                     Name = vltCollection.Name,
                     ParentName = vltCollection.Parent?.Name,
-                    Data = new Dictionary<string, object>()
+                    Data = new CustomSerializedCollectionData()
                 };
 
                 foreach (var (key, value) in vltCollection.GetData())
-                    loadedCollection.Data[key] =
-                        ConvertDataValueToSerializedValue(directory, vltCollection, vltCollection.Class[key], value);
-
-                loadedVaultCollections.Add(loadedCollection);
-            }
-        }
-
-        private object ConvertDataValueToSerializedValue(string directory, VltCollection collection,
-            VltClassField field, object dataPairValue)
-        {
-            switch (dataPairValue)
-            {
-                case IStringValue stringValue:
-                    return stringValue.GetString();
-                case BaseBlob blob:
-                    return ProcessBlob(directory, collection, field, blob);
-                case VltArrayType array:
                 {
-                    var listType = typeof(List<>);
-                    var listGenericType = ResolveType(array.ItemType);
-                    var constructedListType = listType.MakeGenericType(listGenericType);
-                    var instance = (IList)Activator.CreateInstance(constructedListType);
-
-                    if (instance == null) throw new Exception("Activator.CreateInstance returned null");
-
-                    foreach (var arrayItem in array.Items)
-                        instance.Add(listGenericType.IsPrimitive || listGenericType.IsEnum ||
-                                     listGenericType == typeof(string)
-                            ? ConvertDataValueToSerializedValue(directory, collection, field, arrayItem)
-                            : arrayItem);
-
-                    return new SerializedArrayWrapper
-                    {
-                        Capacity = array.Capacity,
-                        Data = instance
-                    };
+                    serializedCollection.Data.SetEntry(key,
+                        ConvertVltValueToSerializedValue(directory, vltCollection, vltCollection.Class[key], value));
                 }
-                default:
-                    return dataPairValue;
+
+                serializedCollections.Add(serializedCollection);
             }
         }
 
-        private object ProcessBlob(string directory, VltCollection collection, VltClassField field, BaseBlob blob)
+        private static object ConvertVltValueToSerializedValue(string directory, VltCollection collection,
+            VltClassField field, object vltValue)
         {
-            if (blob.Data != null && blob.Data.Length > 0)
+            return vltValue switch
             {
-                var blobDir = Path.Combine(directory, "_blobs");
-                Directory.CreateDirectory(blobDir);
-                var blobPath = Path.Combine(blobDir,
-                    $"{collection.ShortPath.TrimEnd('/', '\\').Replace('/', '_').Replace('\\', '_')}_{field.Name}.bin");
-
-                File.WriteAllBytes(blobPath, blob.Data);
-
-                return blobPath.Substring(directory.Length + 1);
-            }
-
-            return "";
+                IStringValue stringValue => stringValue.GetString(),
+                BaseBlob blob => ProcessBlob(directory, collection, field, blob),
+                VltArrayType array => ConvertVltArrayToSerializedArray(directory, collection, field, array),
+                _ => vltValue
+            };
         }
 
-        private static Type ResolveType(Type type)
+        private static object ConvertVltArrayToSerializedArray(string directory, VltCollection collection,
+            VltClassField field,
+            VltArrayType array)
         {
-            // if (type.IsGenericType)
-            // {
-            //     if (type.GetGenericTypeDefinition() == typeof(VLTEnumType<>)) return type.GetGenericArguments()[0];
-            // }
-            // else if (type.BaseType == typeof(PrimitiveTypeBase))
-            // {
-            //     var info = type.GetCustomAttributes<PrimitiveInfoAttribute>().First();
-            //
-            //     return info.PrimitiveType;
-            // }
+            var listItemType = CloakingHelper.IsTypeAStringInDisguise(array.ItemType) ? typeof(string) : array.ItemType;
+            var listType = typeof(List<>).MakeGenericType(listItemType);
+            var items = (IList)Activator.CreateInstance(listType);
 
-            if (type.IsGenericType)
-                throw new ArgumentException($"Generic types are not supported: {type}", nameof(type));
+            if (items == null) throw new Exception("Activator.CreateInstance returned null");
 
-            return type;
+            foreach (var arrayItem in array.Items)
+            {
+                items.Add(ConvertVltValueToSerializedValue(directory, collection, field, arrayItem));
+            }
+
+            return Activator.CreateInstance(typeof(CustomSerializedArray<>).MakeGenericType(listItemType),
+                array.Capacity, items);
+        }
+
+        private static object ProcessBlob(string directory, VltCollection collection, VltClassField field,
+            BaseBlob blob)
+        {
+            if (blob.Data is not { Length: > 0 })
+            {
+                return "";
+            }
+
+            var blobDir = Path.Combine(directory, "_blobs");
+            Directory.CreateDirectory(blobDir);
+            var blobPath = Path.Combine(blobDir,
+                $"{collection.ShortPath.TrimEnd('/', '\\').Replace('/', '_').Replace('\\', '_')}_{field.Name}.bin");
+
+            File.WriteAllBytes(blobPath, blob.Data);
+
+            return blobPath[(directory.Length + 1)..];
         }
 
         protected override object ConvertSerializedValueToDataValue(Database database, string gameId, string dir,
@@ -255,182 +302,36 @@ namespace Attribulator.Plugins.YAMLSupport
             VltClassField field,
             VltCollection vltCollection, object serializedValue, bool createInstance = true)
         {
-            //    0. Is it null? Bail out right away.
-            //    1. Is it a string? Determine underlying primitive type, and then convert.
-            //    2. Is it a list? Ensure we have an array, and then convert all values RECURSIVELY.
-            //    3. Is it a dictionary? Convert and set all values RECURSIVELY, ignoring ones that cannot be set at runtime.
-            //    4. Are none of those conditions true? Bail out.
+            if (serializedValue == null)
+                throw new ArgumentNullException(nameof(serializedValue), "serializedValue cannot be null");
 
-            if (serializedValue == null) throw new InvalidDataException("Null serializedValue is NOT PERMITTED!");
+            var resolvedType = database.TypeRegistry.ResolveType(field.TypeName);
 
-            var instance = createInstance
-                ? FieldUtils.CreateFieldValue(database.TypeRegistry, field)
-                : FieldUtils.ConstructFieldType(database.TypeRegistry, field);
-
-            return DoValueConversion(database, gameId, dir, vltClass, field, vltCollection, serializedValue, instance);
-        }
-
-        private object DoValueConversion(Database database, string gameId, string dir, VltClass vltClass,
-            VltClassField field,
-            VltCollection vltCollection,
-            object serializedValue, object databaseValue)
-        {
-            var databaseValueType = database.TypeRegistry.ResolveType(field.TypeName);
-            switch (serializedValue)
+            if (!CloakingHelper.IsTypeAStringInDisguise(resolvedType))
             {
-                case string str when TypeUtils.IsPrimitive(databaseValueType):
-                    return ValueConversionUtils.ConvertPrimitiveToNewPrimitive(databaseValueType, str);
-                case string str when databaseValue is IStringValue dbStringValue:
-                    dbStringValue.SetString(str);
-                    return dbStringValue;
-                case string str when databaseValue is BaseBlob blob:
-                {
-                    if (string.IsNullOrWhiteSpace(str)) return blob;
-
-                    str = Path.Combine(dir, str);
-                    if (!File.Exists(str))
-                        throw new InvalidDataException(
-                            $"Could not locate blob data file for {vltCollection.ShortPath}[{field.Name}]");
-
-                    blob.Data = File.ReadAllBytes(str);
-
-                    return blob;
-                }
-                case Dictionary<object, object> dictionary when databaseValue is VltArrayType array:
-                    return DoArrayConversion(database, gameId, dir, vltClass, field, vltCollection, array, dictionary);
-                case Dictionary<object, object> dictionary:
-                    return DoDictionaryConversion(database, vltClass, field, vltCollection, databaseValue, dictionary);
-                default:
-                    throw new InvalidDataException(
-                        $"Cannot convert between types {serializedValue.GetType()} and {databaseValue.GetType()}");
-            }
-        }
-
-        private VltArrayType DoArrayConversion(Database database, string gameId, string dir, VltClass vltClass,
-            VltClassField field,
-            VltCollection vltCollection, VltArrayType array, Dictionary<object, object> dictionary)
-        {
-            var capacity = ushort.Parse(dictionary["Capacity"].ToString()!);
-            var rawItemList = (List<object>)dictionary["Data"];
-
-            if (capacity < rawItemList.Count)
-                throw new InvalidDataException(
-                    $"In collection {vltCollection.ShortPath}, the capacity of array field [{field.Name}] ({capacity}) is less than the number of elements in the array ({rawItemList.Count}).");
-            if (field.MaxCount > 0 && (capacity > field.MaxCount || rawItemList.Count > field.MaxCount))
-                throw new InvalidDataException(
-                    $"In collection {vltCollection.ShortPath}, the size or capacity of array field [{field.Name}] is greater than the allowed size ({field.MaxCount}).");
-            array.Capacity = capacity;
-            array.Items = new List<object>();
-
-            foreach (var o in rawItemList)
-            {
-                var newArrayItem =
-                    ConvertSerializedValueToDataValue(database, gameId, dir, vltClass, field, vltCollection, o, false);
-
-                array.Items.Add(newArrayItem);
+                return !field.IsArray
+                    ? serializedValue
+                    : ConvertSerializedArrayToVltArray(field, serializedValue, resolvedType);
             }
 
-            return array;
+            return CloakingHelper.UncloakObject(database, dir, field, serializedValue, resolvedType);
         }
 
-        private static object DoDictionaryConversion(Database database, VltClass vltClass, VltClassField field,
-            VltCollection vltCollection, object instance, Dictionary<object, object> dictionary)
+        private static object ConvertSerializedArrayToVltArray(VltClassField field, object serializedValue,
+            Type resolvedType)
         {
-            foreach (var (key, value) in dictionary)
+            var array = (ISerializedArray)serializedValue;
+
+            foreach (var item in array.GetRawItems())
             {
-                var propName = (string)key;
-                var propertyInfo =
-                    instance.GetType().GetProperty(propName, BindingFlags.Public | BindingFlags.Instance);
-
-                if (propertyInfo == null)
-                    throw new InvalidDataException(
-                        $"Cannot set unknown property of '{instance.GetType()}': '{propName}'");
-
-                if (propertyInfo.SetMethod == null || !propertyInfo.SetMethod.IsPublic) continue;
-
-                var propType = propertyInfo.PropertyType;
-
-                if (propType.IsEnum)
-                {
-                    propertyInfo.SetValue(instance, Enum.Parse(propType, value.ToString()));
-                }
-                else if (propType.IsPrimitive || propType == typeof(string))
-                {
-                    var newValue = FixUpValueForComplexObject(value, propType);
-                    propertyInfo.SetValue(instance,
-                        Convert.ChangeType(newValue, propType, CultureInfo.InvariantCulture));
-                }
-                else
-                {
-                    switch (value)
-                    {
-                        case List<object> objects:
-                        {
-                            var newList = (IList)Activator.CreateInstance(propType, objects.Count);
-                            var elemType = propType.GetElementType() ?? throw new Exception();
-
-                            for (var index = 0; index < objects.Count; index++)
-                                if (elemType.IsEnum)
-                                {
-                                    newList[index] = Enum.Parse(elemType, objects[index].ToString());
-                                }
-                                else
-                                {
-                                    if (elemType == typeof(string))
-                                    {
-                                        newList[index] = objects[index];
-                                    }
-                                    else
-                                    {
-                                        var fixedValue = FixUpValueForComplexObject(objects[index], elemType);
-                                        var convertedValue =
-                                            Convert.ChangeType(fixedValue, elemType, CultureInfo.InvariantCulture);
-
-                                        newList[index] = convertedValue;
-                                    }
-                                }
-
-                            propertyInfo.SetValue(instance, newList);
-                            break;
-                        }
-                        case Dictionary<object, object> objectDictionary:
-                        {
-                            object propInstance;
-                            if (propType.IsSubclassOf(typeof(VltBaseType)) &&
-                                database.TypeRegistry.IsConstructorRegistered(propType))
-                            {
-                                propInstance = database.TypeRegistry.ConstructTypeInstance(propType, field);
-                            }
-                            else
-                            {
-                                propInstance = Activator.CreateInstance(propType);
-                            }
-
-                            propertyInfo.SetValue(instance,
-                                DoDictionaryConversion(database, vltClass, field, vltCollection, propInstance,
-                                    objectDictionary));
-                            break;
-                        }
-                        default:
-                        {
-                            if (value != null) throw new Exception();
-
-                            break;
-                        }
-                    }
-                }
+                Debug.Assert(item.GetType() == resolvedType);
             }
 
-            return instance;
-        }
-
-        private static object FixUpValueForComplexObject(object value, Type elemType)
-        {
-            if (value is string s)
-                if (s.StartsWith("0x", StringComparison.Ordinal) && elemType == typeof(uint))
-                    return uint.Parse(s.Substring(2), NumberStyles.AllowHexSpecifier);
-
-            return value;
+            return new VltArrayType(field, resolvedType)
+            {
+                Items = array.GetRawItems().ToList(),
+                Capacity = array.GetCapacity()
+            };
         }
 
         private static void DirectoryCopy(string sourceDirName, string destDirName, bool copySubDirs)
@@ -463,13 +364,6 @@ namespace Attribulator.Plugins.YAMLSupport
                     var tempPath = Path.Combine(destDirName, subdir.Name);
                     DirectoryCopy(subdir.FullName, tempPath, true);
                 }
-        }
-
-        [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
-        public class SerializedArrayWrapper
-        {
-            public ushort Capacity { get; set; }
-            public IList Data { get; set; }
         }
     }
 }
