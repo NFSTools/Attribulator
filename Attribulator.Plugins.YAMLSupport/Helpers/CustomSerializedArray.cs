@@ -7,6 +7,8 @@ internal class CustomSerializedArray<T> : ISerializedArray
 {
     public ushort Capacity { get; set; }
     public List<T> Data { get; set; }
+    
+    public CustomSerializedArray() {}
 
     public CustomSerializedArray(ushort capacity, List<T> data)
     {
