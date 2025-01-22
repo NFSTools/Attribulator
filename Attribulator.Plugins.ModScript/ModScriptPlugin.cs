@@ -41,6 +41,7 @@ namespace Attribulator.Plugins.ModScript
             _modScriptService.RegisterCommand<CopyOverwriteModScriptCommand>("copy_overwrite");
             _modScriptService.RegisterCommand<ResizeCollectionModScriptCommand>("resize_collection");
             _modScriptService.RegisterCommand<UpdateCollectionModScriptCommand>("update_collection");
+            _modScriptService.RegisterCommand<ExecScriptModScriptCommand>("script");
         }
     }
 }

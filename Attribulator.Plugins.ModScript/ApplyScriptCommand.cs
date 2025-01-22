@@ -8,12 +8,12 @@ using Attribulator.API.Exceptions;
 using Attribulator.API.Plugin;
 using Attribulator.API.Services;
 using Attribulator.ModScript.API;
+using Attribulator.Plugins.ModScript.Commands;
 using CommandLine;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using VaultLib.Core;
-using VaultLib.Core.DB;
 
 namespace Attribulator.Plugins.ModScript
 {
@@ -70,6 +70,7 @@ namespace Attribulator.Plugins.ModScript
             var scriptFiles = new List<string>();
 
             foreach (var scriptFile in ModScriptPaths)
+            {
                 if (!File.Exists(scriptFile))
                 {
                     if (!Directory.Exists(scriptFile))
@@ -81,6 +82,7 @@ namespace Attribulator.Plugins.ModScript
                 {
                     scriptFiles.Add(scriptFile);
                 }
+            }
 
             if (!Directory.Exists(OutputDirectory)) Directory.CreateDirectory(OutputDirectory);
 
@@ -106,51 +108,16 @@ namespace Attribulator.Plugins.ModScript
             foreach (var scriptFile in scriptFiles)
             {
                 _logger.LogInformation("Processing script: {FileName}", scriptFile);
-                var fileStopwatch = Stopwatch.StartNew();
-                var numCommands = 0L;
-                var errors = new List<(long, string, Exception)>();
-
-                foreach (var command in _modScriptService.ParseCommands(File.ReadLines(scriptFile)))
-                    try
-                    {
-                        numCommands++;
-                        command.Execute(modScriptDatabase);
-                    }
-                    catch (Exception e)
-                    {
-                        if (DryRun)
-                        {
-                            errors.Add((command.LineNumber, command.Line, e));
-                        }
-                        else
-                        {
-                            _logger.LogError(e, "Failed to execute script command at line {LineNumber}: {Line}",
-                                command.LineNumber, command.Line);
-                            return 1;
-                        }
-                    }
-
-                fileStopwatch.Stop();
-
-                var commandsPerSecond = (ulong) (numCommands / (fileStopwatch.Elapsed.TotalMilliseconds / 1000.0));
-                _logger.LogInformation(
-                    "Applied {NumCommands} command(s){ErrorsDescription} from script [{FileName}] in {ElapsedMilliseconds}ms ({Duration}; ~ {NumPerSec}/sec)",
-                    numCommands,
-                    GetErrorsBrief(errors.Count),
-                    scriptFile, fileStopwatch.ElapsedMilliseconds, fileStopwatch.Elapsed,
-                    commandsPerSecond);
-
-                totalCommands += numCommands;
-                totalMilliseconds += fileStopwatch.Elapsed.TotalMilliseconds;
-                errorsDict.Add(scriptFile, errors);
+                if (!ExecuteScript(modScriptDatabase, scriptFile, errorsDict, ref totalCommands,
+                        ref totalMilliseconds)) return 1;
             }
 
             var totalCommandsPerSecond =
-                (ulong) (totalCommands / (totalMilliseconds / 1000.0));
+                (ulong)(totalCommands / (totalMilliseconds / 1000.0));
 
             _logger.LogInformation(
                 "Overall: Applied {NumCommands} command(s){ErrorsDescription} from {NumScripts} script(s) (execution time: {ElapsedMilliseconds}ms / {Duration}; ~ {NumPerSec}/sec)",
-                totalCommands, GetErrorsBrief(errorsDict.Sum(e => e.Value.Count)), scriptFiles.Count,
+                totalCommands, GetErrorsBrief(errorsDict.Sum(e => e.Value.Count)), errorsDict.Count,
                 Math.Round(totalMilliseconds),
                 TimeSpan.FromMilliseconds(totalMilliseconds),
                 totalCommandsPerSecond);
@@ -220,6 +187,73 @@ namespace Attribulator.Plugins.ModScript
             _logger.LogInformation("Done!");
 
             return 0;
+        }
+
+        private bool ExecuteScript(DatabaseHelper modScriptDatabase, string scriptFile,
+            Dictionary<string, List<(long, string, Exception)>> errorsDict,
+            ref long totalCommands, ref double totalMilliseconds)
+        {
+            var fileStopwatch = Stopwatch.StartNew();
+            var numCommands = 0L;
+            var errors = new List<(long, string, Exception)>();
+
+            var scriptDirectory = Path.GetDirectoryName(scriptFile)!;
+
+            foreach (var command in _modScriptService.ParseCommands(File.ReadLines(scriptFile)))
+            {
+                try
+                {
+                    numCommands++;
+                    if (command is not ExecScriptModScriptCommand execCommand)
+                    {
+                        command.Execute(modScriptDatabase);
+                    }
+                    else
+                    {
+                        var resolvedPath = Path.Combine(scriptDirectory, execCommand.FileName);
+                        if (!File.Exists(resolvedPath))
+                        {
+                            throw new CommandExecutionException(
+                                $"Can't find external script: {resolvedPath} (relative path: {execCommand.FileName})");
+                        }
+
+                        _logger.LogInformation("Running script referenced by command: {ResolvedPath}", resolvedPath);
+                        if (!ExecuteScript(modScriptDatabase, resolvedPath, errorsDict, ref totalCommands,
+                                ref totalMilliseconds))
+                        {
+                            throw new CommandExecutionException("External script failed");
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    if (DryRun)
+                    {
+                        errors.Add((command.LineNumber, command.Line, e));
+                    }
+                    else
+                    {
+                        _logger.LogError(e, "Failed to execute script command at line {LineNumber}: {Line}",
+                            command.LineNumber, command.Line);
+                        return false;
+                    }
+                }
+            }
+
+            fileStopwatch.Stop();
+
+            var commandsPerSecond = (ulong)(numCommands / (fileStopwatch.Elapsed.TotalMilliseconds / 1000.0));
+            _logger.LogInformation(
+                "Applied {NumCommands} command(s){ErrorsDescription} from script [{FileName}] in {ElapsedMilliseconds}ms ({Duration}; ~ {NumPerSec}/sec)",
+                numCommands,
+                GetErrorsBrief(errors.Count),
+                scriptFile, fileStopwatch.ElapsedMilliseconds, fileStopwatch.Elapsed,
+                commandsPerSecond);
+
+            totalCommands += numCommands;
+            totalMilliseconds += fileStopwatch.Elapsed.TotalMilliseconds;
+            errorsDict.Add(scriptFile, errors);
+            return true;
         }
 
         private static string GetErrorsBrief(long num)
