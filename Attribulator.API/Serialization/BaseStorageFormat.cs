@@ -39,7 +39,10 @@ namespace Attribulator.API.Serialization
 
             foreach (var loadedDatabaseClass in loadedDatabase.Classes)
             {
-                var vltClass = new VltClass(loadedDatabaseClass.Name);
+                var vltClass = new VltClass(loadedDatabaseClass.Name)
+                {
+                    StaticSize = loadedDatabaseClass.StaticSize
+                };
 
                 foreach (var loadedDatabaseClassField in loadedDatabaseClass.Fields)
                 {

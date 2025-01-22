@@ -15,7 +15,7 @@ namespace Attribulator.ModScript.API
         public DatabaseHelper(Database database)
         {
             Database = database;
-            Collections = database.RowManager.GetFlattenedCollections().ToDictionary(c => c.ShortPath, c => c);
+            Collections = database.RowManager.GetCollections().ToDictionary(c => c.ShortPath, c => c);
             database.Vaults.ForEach(v => _vaultsModified[v] = false);
         }
 
@@ -47,10 +47,8 @@ namespace Attribulator.ModScript.API
 
         public VltCollection AddCollection(VltCollection collection, VltCollection parentCollection = null)
         {
-            if (parentCollection != null)
-                parentCollection.AddChild(collection);
-            else
-                Database.RowManager.Rows.Add(collection);
+            Database.RowManager.AddCollection(collection);
+            parentCollection?.AddChild(collection);
 
             Collections[collection.ShortPath] = collection;
             MarkVaultAsModified(collection.Vault);
@@ -68,17 +66,24 @@ namespace Attribulator.ModScript.API
 
         public List<VltCollection> RemoveCollection(VltCollection collection)
         {
-            var removed = new List<VltCollection> {collection};
+            var removed = new List<VltCollection> { collection };
 
-            // Disassociate children
-            var hasParent = collection.Parent != null;
-            collection.Parent?.RemoveChild(collection);
-            Collections.Remove(collection.ShortPath);
+            // // Disassociate children
+            // var hasParent = collection.Parent != null;
+            // collection.Parent?.RemoveChild(collection);
+            // Collections.Remove(collection.ShortPath);
+            //
+            // foreach (var collectionChild in collection.Children.ToList())
+            //     removed.AddRange(RemoveCollection(collectionChild));
+            //
+            // if (!hasParent) Database.RowManager.RemoveCollection(collection);
 
-            foreach (var collectionChild in collection.Children.ToList())
-                removed.AddRange(RemoveCollection(collectionChild));
+            foreach (var child in Database.RowManager.GetCollections(collection.Class.Name)
+                         .Where(c => ReferenceEquals(c.Parent, collection)))
+            {
+                removed.AddRange(RemoveCollection(child));
+            }
 
-            if (!hasParent) Database.RowManager.RemoveCollection(collection);
             MarkVaultAsModified(collection.Vault);
 
             return removed;

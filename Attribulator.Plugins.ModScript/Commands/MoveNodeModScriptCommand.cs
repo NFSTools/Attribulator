@@ -34,7 +34,7 @@ namespace Attribulator.Plugins.ModScript.Commands
             {
                 newParentCollection = GetCollection(databaseHelper, ClassName, ParentName);
 
-                if (IsChild(databaseHelper, collectionToMove, newParentCollection))
+                if (IsChild(collectionToMove, newParentCollection))
                     throw new CommandExecutionException(
                         $"Requested parent collection {ParentName} is a child of {CollectionName}.");
             }
@@ -62,12 +62,18 @@ namespace Attribulator.Plugins.ModScript.Commands
                 databaseHelper.MarkVaultAsModified(collectionToMove.Vault);
         }
 
-        private bool IsChild(DatabaseHelper databaseHelper, VltCollection root, VltCollection test)
+        private static bool IsChild(VltCollection root, VltCollection possibleChild)
         {
-            var flattenedChildren =
-                databaseHelper.Database.RowManager.EnumerateFlattenedCollections(root.Children);
+            var parent = possibleChild.Parent;
 
-            return flattenedChildren.Any(child => ReferenceEquals(child, test));
+            while (parent != null)
+            {
+                if (parent == root)
+                    return true;
+                parent = parent.Parent;
+            }
+
+            return false;
         }
     }
 }

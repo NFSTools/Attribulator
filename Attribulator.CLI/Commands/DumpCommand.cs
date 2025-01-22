@@ -58,7 +58,8 @@ namespace Attribulator.CLI.Commands
             {
                 var dumpedClassData = new DumpedClassData
                     { Class = vltClass, Collections = new List<DumpedCollection>() };
-                foreach (var vltCollection in database.RowManager.GetFlattenedCollections(vltClass.Name))
+                foreach (var vltCollection in database.RowManager.GetCollections(vltClass.Name))
+                {
                     dumpedClassData.Collections.Add(new DumpedCollection
                     {
                         Name = vltCollection.Name,
@@ -66,6 +67,7 @@ namespace Attribulator.CLI.Commands
                         Data = vltCollection.GetData()
                             .ToDictionary(e => e.Key, e => e.Value)
                     });
+                }
 
                 File.WriteAllText(Path.Combine(OutputDirectory, $"{vltClass.Name}.json"),
                     JsonConvert.SerializeObject(dumpedClassData, Formatting.Indented));

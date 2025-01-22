@@ -12,6 +12,8 @@ namespace Attribulator.API.Serialization
         /// </summary>
         public string Name { get; set; }
 
+        public uint StaticSize { get; set; }
+
         /// <summary>
         ///     Gets or sets the list of fields.
         /// </summary>

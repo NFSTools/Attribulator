@@ -75,7 +75,7 @@ namespace Attribulator.Plugins.YAMLSupport
             filterFunc ??= _ => true;
 
             var loadedFileList = loadedFiles.ToList();
-            var loadedDatabase = new SerializedDatabaseInfo
+            var serializedDatabaseInfo = new SerializedDatabaseInfo
             {
                 Classes = new List<SerializedDatabaseClass>(),
                 Files = new List<SerializedDatabaseFile>(),
@@ -83,12 +83,12 @@ namespace Attribulator.Plugins.YAMLSupport
                 PrimaryVaultName = sourceDatabase.Vaults.First(v => v.IsPrimaryVault).Name
             };
 
-            loadedDatabase.Files.AddRange(loadedFileList.Select(f => new SerializedDatabaseFile
+            serializedDatabaseInfo.Files.AddRange(loadedFileList.Select(f => new SerializedDatabaseFile
                 { Name = f.Name, Group = f.Group, Vaults = f.Vaults.Select(v => v.Name).ToList() }));
 
             foreach (var databaseType in sourceDatabase.Types)
             {
-                loadedDatabase.Types.Add(new SerializedTypeInfo
+                serializedDatabaseInfo.Types.Add(new SerializedTypeInfo
                 {
                     Name = databaseType.Name,
                     Size = databaseType.Size
@@ -97,13 +97,14 @@ namespace Attribulator.Plugins.YAMLSupport
 
             foreach (var databaseClass in sourceDatabase.Classes)
             {
-                var loadedDatabaseClass = new SerializedDatabaseClass
+                var serializedDatabaseClass = new SerializedDatabaseClass
                 {
                     Name = databaseClass.Name,
-                    Fields = new List<SerializedDatabaseClassField>()
+                    StaticSize = databaseClass.StaticSize,
+                    Fields = new List<SerializedDatabaseClassField>(),
                 };
 
-                loadedDatabaseClass.Fields.AddRange(databaseClass.Fields.Values.Select(field =>
+                serializedDatabaseClass.Fields.AddRange(databaseClass.Fields.Values.Select(field =>
                     new SerializedDatabaseClassField
                     {
                         Name = field.Name,
@@ -117,13 +118,13 @@ namespace Attribulator.Plugins.YAMLSupport
                             ConvertVltValueToSerializedValue(destinationDirectory, null, field, field.StaticValue)
                     }));
 
-                loadedDatabase.Classes.Add(loadedDatabaseClass);
+                serializedDatabaseInfo.Classes.Add(serializedDatabaseClass);
             }
 
             var infoSerializer = new SerializerBuilder().WithQuotingNecessaryStrings(true).Build();
 
             using var sw = new StreamWriter(Path.Combine(destinationDirectory, "info.yml"));
-            infoSerializer.Serialize(sw, loadedDatabase);
+            infoSerializer.Serialize(sw, serializedDatabaseInfo);
 
             var classSpecificSerializers = sourceDatabase.Classes.ToDictionary(c => c.Name, c =>
             {
@@ -238,10 +239,11 @@ namespace Attribulator.Plugins.YAMLSupport
                     Data = new CustomSerializedCollectionData()
                 };
 
-                foreach (var (key, value) in vltCollection.GetData())
+                foreach (var entry in vltCollection.GetOrderedData())
                 {
-                    serializedCollection.Data.SetEntry(key,
-                        ConvertVltValueToSerializedValue(directory, vltCollection, vltCollection.Class[key], value));
+                    serializedCollection.Data.SetEntry(entry.Key,
+                        ConvertVltValueToSerializedValue(directory, vltCollection, vltCollection.Class[entry.Key],
+                            entry.Value));
                 }
 
                 serializedCollections.Add(serializedCollection);

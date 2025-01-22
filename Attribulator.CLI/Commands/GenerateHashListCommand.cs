@@ -68,9 +68,13 @@ namespace Attribulator.CLI.Commands
                     strList.Add(vltClassField.Name);
             }
 
-            foreach (var vltCollection in database.RowManager.EnumerateFlattenedCollections())
+            foreach (var vltCollection in database.RowManager.EnumerateCollections())
+            {
                 if (!vltCollection.Name.StartsWith("0x"))
+                {
                     strList.Add(vltCollection.Name);
+                }
+            }
 
             await File.WriteAllLinesAsync(OutputPath, strList);
             _logger.LogInformation("Exported {NumEntries} entries to {OutPath}", strList.Count, OutputPath);
