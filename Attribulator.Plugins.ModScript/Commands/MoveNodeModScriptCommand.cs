@@ -44,16 +44,12 @@ namespace Attribulator.Plugins.ModScript.Commands
 
             var oldVault = collectionToMove.Vault;
 
-            // Disassociated from parent? Add to DB
             if (newParentCollection == null)
             {
                 collectionToMove.Parent.RemoveChild(collectionToMove);
-                databaseHelper.AddCollection(collectionToMove);
             }
             else
             {
-                if (collectionToMove.Parent == null)
-                    databaseHelper.Database.RowManager.RemoveCollection(collectionToMove);
                 newParentCollection.AddChild(collectionToMove);
             }
 

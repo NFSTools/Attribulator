@@ -211,16 +211,11 @@ namespace Attribulator.API.Serialization
                 {
                     var parentKey = collectionParentDictionary[collection.ShortPath];
 
-                    if (string.IsNullOrEmpty(parentKey))
-                    {
-                        // Add collection directly
-                        destinationDatabase.RowManager.AddCollection(collection);
-                    }
-                    else
-                    {
-                        var parentCollection = collectionDictionary[$"{collection.Class.Name}/{parentKey}"];
-                        parentCollection.AddChild(collection);
-                    }
+                    destinationDatabase.RowManager.AddCollection(collection);
+
+                    if (string.IsNullOrEmpty(parentKey)) continue;
+                    var parentCollection = collectionDictionary[$"{collection.Class.Name}/{parentKey}"];
+                    parentCollection.AddChild(collection);
                 }
             }
 
