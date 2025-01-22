@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
-using VaultLib.Core.Types;
 
 namespace Attribulator.ModScript.API.Utils
 {
@@ -57,16 +56,58 @@ namespace Attribulator.ModScript.API.Utils
                     throw new NullReferenceException(
                         "Ran into an unexpected NULL value - cannot access further properties");
 
-                var pi = examining.GetType()
+                var examiningType = examining.GetType();
+
+                // Structs returned by VaultLib typically have fields, not properties.
+                if (examiningType.IsValueType)
+                {
+                    var fi = examiningType.GetField(parsedProperty.Name, BindingFlags.Public | BindingFlags.Instance);
+
+                    if (fi != null)
+                    {
+                        var fv = fi.GetValue(examining);
+                        var ft = fi.FieldType;
+
+                        if (!ft.IsArray)
+                        {
+                            retrievedProperty = new ReflectedField(fi, examining);
+                            examining = fv;
+                        }
+                        else if (fv is Array arr)
+                        {
+                            if (parsedProperty.Index is { } idx)
+                            {
+                                if (idx >= arr.Length)
+                                    throw new IndexOutOfRangeException(
+                                        $"Attempted access to item at index {idx}, but that's out of range: 0 <= {idx} < {arr.Length} not satisfied");
+
+                                retrievedProperty = new ArrayProperty(arr, idx, ft.GetElementType());
+                                examining = arr.GetValue(idx);
+                            }
+                            else
+                            {
+                                throw new MemberAccessException("Array access must include index");
+                            }
+                        }
+                        else
+                        {
+                            throw new NullReferenceException("Can't index into NULL array");
+                        }
+
+                        continue;
+                    }
+                }
+
+                var pi = examiningType
                     .GetProperty(parsedProperty.Name, BindingFlags.Public | BindingFlags.Instance);
 
                 if (pi == null)
                     throw new MissingFieldException(
-                        $"Could not find property [{parsedProperty.Name}] in type {examining.GetType()}");
+                        $"Could not find property [{parsedProperty.Name}] in type {examiningType}");
 
                 if (!pi.CanRead || !pi.CanWrite)
                     throw new FieldAccessException(
-                        $"Property [{parsedProperty.Name}] of type {examining.GetType()} is not accessible");
+                        $"Property [{parsedProperty.Name}] of type {examiningType} is not accessible");
 
                 var pv = pi.GetValue(examining);
                 var pt = pi.PropertyType;
@@ -138,6 +179,33 @@ namespace Attribulator.ModScript.API.Utils
             public override Type GetPropertyType()
             {
                 return _propertyInfo.PropertyType;
+            }
+        }
+
+        public class ReflectedField : RetrievedProperty
+        {
+            private readonly FieldInfo _fieldInfo;
+            private readonly object _targetObject;
+
+            public ReflectedField(FieldInfo fieldInfo, object targetObject)
+            {
+                _fieldInfo = fieldInfo;
+                _targetObject = targetObject;
+            }
+
+            public override object GetValue()
+            {
+                return _fieldInfo.GetValue(_targetObject);
+            }
+
+            public override void SetValue(object value)
+            {
+                _fieldInfo.SetValue(_targetObject, value);
+            }
+
+            public override Type GetPropertyType()
+            {
+                return _fieldInfo.FieldType;
             }
         }
 
