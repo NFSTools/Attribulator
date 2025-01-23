@@ -19,8 +19,8 @@ namespace Attribulator.API.Serialization
         public string Group { get; set; }
 
         /// <summary>
-        ///     Gets or sets the list of vault names.
+        ///     Gets or sets the list of vaults.
         /// </summary>
-        public List<string> Vaults { get; set; }
+        public List<SerializedVaultInfo> Vaults { get; set; }
     }
 }

@@ -84,7 +84,15 @@ namespace Attribulator.Plugins.YAMLSupport
             };
 
             serializedDatabaseInfo.Files.AddRange(loadedFileList.Select(f => new SerializedDatabaseFile
-                { Name = f.Name, Group = f.Group, Vaults = f.Vaults.Select(v => v.Name).ToList() }));
+            {
+                Name = f.Name,
+                Group = f.Group,
+                Vaults = f.Vaults.Select(v => new SerializedVaultInfo
+                {
+                    Name = v.Name,
+                    Version = v.Version
+                }).ToList()
+            }));
 
             foreach (var databaseType in sourceDatabase.Types)
             {

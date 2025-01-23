@@ -123,12 +123,14 @@ namespace Attribulator.API.Serialization
                 var baseDirectory = Path.Combine(sourceDirectory, file.Group, file.Name);
                 vaultsToSaveDictionary[file.Name] = new List<Vault>();
 
-                foreach (var vaultName in file.Vaults)
+                foreach (var vault in file.Vaults)
                 {
+                    var vaultName = vault.Name;
                     var vaultDirectory = Path.Combine(baseDirectory, vaultName).Trim();
                     var newVault = new Vault(vaultName)
                     {
-                        Database = destinationDatabase, IsPrimaryVault = vaultName == loadedDatabase.PrimaryVaultName
+                        Database = destinationDatabase, IsPrimaryVault = vaultName == loadedDatabase.PrimaryVaultName,
+                        Version = vault.Version
                     };
                     if (Directory.Exists(vaultDirectory))
                     {
