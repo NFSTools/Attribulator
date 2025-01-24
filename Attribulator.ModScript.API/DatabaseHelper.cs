@@ -68,18 +68,11 @@ namespace Attribulator.ModScript.API
         {
             var removed = new List<VltCollection> { collection };
 
-            // // Disassociate children
-            // var hasParent = collection.Parent != null;
-            // collection.Parent?.RemoveChild(collection);
-            // Collections.Remove(collection.ShortPath);
-            //
-            // foreach (var collectionChild in collection.Children.ToList())
-            //     removed.AddRange(RemoveCollection(collectionChild));
-            //
-            // if (!hasParent) Database.RowManager.RemoveCollection(collection);
+            Database.RowManager.RemoveCollection(collection);
 
             foreach (var child in Database.RowManager.GetCollections(collection.Class.Name)
-                         .Where(c => ReferenceEquals(c.Parent, collection)))
+                         .Where(c => ReferenceEquals(c.Parent, collection))
+                         .ToList())
             {
                 removed.AddRange(RemoveCollection(child));
             }
