@@ -231,7 +231,7 @@ namespace Attribulator.Plugins.YAMLSupport
             {
                 ParentName = data.ParentName,
                 Name = data.Name,
-                Data = data.Data.GetEntries()
+                Data = data.Data.GetTable()
             };
         }
 

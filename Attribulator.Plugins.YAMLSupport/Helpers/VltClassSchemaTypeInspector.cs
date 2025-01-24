@@ -26,7 +26,8 @@ internal class VltClassSchemaTypeInspector : ITypeInspector
     {
         if (type == typeof(CustomSerializedCollectionData))
         {
-            return ((CustomSerializedCollectionData)container!).GetEntries()
+            return ((CustomSerializedCollectionData)container!).GetTable()
+                .GetEntries()
                 .Select(e => _fieldDescriptors[e.Key]);
         }
 

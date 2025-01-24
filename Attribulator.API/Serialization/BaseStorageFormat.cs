@@ -98,8 +98,10 @@ namespace Attribulator.API.Serialization
                     if (!seenCollections.TryAdd(newVltCollection.ShortPath, true))
                         throw new Exception("Duplicate collection detected: " + newVltCollection.ShortPath);
 
-                    foreach (var (key, value) in loadedCollection.Data)
+                    foreach (var entry in loadedCollection.Data.GetEntries())
                     {
+                        var key = entry.Key;
+                        var value = entry.Value;
                         if (!FieldCache.TryGetValue((vltClass.Name, key), out var field))
                             throw new Exception(
                                 $"Cannot find field: {vltClass.Name}/{key}");

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using VaultLib.Core.Data;
 
 namespace Attribulator.API.Serialization
 {
@@ -20,6 +21,6 @@ namespace Attribulator.API.Serialization
         /// <summary>
         ///     Gets or sets the collection data map.
         /// </summary>
-        public Dictionary<string, object> Data { get; set; }
+        public VltDataTable Data { get; set; }
     }
 }
