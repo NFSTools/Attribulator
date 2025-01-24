@@ -46,10 +46,39 @@ namespace Attribulator.API.Utils
             {
                 return primitiveString.StartsWith("0x")
                     ? ConvertHexToPrimitive(primitiveType, primitiveString[2..])
-                    : Convert.ChangeType(primitiveString, primitiveType, CultureInfo.InvariantCulture);
+                    : SmartHashConversion(primitiveType, primitiveString);
             }
 
             throw new InvalidCastException($"Can't convert input string '{primitiveString}' to {primitiveType}.");
+        }
+
+        private static object SmartHashConversion(Type primitiveType, string primitiveString)
+        {
+            if (primitiveType == typeof(ulong))
+            {
+                return ulong.TryParse(primitiveString, out var result) ? result : Vlt64Hasher.Hash(primitiveString);
+            }
+
+            if (primitiveType == typeof(long))
+            {
+                return long.TryParse(primitiveString, out var result)
+                    ? result
+                    : unchecked((long)Vlt64Hasher.Hash(primitiveString));
+            }
+
+            if (primitiveType == typeof(uint))
+            {
+                return uint.TryParse(primitiveString, out var result) ? result : Vlt32Hasher.Hash(primitiveString);
+            }
+
+            if (primitiveType == typeof(int))
+            {
+                return int.TryParse(primitiveString, out var result)
+                    ? result
+                    : unchecked((int)Vlt32Hasher.Hash(primitiveString));
+            }
+
+            return Convert.ChangeType(primitiveString, primitiveType, CultureInfo.InvariantCulture);
         }
 
         private static object ConvertHexToPrimitive(Type primitiveType, string hexString)
