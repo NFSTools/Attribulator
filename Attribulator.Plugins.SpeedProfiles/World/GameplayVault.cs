@@ -24,7 +24,7 @@ namespace Attribulator.Plugins.SpeedProfiles.World
             var nameChars = new char[0x2C];
             _name.CopyTo(0, nameChars, 0, _name.Length);
 
-            var vaultWriter = new VaultWriter(vaults[0], new VaultWriteOptions());
+            var vaultWriter = new VaultWriter(vaults[0], savingOptions?.VaultWriteOptions ?? new VaultWriteOptions());
             vaultWriter.ExportManager.AddExport(new VaultSlotExport());
             var vaultStreamInfo = vaultWriter.BuildVault();
 

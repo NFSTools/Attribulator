@@ -5,6 +5,7 @@ using System.Linq;
 using Attribulator.API;
 using Attribulator.API.Data;
 using Attribulator.Plugins.SpeedProfiles.World;
+using VaultLib.Core;
 using VaultLib.Core.DB;
 using VaultLib.Core.Pack;
 
@@ -62,7 +63,13 @@ namespace Attribulator.Plugins.SpeedProfiles
                 var outPath = Path.Combine(directory, file.Group, file.Name + ".bin");
                 Debug.WriteLine("Saving file '{0}' to '{1}' ({2} vaults)", file.Name, outPath, vaultsToSave.Count);
                 using var bw = new BinaryWriter(File.Open(outPath, FileMode.Create, FileAccess.ReadWrite));
-                vaultPack.Save(bw, vaultsToSave, new PackSavingOptions());
+                vaultPack.Save(bw, vaultsToSave, new PackSavingOptions(vaultWriteOptions: new VaultWriteOptions
+                {
+                    Quirks = new VaultWriteQuirks
+                    {
+                        StartChunkBeforeDepChunk = true
+                    }
+                }));
                 bw.Close();
             }
         }
