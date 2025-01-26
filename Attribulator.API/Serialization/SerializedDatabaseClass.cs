@@ -11,7 +11,7 @@ namespace Attribulator.API.Serialization
         ///     Gets or sets the name of the class.
         /// </summary>
         public string Name { get; set; }
-
+        public uint LayoutSize { get; set; }
         public uint StaticSize { get; set; }
 
         /// <summary>

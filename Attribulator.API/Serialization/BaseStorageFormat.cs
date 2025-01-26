@@ -41,7 +41,8 @@ namespace Attribulator.API.Serialization
             {
                 var vltClass = new VltClass(loadedDatabaseClass.Name)
                 {
-                    StaticSize = loadedDatabaseClass.StaticSize
+                    StaticSize = loadedDatabaseClass.StaticSize,
+                    LayoutSize = loadedDatabaseClass.LayoutSize,
                 };
 
                 foreach (var loadedDatabaseClassField in loadedDatabaseClass.Fields)

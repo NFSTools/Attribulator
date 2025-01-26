@@ -108,6 +108,7 @@ namespace Attribulator.Plugins.YAMLSupport
                 var serializedDatabaseClass = new SerializedDatabaseClass
                 {
                     Name = databaseClass.Name,
+                    LayoutSize = databaseClass.LayoutSize,
                     StaticSize = databaseClass.StaticSize,
                     Fields = new List<SerializedDatabaseClassField>(),
                 };
