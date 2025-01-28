@@ -23,10 +23,14 @@ namespace Attribulator.Plugins.ModScript.Commands
         public override void Execute(DatabaseHelper databaseHelper)
         {
             var collection = GetCollection(databaseHelper, ClassName, CollectionName);
+
+            bool removedAnything = false;
+
             if (collection.HasEntry(FieldName))
             {
                 collection.RemoveValue(FieldName);
                 databaseHelper.MarkVaultAsModified(collection.Vault);
+                removedAnything = true;
             }
             else
             {
@@ -36,7 +40,14 @@ namespace Attribulator.Plugins.ModScript.Commands
                 {
                     collection.RemoveValue(hashed);
                     databaseHelper.MarkVaultAsModified(collection.Vault);
+                    removedAnything = true;
                 }
+            }
+
+            if (!removedAnything)
+            {
+                throw new CommandExecutionException(
+                    $"Field {FieldName} not found in collection {collection.ShortPath}");
             }
         }
     }
