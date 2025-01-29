@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Attribulator.API.Utils;
 using VaultLib.Core.Data;
 using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.DB;
@@ -46,7 +47,7 @@ internal class VltClassSchemaTypeInspector<TKey> : ITypeInspector where TKey : s
         }
 
         // todo: error handling?
-        var field = _vltClass[name];
+        var field = _vltClass[KeyUtils.StringToKey<TKey>(name, true)];
 
         return CreateFieldDescriptor(field);
     }

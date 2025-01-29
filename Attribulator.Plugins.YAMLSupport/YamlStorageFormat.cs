@@ -223,6 +223,7 @@ namespace Attribulator.Plugins.YAMLSupport
         {
             var deserializer = new DeserializerBuilder()
                 .WithTypeInspector(inspector => new VltClassSchemaTypeInspector<TKey>(inspector, database, vltClass))
+                .WithTypeConverter(new VltKeyTypeConverter<TKey>())
                 .Build();
 
             var results = deserializer.Deserialize<List<CustomSerializedCollection<TKey>>>(
