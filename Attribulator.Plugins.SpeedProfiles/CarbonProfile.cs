@@ -3,41 +3,38 @@ using System.IO;
 using System.Linq;
 using Attribulator.API;
 using Attribulator.API.Data;
+using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.DB;
-using VaultLib.Core.Exports;
-using VaultLib.Core.Exports.Implementations;
 using VaultLib.Core.Pack;
-using VaultLib.Core.Structures;
-using VaultLib.ModernBase.Exports;
-using VaultLib.ModernBase.Structures;
+using VaultLib.Support.Carbon;
 
 namespace Attribulator.Plugins.SpeedProfiles
 {
     /// <summary>
     ///     Basic profile for PC 32-bit NFS Carbon
     /// </summary>
-    public class CarbonProfile : IProfile
+    public class CarbonProfile : IProfile<Key32>
     {
-        public Database CreateDatabase()
+        public Database<Key32> CreateDatabase()
         {
-            var module = new VaultLib.Support.Carbon.ModuleDef();
-            var database = new Database(new DatabaseOptions(GetGameId(), GetDatabaseType()),
+            var module = new ModuleDef32();
+            var database = new Database<Key32>(new DatabaseOptions(GetGameId(), GetDatabaseType()),
                 module.CreateExportFactory());
             module.RegisterTypes(database.TypeRegistry);
             return database;
         }
 
-        public IEnumerable<LoadedFile> LoadFiles(Database database, string directory)
+        public IEnumerable<LoadedFile<Key32>> LoadFiles(Database<Key32> database, string directory)
         {
             return (from file in GetFilesToLoad()
                 let path = Path.Combine(directory, file)
                 let standardVaultPack = new StandardVaultPack()
                 let br = new BinaryReader(File.OpenRead(path))
                 let vaults = standardVaultPack.Load(br, database, new PackLoadingOptions())
-                select new LoadedFile(Path.GetFileNameWithoutExtension(file), "main", vaults)).ToList();
+                select new LoadedFile<Key32>(Path.GetFileNameWithoutExtension(file), "main", vaults)).ToList();
         }
 
-        public void SaveFiles(Database database, string directory, IEnumerable<LoadedFile> files)
+        public void SaveFiles(Database<Key32> database, string directory, IEnumerable<LoadedFile<Key32>> files)
         {
             foreach (var file in files)
             {

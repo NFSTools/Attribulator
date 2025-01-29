@@ -1,12 +1,16 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using Attribulator.API;
+using Attribulator.API.Exceptions;
 using Attribulator.API.Plugin;
+using Attribulator.API.Serialization;
 using Attribulator.API.Services;
 using CommandLine;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.DB;
 
 namespace Attribulator.CLI.Commands
@@ -50,6 +54,25 @@ namespace Attribulator.CLI.Commands
             var profile = ServiceProvider.GetRequiredService<IProfileService>().GetProfile(ProfileName);
             var storageFormat = ServiceProvider.GetRequiredService<IStorageFormatService>()
                 .GetStorageFormat(StorageFormatName);
+            switch (profile)
+            {
+                case IProfile<Key32> profile32:
+                    ExecuteInternal(profile32, storageFormat);
+                    break;
+                case IProfile<Key64> profile64:
+                    ExecuteInternal(profile64, storageFormat);
+                    break;
+                default:
+                    throw new CommandException("Profile is not supported");
+            }
+
+            _logger.LogInformation("Done!");
+            return Task.FromResult(0);
+        }
+
+        private void ExecuteInternal<TKey>(IProfile<TKey> profile, IDatabaseStorageFormat storageFormat)
+            where TKey : struct, IKey<TKey>
+        {
             var database = profile.CreateDatabase();
             _logger.LogInformation("Loading database from disk...");
             var files = profile.LoadFiles(database, InputDirectory);
@@ -57,9 +80,6 @@ namespace Attribulator.CLI.Commands
             _logger.LogInformation("Unpacking database to disk...");
 
             storageFormat.Serialize(database, OutputDirectory, files);
-
-            _logger.LogInformation("Done!");
-            return Task.FromResult(0);
         }
     }
 }

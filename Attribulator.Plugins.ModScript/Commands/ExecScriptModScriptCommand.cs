@@ -3,17 +3,21 @@ using Attribulator.ModScript.API;
 
 namespace Attribulator.Plugins.ModScript.Commands;
 
-public class ExecScriptModScriptCommand : BaseModScriptCommand
+public class ExecScriptModScriptCommand : BaseModScriptCommand, IParseableModScriptCommand<ExecScriptModScriptCommand>
 {
     public string FileName { get; set; }
 
-    public override void Parse(List<string> parts)
+    public static ExecScriptModScriptCommand Parse(List<string> parts)
     {
         if (parts.Count != 2) throw new CommandParseException($"Expected 2 tokens, got {parts.Count}");
-        FileName = parts[1];
+
+        return new ExecScriptModScriptCommand
+        {
+            FileName = parts[1]
+        };
     }
 
-    public override void Execute(DatabaseHelper databaseHelper)
+    protected override void Execute<TKey>(DatabaseHelper<TKey> databaseHelper)
     {
         throw new System.NotImplementedException("This command should not be executed directly");
     }

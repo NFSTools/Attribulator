@@ -9,7 +9,8 @@ using VaultLib.Core.Types;
 namespace Attribulator.Plugins.ModScript.Commands
 {
     // copy_fields class sourceNode targetNode options
-    public class CopyFieldsModScriptCommand : BaseModScriptCommand
+    public class CopyFieldsModScriptCommand : BaseModScriptCommand,
+        IParseableModScriptCommand<CopyFieldsModScriptCommand>
     {
         [Flags]
         public enum CopyOptions
@@ -24,33 +25,43 @@ namespace Attribulator.Plugins.ModScript.Commands
         public string DestinationCollectionName { get; set; }
         public CopyOptions Options { get; set; }
 
-        public override void Parse(List<string> parts)
+        public static CopyFieldsModScriptCommand Parse(List<string> parts)
         {
             if (parts.Count != 5) throw new CommandParseException($"Expected 5 tokens, got {parts.Count}");
 
-            ClassName = CleanHashString(parts[1]);
-            SourceCollectionName = CleanHashString(parts[2]);
-            DestinationCollectionName = CleanHashString(parts[3]);
+            var className = CleanHashString(parts[1]);
+            var sourceCollectionName = CleanHashString(parts[2]);
+            var destinationCollectionName = CleanHashString(parts[3]);
             var copyOptionEntries = parts[4].Split('|', StringSplitOptions.RemoveEmptyEntries).ToList();
 
+            CopyOptions options = 0;
+
             if (copyOptionEntries.Contains("base"))
-                Options |= CopyOptions.Base;
+                options |= CopyOptions.Base;
             if (copyOptionEntries.Contains("optional"))
-                Options |= CopyOptions.Optional;
+                options |= CopyOptions.Optional;
             if (copyOptionEntries.Contains("overwrite"))
-                Options |= CopyOptions.OverwriteOptional;
+                options |= CopyOptions.OverwriteOptional;
+
+            return new CopyFieldsModScriptCommand
+            {
+                ClassName = className,
+                SourceCollectionName = sourceCollectionName,
+                DestinationCollectionName = destinationCollectionName,
+                Options = options,
+            };
         }
 
-        public override void Execute(DatabaseHelper databaseHelper)
+        protected override void Execute<TKey>(DatabaseHelper<TKey> databaseHelper)
         {
             var srcCollection = GetCollection(databaseHelper, ClassName, SourceCollectionName);
             var dstCollection = GetCollection(databaseHelper, ClassName, DestinationCollectionName);
-            var values = new Dictionary<VltClassField, object>();
+            var values = new Dictionary<VltClassField<TKey>, object>();
 
             if ((Options & CopyOptions.Base) != 0)
                 foreach (var baseField in srcCollection.Class.BaseFields)
                     values.Add(baseField,
-                        ValueCloningUtils.CloneValue(databaseHelper.Database, srcCollection.GetRawValue(baseField.Name),
+                        ValueCloningUtils.CloneValue(databaseHelper.Database, srcCollection.GetRawValue(baseField.Key),
                             srcCollection.Class,
                             baseField, dstCollection));
 
@@ -69,15 +80,15 @@ namespace Attribulator.Plugins.ModScript.Commands
             // optional by itself will copy anything that doesn't exist
             // optional + overwrite will copy nonexistent fields and overwrite the other ones(optional only)
             if ((Options & CopyOptions.Base) != 0)
-                foreach (var (key, value) in values)
-                    if (key.IsInLayout)
-                        dstCollection.SetRawValue(key.Name, value);
+                foreach (var (field, value) in values)
+                    if (field.IsInLayout)
+                        dstCollection.SetRawValue(field.Key, value);
 
             if ((Options & CopyOptions.Optional) != 0)
                 foreach (var (field, value) in values)
-                    if (!field.IsInLayout && (!dstCollection.HasEntry(field.Name) ||
+                    if (!field.IsInLayout && (!dstCollection.HasEntry(field.Key) ||
                                               (Options & CopyOptions.OverwriteOptional) != 0))
-                        dstCollection.SetRawValue(field.Name, value);
+                        dstCollection.SetRawValue(field.Key, value);
             databaseHelper.MarkVaultAsModified(dstCollection.Vault);
         }
     }

@@ -8,9 +8,11 @@ using System.Numerics;
 using System.Threading.Tasks;
 using Attribulator.API.Data;
 using Attribulator.API.Serialization;
+using Attribulator.API.Utils;
 using Attribulator.Plugins.YAMLSupport.Helpers;
 using VaultLib.Core;
 using VaultLib.Core.Data;
+using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.DB;
 using VaultLib.Core.Types;
 using VaultLib.Core.Types.Attrib;
@@ -24,7 +26,8 @@ namespace Attribulator.Plugins.YAMLSupport
     /// </summary>
     public class YamlStorageFormat : BaseStorageFormat
     {
-        public override SerializedDatabaseInfo LoadInfo(string sourceDirectory, Database destinationDatabase)
+        public override SerializedDatabaseInfo LoadInfo<TKey>(string sourceDirectory,
+            Database<TKey> destinationDatabase)
         {
             using var dbs = new StreamReader(Path.Combine(sourceDirectory, "info.yml"));
 
@@ -51,7 +54,7 @@ namespace Attribulator.Plugins.YAMLSupport
                     var fieldUnderlyingType =
                         destinationDatabase.TypeRegistry.ResolveType(serializedDatabaseClassField.TypeName);
 
-                    var effectiveFieldUnderlyingType = CloakingHelper.IsTypeAStringInDisguise(fieldUnderlyingType)
+                    var effectiveFieldUnderlyingType = CloakingHelper.IsTypeAStringInDisguise<TKey>(fieldUnderlyingType)
                         ? typeof(string)
                         : fieldUnderlyingType;
 
@@ -69,8 +72,8 @@ namespace Attribulator.Plugins.YAMLSupport
             return serializedDatabaseInfo;
         }
 
-        public override void Serialize(Database sourceDatabase, string destinationDirectory,
-            IEnumerable<LoadedFile> loadedFiles, Func<Vault, bool> filterFunc = null)
+        public override void Serialize<TKey>(Database<TKey> sourceDatabase, string destinationDirectory,
+            IEnumerable<LoadedFile<TKey>> loadedFiles, Func<Vault<TKey>, bool> filterFunc = null)
         {
             filterFunc ??= _ => true;
 
@@ -107,7 +110,7 @@ namespace Attribulator.Plugins.YAMLSupport
             {
                 var serializedDatabaseClass = new SerializedDatabaseClass
                 {
-                    Name = databaseClass.Name,
+                    Name = KeyUtils.KeyToString(databaseClass.Key),
                     LayoutSize = databaseClass.LayoutSize,
                     StaticSize = databaseClass.StaticSize,
                     Fields = new List<SerializedDatabaseClassField>(),
@@ -116,8 +119,8 @@ namespace Attribulator.Plugins.YAMLSupport
                 serializedDatabaseClass.Fields.AddRange(databaseClass.Fields.Values.Select(field =>
                     new SerializedDatabaseClassField
                     {
-                        Name = field.Name,
-                        TypeName = field.TypeName,
+                        Name = KeyUtils.KeyToString(field.Key),
+                        TypeName = KeyUtils.KeyToString(field.TypeKey),
                         Alignment = field.Alignment,
                         Flags = field.Flags,
                         MaxCount = field.MaxCount,
@@ -135,13 +138,14 @@ namespace Attribulator.Plugins.YAMLSupport
             using var sw = new StreamWriter(Path.Combine(destinationDirectory, "info.yml"));
             infoSerializer.Serialize(sw, serializedDatabaseInfo);
 
-            var classSpecificSerializers = sourceDatabase.Classes.ToDictionary(c => c.Name, c =>
+            var classSpecificSerializers = sourceDatabase.Classes.ToDictionary(c => c.Key, c =>
             {
                 return new SerializerBuilder()
                     .WithQuotingNecessaryStrings(true)
                     .DisableAliases()
                     .WithTypeInspector(
-                        inspector => new VltClassSchemaTypeInspector(inspector, sourceDatabase, c))
+                        inspector => new VltClassSchemaTypeInspector<TKey>(inspector, sourceDatabase, c))
+                    .WithTypeConverter(new VltKeyTypeConverter<TKey>())
                     // add YamlIgnore to some annoying matrix properties
                     .WithAttributeOverride<Matrix4x4>(m => m.Translation, new YamlIgnoreAttribute())
                     .WithAttributeOverride<Matrix4x4>(m => m.IsIdentity, new YamlIgnoreAttribute())
@@ -163,22 +167,23 @@ namespace Attribulator.Plugins.YAMLSupport
                     // Solution: Store the name of the parent node instead of having an array of children.
 
                     foreach (var collectionGroup in sourceDatabase.RowManager.GetCollectionsInVault(vault)
-                                 .GroupBy(v => v.Class.Name))
+                                 .GroupBy(v => v.Class.Key))
                     {
-                        var serializedCollections = new List<CustomSerializedCollection>();
+                        var serializedCollections = new List<CustomSerializedCollection<TKey>>();
                         ConvertVltCollectionsToSerializedCollections(vaultDirectory, collectionGroup,
                             serializedCollections);
 
-                        using var vw = new StreamWriter(Path.Combine(vaultDirectory, collectionGroup.Key + ".yml"));
+                        using var vw = new StreamWriter(Path.Combine(vaultDirectory,
+                            KeyUtils.KeyToString(collectionGroup.Key) + ".yml"));
                         classSpecificSerializers[collectionGroup.Key].Serialize(vw, serializedCollections);
                     }
                 }
             }
         }
 
-        public override void Backup(string srcDirectory, string destinationDirectory,
-            LoadedFile file,
-            IEnumerable<Vault> vaults)
+        public override void Backup<TKey>(string srcDirectory, string destinationDirectory,
+            LoadedFile<TKey> file,
+            IEnumerable<Vault<TKey>> vaults)
         {
             var srcFileBaseDir =
                 Path.Combine(srcDirectory, file.Group, file.Name);
@@ -213,22 +218,23 @@ namespace Attribulator.Plugins.YAMLSupport
             return Directory.GetFiles(directory, "*.yml");
         }
 
-        protected override async Task<IEnumerable<SerializedCollection>> LoadDataFileAsync(string path,
-            Database database, VltClass vltClass)
+        protected override async Task<IEnumerable<SerializedCollection<TKey>>> LoadDataFileAsync<TKey>(string path,
+            Database<TKey> database, VltClass<TKey> vltClass)
         {
             var deserializer = new DeserializerBuilder()
-                .WithTypeInspector(inspector => new VltClassSchemaTypeInspector(inspector, database, vltClass))
+                .WithTypeInspector(inspector => new VltClassSchemaTypeInspector<TKey>(inspector, database, vltClass))
                 .Build();
 
-            var results = deserializer.Deserialize<List<CustomSerializedCollection>>(
+            var results = deserializer.Deserialize<List<CustomSerializedCollection<TKey>>>(
                 await File.ReadAllTextAsync(path));
 
             return results.Select(ConvertFromCustomSerializedCollection);
         }
 
-        private static SerializedCollection ConvertFromCustomSerializedCollection(CustomSerializedCollection data)
+        private static SerializedCollection<TKey> ConvertFromCustomSerializedCollection<TKey>(
+            CustomSerializedCollection<TKey> data) where TKey : struct, IKey<TKey>
         {
-            return new SerializedCollection
+            return new SerializedCollection<TKey>
             {
                 ParentName = data.ParentName,
                 Name = data.Name,
@@ -236,16 +242,17 @@ namespace Attribulator.Plugins.YAMLSupport
             };
         }
 
-        private static void ConvertVltCollectionsToSerializedCollections(string directory,
-            IEnumerable<VltCollection> vltCollections, ICollection<CustomSerializedCollection> serializedCollections)
+        private static void ConvertVltCollectionsToSerializedCollections<TKey>(string directory,
+            IEnumerable<VltCollection<TKey>> vltCollections,
+            ICollection<CustomSerializedCollection<TKey>> serializedCollections) where TKey : struct, IKey<TKey>
         {
             foreach (var vltCollection in vltCollections)
             {
-                var serializedCollection = new CustomSerializedCollection()
+                var serializedCollection = new CustomSerializedCollection<TKey>
                 {
-                    Name = vltCollection.Name,
-                    ParentName = vltCollection.Parent?.Name,
-                    Data = new CustomSerializedCollectionData()
+                    Name = KeyUtils.KeyToString(vltCollection.Key),
+                    ParentName = vltCollection.Parent is { Key: var pk } ? KeyUtils.KeyToString(pk) : null,
+                    Data = new CustomSerializedCollectionData<TKey>()
                 };
 
                 foreach (var entry in vltCollection.GetOrderedData())
@@ -259,23 +266,25 @@ namespace Attribulator.Plugins.YAMLSupport
             }
         }
 
-        private static object ConvertVltValueToSerializedValue(string directory, VltCollection collection,
-            VltClassField field, object vltValue)
+        private static object ConvertVltValueToSerializedValue<TKey>(string directory, VltCollection<TKey> collection,
+            VltClassField<TKey> field, object vltValue) where TKey : struct, IKey<TKey>
         {
             return vltValue switch
             {
                 IStringValue stringValue => stringValue.GetString(),
-                BaseBlob blob => ProcessBlob(directory, collection, field, blob),
-                VltArrayType array => ConvertVltArrayToSerializedArray(directory, collection, field, array),
+                BaseBlob<TKey> blob => ProcessBlob(directory, collection, field, blob),
+                VltArrayType<TKey> array => ConvertVltArrayToSerializedArray(directory, collection, field, array),
                 _ => vltValue
             };
         }
 
-        private static object ConvertVltArrayToSerializedArray(string directory, VltCollection collection,
-            VltClassField field,
-            VltArrayType array)
+        private static object ConvertVltArrayToSerializedArray<TKey>(string directory, VltCollection<TKey> collection,
+            VltClassField<TKey> field,
+            VltArrayType<TKey> array) where TKey : struct, IKey<TKey>
         {
-            var listItemType = CloakingHelper.IsTypeAStringInDisguise(array.ItemType) ? typeof(string) : array.ItemType;
+            var listItemType = CloakingHelper.IsTypeAStringInDisguise<TKey>(array.ItemType)
+                ? typeof(string)
+                : array.ItemType;
             var listType = typeof(List<>).MakeGenericType(listItemType);
             var items = (IList)Activator.CreateInstance(listType);
 
@@ -290,35 +299,42 @@ namespace Attribulator.Plugins.YAMLSupport
                 array.Capacity, items);
         }
 
-        private static object ProcessBlob(string directory, VltCollection collection, VltClassField field,
-            BaseBlob blob)
+        private static object ProcessBlob<TKey>(string directory, VltCollection<TKey> collection,
+            VltClassField<TKey> field,
+            BaseBlob<TKey> blob) where TKey : struct, IKey<TKey>
         {
             if (blob.Data is not { Length: > 0 })
             {
                 return "";
             }
 
+            var className = KeyUtils.KeyToString(collection.Class.Key);
+            var collectionName = KeyUtils.KeyToString(collection.Key);
+            var fieldName = KeyUtils.KeyToString(field.Key);
+            var collectionShortPath = $"{className}/{collectionName}";
+
             var blobDir = Path.Combine(directory, "_blobs");
             Directory.CreateDirectory(blobDir);
             var blobPath = Path.Combine(blobDir,
-                $"{collection.ShortPath.TrimEnd('/', '\\').Replace('/', '_').Replace('\\', '_')}_{field.Name}.bin");
+                $"{collectionShortPath.TrimEnd('/', '\\').Replace('/', '_').Replace('\\', '_')}_{fieldName}.bin");
 
             File.WriteAllBytes(blobPath, blob.Data);
 
             return blobPath[(directory.Length + 1)..];
         }
 
-        protected override object ConvertSerializedValueToDataValue(Database database, string gameId, string dir,
-            VltClass vltClass,
-            VltClassField field,
-            VltCollection vltCollection, object serializedValue, bool createInstance = true)
+        protected override object ConvertSerializedValueToDataValue<TKey>(Database<TKey> database, string gameId,
+            string dir,
+            VltClass<TKey> vltClass,
+            VltClassField<TKey> field,
+            VltCollection<TKey> vltCollection, object serializedValue, bool createInstance = true)
         {
             if (serializedValue == null)
                 throw new ArgumentNullException(nameof(serializedValue), "serializedValue cannot be null");
 
-            var resolvedType = database.TypeRegistry.ResolveType(field.TypeName);
+            var resolvedType = database.TypeRegistry.ResolveType(field.TypeKey);
 
-            if (!CloakingHelper.IsTypeAStringInDisguise(resolvedType))
+            if (!CloakingHelper.IsTypeAStringInDisguise<TKey>(resolvedType))
             {
                 return !field.IsArray
                     ? serializedValue
@@ -328,8 +344,8 @@ namespace Attribulator.Plugins.YAMLSupport
             return CloakingHelper.UncloakObject(database, dir, field, serializedValue, resolvedType);
         }
 
-        private static object ConvertSerializedArrayToVltArray(VltClassField field, object serializedValue,
-            Type resolvedType)
+        private static object ConvertSerializedArrayToVltArray<TKey>(VltClassField<TKey> field, object serializedValue,
+            Type resolvedType) where TKey : struct, IKey<TKey>
         {
             var array = (ISerializedArray)serializedValue;
 
@@ -338,7 +354,7 @@ namespace Attribulator.Plugins.YAMLSupport
                 Debug.Assert(item.GetType() == resolvedType);
             }
 
-            return new VltArrayType(field, resolvedType)
+            return new VltArrayType<TKey>(field, resolvedType)
             {
                 Items = array.GetRawItems().ToList(),
                 Capacity = array.GetCapacity()

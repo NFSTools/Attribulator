@@ -19,7 +19,7 @@ namespace Attribulator.ModScript.API
         /// </summary>
         /// <param name="name">The name of the command.</param>
         /// <typeparam name="TCommand">The type of the command.</typeparam>
-        void RegisterCommand<TCommand>(string name) where TCommand : IModScriptCommand, new();
+        void RegisterCommand<TCommand>(string name) where TCommand : IParseableModScriptCommand<TCommand>;
 
         /// <summary>
         ///     Returns the names of the available ModScript commands.

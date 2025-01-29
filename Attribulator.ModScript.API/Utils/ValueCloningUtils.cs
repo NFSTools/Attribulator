@@ -4,6 +4,7 @@ using System.Reflection;
 using Attribulator.API.Utils;
 using VaultLib.Core;
 using VaultLib.Core.Data;
+using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.DB;
 using VaultLib.Core.Types;
 using VaultLib.Core.Types.EA.Reflection;
@@ -25,9 +26,9 @@ namespace Attribulator.ModScript.API.Utils
         /// <param name="vltClassField">The VLT field holding the object.</param>
         /// <param name="vltCollection">The VLT collection.</param>
         /// <returns>A new instance of the object with all properties copied.</returns>
-        public static object CloneValue(Database database, object originalValue, VltClass vltClass,
-            VltClassField vltClassField,
-            VltCollection vltCollection)
+        public static object CloneValue<TKey>(Database<TKey> database, object originalValue, VltClass<TKey> vltClass,
+            VltClassField<TKey> vltClassField,
+            VltCollection<TKey> vltCollection) where TKey : struct, IKey<TKey>
         {
             var originalType = originalValue.GetType();
             if (TypeUtils.IsPrimitive(originalType))
@@ -35,9 +36,9 @@ namespace Attribulator.ModScript.API.Utils
                 return originalValue;
             }
 
-            if (originalValue is VltArrayType array)
+            if (originalValue is VltArrayType<TKey> array)
             {
-                var newArray = (VltArrayType)FieldUtils.CreateFieldValue(database.TypeRegistry, vltClassField);
+                var newArray = (VltArrayType<TKey>)FieldUtils.CreateFieldValue(database.TypeRegistry, vltClassField);
                 newArray.Capacity = array.Capacity;
                 newArray.Items = array.Items
                     .Select(i => CloneValue(database, i, vltClass, vltClassField, vltCollection)).ToList();
@@ -60,11 +61,13 @@ namespace Attribulator.ModScript.API.Utils
             }
         }
 
-        private static object CloneObjectWithReflection(Database database, object originalValue,
+        private static object CloneObjectWithReflection<TKey>(Database<TKey> database, object originalValue,
             object newValue,
-            VltClass vltClass, VltClassField vltClassField,
-            VltCollection vltCollection)
+            VltClass<TKey> vltClass, VltClassField<TKey> vltClassField,
+            VltCollection<TKey> vltCollection) where TKey : struct, IKey<TKey>
         {
+            // TODO: this needs to handle fields as well. maybe there's an easier method for value types?
+            
             var properties = originalValue.GetType()
                 .GetProperties(BindingFlags.Public | BindingFlags.Instance)
                 .Where(p => p.SetMethod?.IsPublic ?? false)
@@ -79,7 +82,7 @@ namespace Attribulator.ModScript.API.Utils
                     case null:
                         propertyInfo.SetValue(newValue, null);
                         continue;
-                    case VltBaseType vltBaseType:
+                    case VltBaseType<TKey> vltBaseType:
                         propertyInfo.SetValue(newValue, CloneObjectWithReflection(
                             database,
                             vltBaseType,

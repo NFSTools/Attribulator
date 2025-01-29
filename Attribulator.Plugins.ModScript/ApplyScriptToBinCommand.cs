@@ -2,6 +2,8 @@
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using Attribulator.API;
+using Attribulator.API.Exceptions;
 using Attribulator.API.Plugin;
 using Attribulator.API.Services;
 using Attribulator.ModScript.API;
@@ -9,6 +11,7 @@ using CommandLine;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.DB;
 
 namespace Attribulator.Plugins.ModScript
@@ -57,16 +60,28 @@ namespace Attribulator.Plugins.ModScript
 
             var profile = ServiceProvider.GetRequiredService<IProfileService>().GetProfile(ProfileName);
             _logger.LogInformation("Loading database from disk...");
+
+            return profile switch
+            {
+                IProfile<Key32> profile32 => ExecuteInternal(profile32),
+                IProfile<Key64> profile64 => ExecuteInternal(profile64),
+                _ => throw new CommandException("Profile is not supported")
+            };
+        }
+
+        private Task<int> ExecuteInternal<TKey>(IProfile<TKey> profile) where TKey : struct, IKey<TKey>
+        {
             var database = profile.CreateDatabase();
             var files = profile.LoadFiles(database, InputDirectory);
             database.CompleteLoad();
             _logger.LogInformation("Loaded database");
 
-            var modScriptDatabase = new DatabaseHelper(database);
+            var modScriptDatabase = new DatabaseHelper<TKey>(database);
             var scriptStopwatch = Stopwatch.StartNew();
             var numCommands = 0L;
 
             foreach (var command in _modScriptService.ParseCommands(File.ReadLines(ModScriptPath)))
+            {
                 try
                 {
                     command.Execute(modScriptDatabase);
@@ -78,10 +93,11 @@ namespace Attribulator.Plugins.ModScript
                         command.LineNumber, command.Line);
                     return Task.FromResult(1);
                 }
+            }
 
             scriptStopwatch.Stop();
 
-            var commandsPerSecond = (ulong) (numCommands / (scriptStopwatch.ElapsedMilliseconds / 1000.0));
+            var commandsPerSecond = (ulong)(numCommands / (scriptStopwatch.ElapsedMilliseconds / 1000.0));
             _logger.LogInformation(
                 "Applied {NumCommands} command(s) from script in {ElapsedMilliseconds}ms ({Duration}; ~ {NumPerSec}/sec)",
                 numCommands, scriptStopwatch.ElapsedMilliseconds, scriptStopwatch.Elapsed, commandsPerSecond);

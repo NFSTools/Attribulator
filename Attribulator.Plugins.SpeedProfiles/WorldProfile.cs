@@ -6,25 +6,26 @@ using Attribulator.API;
 using Attribulator.API.Data;
 using Attribulator.Plugins.SpeedProfiles.World;
 using VaultLib.Core;
+using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.DB;
 using VaultLib.Core.Pack;
 
 namespace Attribulator.Plugins.SpeedProfiles
 {
-    public class WorldProfile : IProfile
+    public class WorldProfile : IProfile<Key32>
     {
-        public Database CreateDatabase()
+        public Database<Key32> CreateDatabase()
         {
             var module = new VaultLib.Support.World.ModuleDef();
-            var database = new Database(new DatabaseOptions(GetGameId(), GetDatabaseType()),
+            var database = new Database<Key32>(new DatabaseOptions(GetGameId(), GetDatabaseType()),
                 module.CreateExportFactory());
             module.RegisterTypes(database.TypeRegistry);
             return database;
         }
 
-        public IEnumerable<LoadedFile> LoadFiles(Database database, string directory)
+        public IEnumerable<LoadedFile<Key32>> LoadFiles(Database<Key32> database, string directory)
         {
-            var files = new List<LoadedFile>();
+            var files = new List<LoadedFile<Key32>>();
             foreach (var file in GetFilesToLoad(directory))
             {
                 //var standardVaultPack = new StandardVaultPack();
@@ -41,13 +42,13 @@ namespace Attribulator.Plugins.SpeedProfiles
 
                 var vaults = vaultPack.Load(br, database, new PackLoadingOptions());
 
-                files.Add(new LoadedFile(Path.GetFileNameWithoutExtension(file), group, vaults));
+                files.Add(new LoadedFile<Key32>(Path.GetFileNameWithoutExtension(file), group, vaults));
             }
 
             return files;
         }
 
-        public void SaveFiles(Database database, string directory, IEnumerable<LoadedFile> files)
+        public void SaveFiles(Database<Key32> database, string directory, IEnumerable<LoadedFile<Key32>> files)
         {
             foreach (var file in files)
             {

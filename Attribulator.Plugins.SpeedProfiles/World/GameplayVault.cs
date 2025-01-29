@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using CoreLibraries.IO;
 using VaultLib.Core;
+using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.DB;
 using VaultLib.Core.Pack;
 
@@ -17,15 +18,17 @@ namespace Attribulator.Plugins.SpeedProfiles.World
             _name = name;
         }
 
-        public void Save(BinaryWriter bw, IList<Vault> vaults, PackSavingOptions savingOptions = null)
+        public void Save<TKey>(BinaryWriter bw, IList<Vault<TKey>> vaults, PackSavingOptions savingOptions = null)
+            where TKey : struct, IKey<TKey>
         {
             if (vaults.Count != 1) throw new InvalidDataException("Can only save exactly 1 vault");
 
             var nameChars = new char[0x2C];
             _name.CopyTo(0, nameChars, 0, _name.Length);
 
-            var vaultWriter = new VaultWriter(vaults[0], savingOptions?.VaultWriteOptions ?? new VaultWriteOptions());
-            vaultWriter.ExportManager.AddExport(new VaultSlotExport());
+            var vaultWriter =
+                new VaultWriter<TKey>(vaults[0], savingOptions?.VaultWriteOptions ?? new VaultWriteOptions());
+            vaultWriter.ExportManager.AddExport(new VaultSlotExport<TKey>());
             var vaultStreamInfo = vaultWriter.BuildVault();
 
             bw.Write(nameChars);
@@ -60,7 +63,8 @@ namespace Attribulator.Plugins.SpeedProfiles.World
             bw.BaseStream.Position = bw.BaseStream.Length;
         }
 
-        public IList<Vault> Load(BinaryReader br, Database database, PackLoadingOptions loadingOptions)
+        public IList<Vault<TKey>> Load<TKey>(BinaryReader br, Database<TKey> database,
+            PackLoadingOptions loadingOptions) where TKey : struct, IKey<TKey>
         {
             var name = new string(br.ReadChars(0x2C)).Trim('\0');
 
@@ -86,7 +90,7 @@ namespace Attribulator.Plugins.SpeedProfiles.World
             using var loadingWrapper = new VaultReadWrapper(name, binStream, vltStream, byteOrder);
             var vault = database.LoadVault(loadingWrapper);
 
-            return new List<Vault>(new[] { vault });
+            return new List<Vault<TKey>>(new[] { vault });
         }
     }
 }

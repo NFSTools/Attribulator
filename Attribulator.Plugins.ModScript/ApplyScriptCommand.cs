@@ -4,8 +4,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Attribulator.API;
 using Attribulator.API.Exceptions;
 using Attribulator.API.Plugin;
+using Attribulator.API.Serialization;
 using Attribulator.API.Services;
 using Attribulator.ModScript.API;
 using Attribulator.Plugins.ModScript.Commands;
@@ -14,6 +16,7 @@ using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using VaultLib.Core;
+using VaultLib.Core.DataInterfaces;
 
 namespace Attribulator.Plugins.ModScript
 {
@@ -95,12 +98,23 @@ namespace Attribulator.Plugins.ModScript
                 throw new CommandException(
                     $"Cannot find storage format that is compatible with directory [{InputDirectory}].");
 
+            return profile switch
+            {
+                IProfile<Key32> profile32 => await ExecuteInternal(profile32, storageFormat, scriptFiles),
+                IProfile<Key64> profile64 => await ExecuteInternal(profile64, storageFormat, scriptFiles),
+                _ => throw new CommandException("Profile is not supported")
+            };
+        }
+
+        private async Task<int> ExecuteInternal<TKey>(IProfile<TKey> profile, IDatabaseStorageFormat storageFormat,
+            List<string> scriptFiles) where TKey : struct, IKey<TKey>
+        {
             var database = profile.CreateDatabase();
             _logger.LogInformation("Loading database from disk...");
             var files = (await storageFormat.DeserializeAsync(InputDirectory, database)).ToList();
             _logger.LogInformation("Loaded database");
 
-            var modScriptDatabase = new DatabaseHelper(database);
+            var modScriptDatabase = new DatabaseHelper<TKey>(database);
             var totalCommands = 0L;
             var totalMilliseconds = 0.0d;
             var errorsDict = new Dictionary<string, List<(long, string, Exception)>>();
@@ -150,7 +164,7 @@ namespace Attribulator.Plugins.ModScript
                 {
                     _logger.LogInformation("Saving database");
 
-                    bool VaultFilter(Vault vault)
+                    bool VaultFilter(Vault<TKey> vault)
                     {
                         return modifiedVaultNames.Contains(vault.Name);
                     }
@@ -189,9 +203,9 @@ namespace Attribulator.Plugins.ModScript
             return 0;
         }
 
-        private bool ExecuteScript(DatabaseHelper modScriptDatabase, string scriptFile,
+        private bool ExecuteScript<TKey>(DatabaseHelper<TKey> modScriptDatabase, string scriptFile,
             Dictionary<string, List<(long, string, Exception)>> errorsDict,
-            ref long totalCommands, ref double totalMilliseconds)
+            ref long totalCommands, ref double totalMilliseconds) where TKey : struct, IKey<TKey>
         {
             var fileStopwatch = Stopwatch.StartNew();
             var numCommands = 0L;

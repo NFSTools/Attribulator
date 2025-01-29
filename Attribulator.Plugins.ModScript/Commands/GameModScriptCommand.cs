@@ -3,16 +3,19 @@ using Attribulator.ModScript.API;
 
 namespace Attribulator.Plugins.ModScript.Commands
 {
-    public class GameModScriptCommand : BaseModScriptCommand
+    public class GameModScriptCommand : BaseModScriptCommand, IParseableModScriptCommand<GameModScriptCommand>
     {
         public string Game { get; private set; }
 
-        public override void Parse(List<string> parts)
+        public static GameModScriptCommand Parse(List<string> parts)
         {
-            Game = parts[1];
+            return new GameModScriptCommand
+            {
+                Game = parts[1]
+            };
         }
 
-        public override void Execute(DatabaseHelper databaseHelper)
+        protected override void Execute<TKey>(DatabaseHelper<TKey> databaseHelper)
         {
             //
         }

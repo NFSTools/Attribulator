@@ -8,7 +8,8 @@ using VaultLib.Core.Types;
 namespace Attribulator.Plugins.ModScript.Commands
 {
     // resize_collection class node field [property path] size
-    public class ResizeCollectionModScriptCommand : BaseModScriptCommand
+    public class ResizeCollectionModScriptCommand : BaseModScriptCommand,
+        IParseableModScriptCommand<ResizeCollectionModScriptCommand>
     {
         public string ClassName { get; set; }
         public string CollectionName { get; set; }
@@ -17,46 +18,57 @@ namespace Attribulator.Plugins.ModScript.Commands
         public List<string> PropertyPath { get; set; }
         public ushort Size { get; set; }
 
-        public override void Parse(List<string> parts)
+        public static ResizeCollectionModScriptCommand Parse(List<string> parts)
         {
             if (parts.Count < 6) throw new CommandParseException("Expected at least 6 tokens");
 
-            ClassName = parts[1];
-            CollectionName = CleanHashString(parts[2]);
-            FieldName = parts[3];
-            PropertyPath = new List<string>();
+            var className = parts[1];
+            var collectionName = CleanHashString(parts[2]);
+            var fieldName = parts[3];
 
-            var split = FieldName.Split(new[] {'[', ']'}, StringSplitOptions.RemoveEmptyEntries);
+            var split = fieldName.Split(new[] { '[', ']' }, StringSplitOptions.RemoveEmptyEntries);
+
+            int arrayIndex = 0;
 
             switch (split.Length)
             {
                 case 2:
                     if (split[1] == "^")
-                        ArrayIndex = -1;
+                        arrayIndex = -1;
                     else
-                        ArrayIndex = int.Parse(split[1]);
-                    FieldName = split[0];
+                        arrayIndex = int.Parse(split[1]);
+                    fieldName = split[0];
                     break;
                 case 1:
-                    FieldName = split[0];
+                    fieldName = split[0];
                     break;
                 default:
                     throw new CommandParseException("Badly malformed update_field command...");
             }
 
-            FieldName = CleanHashString(FieldName);
-            PropertyPath = parts.Skip(4).Take(parts.Count - 5).ToList();
-            Size = ushort.Parse(parts[^1]);
+            fieldName = CleanHashString(fieldName);
+            var propertyPath = parts.Skip(4).Take(parts.Count - 5).ToList();
+            var size = ushort.Parse(parts[^1]);
+
+            return new ResizeCollectionModScriptCommand
+            {
+                ClassName = className,
+                CollectionName = collectionName,
+                FieldName = fieldName,
+                ArrayIndex = arrayIndex,
+                PropertyPath = propertyPath,
+                Size = size
+            };
         }
 
-        public override void Execute(DatabaseHelper databaseHelper)
+        protected override void Execute<TKey>(DatabaseHelper<TKey> databaseHelper)
         {
             var collection = GetCollection(databaseHelper, ClassName, CollectionName);
-            var field = GetField(collection.Class, FieldName);
-            var data = collection.GetRawValue(field.Name);
+            var field = databaseHelper.GetField(collection.Class, FieldName);
+            var data = collection.GetRawValue(field.Key);
             var itemToEdit = data;
 
-            if (data is VltArrayType array)
+            if (data is VltArrayType<TKey> array)
             {
                 if (ArrayIndex == -1)
                     ArrayIndex = array.Items.Count - 1;
@@ -69,7 +81,7 @@ namespace Attribulator.Plugins.ModScript.Commands
 
             var parsedProperties = PropertyUtils.ParsePath(PropertyPath).ToList();
             var retrievedProperty =
-                (PropertyUtils.ReflectedProperty) PropertyUtils.GetProperty(itemToEdit, parsedProperties);
+                (PropertyUtils.ReflectedProperty)PropertyUtils.GetProperty(itemToEdit, parsedProperties);
             var retrievedValue = retrievedProperty.GetValue();
 
             if (!(retrievedValue is Array retrievedArray))

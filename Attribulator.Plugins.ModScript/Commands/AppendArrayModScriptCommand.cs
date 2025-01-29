@@ -1,51 +1,57 @@
 ﻿using System.Collections.Generic;
 using Attribulator.API.Utils;
 using Attribulator.ModScript.API;
-using VaultLib.Core;
 using VaultLib.Core.Types;
 using VaultLib.Core.Types.Abstractions;
-using VaultLib.Core.Types.EA.Reflection;
 using VaultLib.Core.Utils;
 
 namespace Attribulator.Plugins.ModScript.Commands
 {
     // append_array class node field [value]
-    public class AppendArrayModScriptCommand : BaseModScriptCommand
+    public class AppendArrayModScriptCommand : BaseModScriptCommand,
+        IParseableModScriptCommand<AppendArrayModScriptCommand>
     {
-        private bool _hasValue;
         public string ClassName { get; set; }
         public string CollectionName { get; set; }
         public string FieldName { get; set; }
         public string Value { get; set; }
 
-        public override void Parse(List<string> parts)
+        public static AppendArrayModScriptCommand Parse(List<string> parts)
         {
             if (parts.Count < 4) throw new CommandParseException("Expected at least 4 tokens");
 
-            ClassName = parts[1];
-            CollectionName = CleanHashString(parts[2]);
-            FieldName = CleanHashString(parts[3]);
+            var className = parts[1];
+            var collectionName = CleanHashString(parts[2]);
+            var fieldName = CleanHashString(parts[3]);
+            string value = null;
 
             if (parts.Count > 4)
             {
-                Value = parts[4];
-                _hasValue = true;
+                value = parts[4];
             }
+
+            return new AppendArrayModScriptCommand
+            {
+                ClassName = className,
+                CollectionName = collectionName,
+                FieldName = fieldName,
+                Value = value
+            };
         }
 
-        public override void Execute(DatabaseHelper databaseHelper)
+        protected override void Execute<TKey>(DatabaseHelper<TKey> databaseHelper)
         {
             var collection = GetCollection(databaseHelper, ClassName, CollectionName);
-            var field = GetField(collection.Class, FieldName);
+            var field = databaseHelper.GetField(collection.Class, FieldName);
 
             if (!field.IsArray)
                 throw new CommandExecutionException($"Field {ClassName}[{FieldName}] is not an array!");
 
             if (!collection.HasEntry(FieldName))
                 throw new CommandExecutionException(
-                    $"Collection {collection.ShortPath} does not have an entry for {FieldName}.");
+                    $"Collection {ClassName}[{CollectionName}] does not have an entry for {FieldName}.");
 
-            var array = collection.GetRawValue<VltArrayType>(FieldName);
+            var array = collection.GetRawValue<VltArrayType<TKey>>(FieldName);
 
             if (array.Items.Count == array.Capacity && field.IsInLayout)
                 throw new CommandExecutionException("Cannot append to a full array when it is a layout field");
@@ -56,7 +62,7 @@ namespace Attribulator.Plugins.ModScript.Commands
 
             var itemToEdit = FieldUtils.ConstructFieldType(databaseHelper.Database.TypeRegistry, field);
 
-            if (_hasValue)
+            if (Value != null)
             {
                 if (TypeUtils.IsPrimitiveValue(itemToEdit))
                 {
@@ -66,14 +72,14 @@ namespace Attribulator.Plugins.ModScript.Commands
                 {
                     stringValue.SetString(Value);
                 }
-                else if (itemToEdit is BaseRefSpec refSpec)
+                else if (itemToEdit is BaseRefSpec<TKey> refSpec)
                 {
-                    refSpec.CollectionKey = Value;
+                    refSpec.CollectionKey = KeyUtils.StringToKey<TKey>(Value, true);
                 }
                 else
                 {
                     throw new CommandExecutionException(
-                        $"Object stored in {collection.Class.Name}[{field.Name}] is not a simple type and cannot be used in a value-append command");
+                        $"Object stored in {collection.Class.Key}[{field.Key}] is not a simple type and cannot be used in a value-append command");
                 }
             }
 

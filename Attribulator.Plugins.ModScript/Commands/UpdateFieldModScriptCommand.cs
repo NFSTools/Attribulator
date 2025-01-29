@@ -13,7 +13,8 @@ using VaultLib.Core.Utils;
 namespace Attribulator.Plugins.ModScript.Commands
 {
     // update_field class node field [property] value
-    public class UpdateFieldModScriptCommand : BaseModScriptCommand
+    public class UpdateFieldModScriptCommand : BaseModScriptCommand,
+        IParseableModScriptCommand<UpdateFieldModScriptCommand>
     {
         public string ClassName { get; set; }
         public string CollectionName { get; set; }
@@ -22,54 +23,67 @@ namespace Attribulator.Plugins.ModScript.Commands
         public List<string> PropertyPath { get; set; }
         public string Value { get; set; }
 
-        public override void Parse(List<string> parts)
+        public static UpdateFieldModScriptCommand Parse(List<string> parts)
         {
             if (parts.Count < 5) throw new CommandParseException("Expected at least 5 tokens");
 
-            ClassName = parts[1];
-            CollectionName = CleanHashString(parts[2]);
-            FieldName = parts[3];
-            PropertyPath = new List<string>();
+            var className = parts[1];
+            var collectionName = CleanHashString(parts[2]);
+            var fieldName = parts[3];
+            var propertyPath = new List<string>();
 
-            var split = FieldName.Split(new[] { '[', ']' }, StringSplitOptions.RemoveEmptyEntries);
+            var split = fieldName.Split(new[] { '[', ']' }, StringSplitOptions.RemoveEmptyEntries);
+
+            int arrayIndex = 0;
 
             switch (split.Length)
             {
                 case 2:
                     if (split[1] == "^")
-                        ArrayIndex = -1;
+                        arrayIndex = -1;
                     else
-                        ArrayIndex = int.Parse(split[1]);
-                    FieldName = split[0];
+                        arrayIndex = int.Parse(split[1]);
+                    fieldName = split[0];
                     break;
                 case 1:
-                    FieldName = split[0];
+                    fieldName = split[0];
                     break;
                 default:
                     throw new CommandParseException("Badly malformed update_field command...");
             }
 
-            FieldName = CleanHashString(FieldName);
+            fieldName = CleanHashString(fieldName);
 
+            string value;
             if (parts.Count > 5)
             {
-                PropertyPath = parts.Skip(4).Take(parts.Count - 5).ToList();
-                Value = parts[^1];
+                propertyPath = parts.Skip(4).Take(parts.Count - 5).ToList();
+                value = parts[^1];
             }
             else
             {
-                Value = parts[4];
+                value = parts[4];
             }
+
+            return new UpdateFieldModScriptCommand
+            {
+                ClassName = className,
+                CollectionName = collectionName,
+                FieldName = fieldName,
+                ArrayIndex = arrayIndex,
+                Value = value,
+                PropertyPath = propertyPath
+            };
         }
 
-        public override void Execute(DatabaseHelper databaseHelper)
+        protected override void Execute<TKey>(DatabaseHelper<TKey> databaseHelper)
         {
             var collection = GetCollection(databaseHelper, ClassName, CollectionName);
-            var field = GetField(collection.Class, FieldName);
-            var data = collection.GetRawValue(field.Name);
+            var field = databaseHelper.GetField(collection.Class, FieldName);
+            var data = collection.GetRawValue(field.Key);
             var itemToEdit = data;
 
-            if (data is VltArrayType array)
+            if (data is VltArrayType<TKey> array)
             {
                 if (ArrayIndex == -1)
                     ArrayIndex = array.Items.Count - 1;
@@ -90,14 +104,14 @@ namespace Attribulator.Plugins.ModScript.Commands
                 {
                     stringValue.SetString(Value);
                 }
-                else if (itemToEdit is BaseRefSpec refSpec)
+                else if (itemToEdit is BaseRefSpec<TKey> refSpec)
                 {
-                    refSpec.CollectionKey = Value;
+                    refSpec.CollectionKey = KeyUtils.StringToKey<TKey>(Value, true);
                 }
                 else
                 {
                     throw new CommandExecutionException(
-                        $"Object stored in {collection.Class.Name}[{field.Name}] is not a simple type and cannot be used in a value-update command");
+                        $"Object stored in {ClassName}[{FieldName}] is not a simple type and cannot be used in a value-update command");
                 }
                 // switch (itemToEdit)
                 // {
@@ -180,7 +194,7 @@ namespace Attribulator.Plugins.ModScript.Commands
                             matrix.M44 = value;
                             break;
                     }
-                    
+
                     itemToEdit = matrix;
                 }
                 else
@@ -196,7 +210,7 @@ namespace Attribulator.Plugins.ModScript.Commands
                 }
             }
 
-            collection.SetRawValue(field.Name, itemToEdit);
+            collection.SetRawValue(field.Key, itemToEdit);
 
             databaseHelper.MarkVaultAsModified(collection.Vault);
         }

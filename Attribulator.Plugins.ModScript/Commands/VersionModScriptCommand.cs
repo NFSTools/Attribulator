@@ -3,22 +3,23 @@ using Attribulator.ModScript.API;
 
 namespace Attribulator.Plugins.ModScript.Commands
 {
-    public class VersionModScriptCommand : BaseModScriptCommand
+    public class VersionModScriptCommand : BaseModScriptCommand, IParseableModScriptCommand<VersionModScriptCommand>
     {
-        public string Version { get; private set; }
+        public string Version { get; private init; }
 
-        public override void Parse(List<string> parts)
+        static VersionModScriptCommand IParseableModScriptCommand<VersionModScriptCommand>.Parse(List<string> parts)
         {
-            Version = parts[1];
-
-            if (Version != "4.6")
-                throw new CommandParseException(
-                    "This tool is only compatible with ModScript files for NFS-VltEd 4.6.");
+            return new VersionModScriptCommand
+            {
+                Version = parts[1]
+            };
         }
 
-        public override void Execute(DatabaseHelper databaseHelper)
+        protected override void Execute<TKey>(DatabaseHelper<TKey> databaseHelper)
         {
-            //
+            if (Version != "4.6")
+                throw new CommandExecutionException(
+                    "This tool is only compatible with ModScript files for NFS-VltEd 4.6.");
         }
     }
 }

@@ -2,31 +2,32 @@
 using System.Collections.Generic;
 using System.Linq;
 using VaultLib.Core.Data;
+using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.DB;
 using YamlDotNet.Serialization;
 
 namespace Attribulator.Plugins.YAMLSupport.Helpers;
 
-internal class VltClassSchemaTypeInspector : ITypeInspector
+internal class VltClassSchemaTypeInspector<TKey> : ITypeInspector where TKey : struct, IKey<TKey>
 {
     private readonly ITypeInspector _innerInspector;
-    private readonly Database _database;
-    private readonly VltClass _vltClass;
-    private readonly Dictionary<string, IPropertyDescriptor> _fieldDescriptors;
+    private readonly Database<TKey> _database;
+    private readonly VltClass<TKey> _vltClass;
+    private readonly Dictionary<TKey, IPropertyDescriptor> _fieldDescriptors;
 
-    public VltClassSchemaTypeInspector(ITypeInspector innerInspector, Database database, VltClass vltClass)
+    public VltClassSchemaTypeInspector(ITypeInspector innerInspector, Database<TKey> database, VltClass<TKey> vltClass)
     {
         _innerInspector = innerInspector;
         _database = database;
         _vltClass = vltClass;
-        _fieldDescriptors = vltClass.Fields.Values.ToDictionary(f => f.Name, CreateFieldDescriptor);
+        _fieldDescriptors = vltClass.Fields.Values.ToDictionary(f => f.Key, CreateFieldDescriptor);
     }
 
     public IEnumerable<IPropertyDescriptor> GetProperties(Type type, object container)
     {
-        if (type == typeof(CustomSerializedCollectionData))
+        if (type == typeof(CustomSerializedCollectionData<TKey>))
         {
-            return ((CustomSerializedCollectionData)container!).GetTable()
+            return ((CustomSerializedCollectionData<TKey>)container!).GetTable()
                 .GetEntries()
                 .Select(e => _fieldDescriptors[e.Key]);
         }
@@ -38,7 +39,7 @@ internal class VltClassSchemaTypeInspector : ITypeInspector
         bool caseInsensitivePropertyMatching)
     {
         // we don't need to mess with anything but CustomSerializedCollectionData
-        if (type != typeof(CustomSerializedCollectionData))
+        if (type != typeof(CustomSerializedCollectionData<TKey>))
         {
             return _innerInspector.GetProperty(type, container, name, ignoreUnmatched,
                 caseInsensitivePropertyMatching);
@@ -50,9 +51,9 @@ internal class VltClassSchemaTypeInspector : ITypeInspector
         return CreateFieldDescriptor(field);
     }
 
-    private IPropertyDescriptor CreateFieldDescriptor(VltClassField field)
+    private IPropertyDescriptor CreateFieldDescriptor(VltClassField<TKey> field)
     {
-        var fieldType = _database.TypeRegistry.ResolveType(field.TypeName);
+        var fieldType = _database.TypeRegistry.ResolveType(field.TypeKey);
 
         if (fieldType == null)
         {
@@ -63,7 +64,7 @@ internal class VltClassSchemaTypeInspector : ITypeInspector
 
         // special case 1: IStringValue -> string
         // special case 2: blob -> string (file path)
-        if (CloakingHelper.IsTypeAStringInDisguise(fieldType))
+        if (CloakingHelper.IsTypeAStringInDisguise<TKey>(fieldType))
         {
             fieldType = typeof(string);
         }
@@ -76,7 +77,7 @@ internal class VltClassSchemaTypeInspector : ITypeInspector
             ? typeof(CustomSerializedArray<>).MakeGenericType(fieldType)
             : fieldType;
 
-        return new CustomDataEntryPropertyDescriptor(field, propType);
+        return new CustomDataEntryPropertyDescriptor<TKey>(field, propType);
     }
 
     public string GetEnumName(Type enumType, string name)

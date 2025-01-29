@@ -28,6 +28,7 @@ namespace Attribulator.Plugins.ModScript
             _modScriptService.RegisterCommand<GameModScriptCommand>("game");
             _modScriptService.RegisterCommand<ResizeFieldModScriptCommand>("resize_field");
             _modScriptService.RegisterCommand<UpdateFieldModScriptCommand>("update_field");
+            _modScriptService.RegisterCommand<UpdateFieldModScriptCommand>("update_collection");
             _modScriptService.RegisterCommand<CopyNodeModScriptCommand>("copy_node");
             _modScriptService.RegisterCommand<AddNodeModScriptCommand>("add_node");
             _modScriptService.RegisterCommand<ChangeVaultModScriptCommand>("change_vault");
@@ -40,7 +41,6 @@ namespace Attribulator.Plugins.ModScript
             _modScriptService.RegisterCommand<AddOverwriteModScriptCommand>("add_overwrite");
             _modScriptService.RegisterCommand<CopyOverwriteModScriptCommand>("copy_overwrite");
             _modScriptService.RegisterCommand<ResizeCollectionModScriptCommand>("resize_collection");
-            _modScriptService.RegisterCommand<UpdateCollectionModScriptCommand>("update_collection");
             _modScriptService.RegisterCommand<ExecScriptModScriptCommand>("script");
         }
     }

@@ -1,16 +1,18 @@
 ﻿using System;
+using Attribulator.API.Utils;
 using VaultLib.Core.Data;
+using VaultLib.Core.DataInterfaces;
 using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 
 namespace Attribulator.Plugins.YAMLSupport.Helpers;
 
-internal class CustomDataEntryPropertyDescriptor : IPropertyDescriptor
+internal class CustomDataEntryPropertyDescriptor<TKey> : IPropertyDescriptor where TKey : struct, IKey<TKey>
 {
-    private readonly VltClassField _field;
+    private readonly VltClassField<TKey> _field;
     private readonly Type _fieldType;
 
-    public CustomDataEntryPropertyDescriptor(VltClassField field,
+    public CustomDataEntryPropertyDescriptor(VltClassField<TKey> field,
         Type fieldType)
     {
         _field = field;
@@ -24,16 +26,16 @@ internal class CustomDataEntryPropertyDescriptor : IPropertyDescriptor
 
     public IObjectDescriptor Read(object target)
     {
-        var value = ((CustomSerializedCollectionData)target).GetEntry(_field.Name);
+        var value = ((CustomSerializedCollectionData<TKey>)target).GetEntry(_field.Key);
         return new ObjectDescriptor(value, _fieldType, _fieldType);
     }
 
     public void Write(object target, object value)
     {
-        ((CustomSerializedCollectionData)target).SetEntry(_field.Name, value);
+        ((CustomSerializedCollectionData<TKey>)target).SetEntry(_field.Key, value);
     }
 
-    public string Name => _field.Name;
+    public string Name => KeyUtils.KeyToString(_field.Key);
     public bool AllowNulls => !_field.IsInLayout;
     public bool CanWrite => true;
     public Type Type => _fieldType;

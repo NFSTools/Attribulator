@@ -1,16 +1,21 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Attribulator.API;
+using Attribulator.API.Exceptions;
 using Attribulator.API.Plugin;
 using Attribulator.API.Services;
+using Attribulator.API.Utils;
 using CommandLine;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using VaultLib.Core.Data;
+using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.DB;
 
 namespace Attribulator.CLI.Commands
@@ -47,7 +52,26 @@ namespace Attribulator.CLI.Commands
 
             if (!Directory.Exists(OutputDirectory)) Directory.CreateDirectory(OutputDirectory);
 
-            var profile = ServiceProvider.GetRequiredService<IProfileService>().GetProfile(ProfileName);
+            var profile = FindProfile(ProfileName);
+
+            switch (profile)
+            {
+                case IProfile<Key32> profile32:
+                    ExecuteInternal(profile32);
+                    break;
+                case IProfile<Key64> profile64:
+                    ExecuteInternal(profile64);
+                    break;
+                default:
+                    throw new CommandException("Profile is not supported");
+            }
+
+            _logger.LogInformation("Done!");
+            return Task.FromResult(0);
+        }
+
+        private void ExecuteInternal<TKey>(IProfile<TKey> profile) where TKey : struct, IKey<TKey>
+        {
             var database = profile.CreateDatabase();
             _logger.LogInformation("Loading database from disk...");
             profile.LoadFiles(database, InputDirectory);
@@ -56,38 +80,35 @@ namespace Attribulator.CLI.Commands
 
             foreach (var vltClass in database.Classes)
             {
-                var dumpedClassData = new DumpedClassData
-                    { Class = vltClass, Collections = new List<DumpedCollection>() };
-                foreach (var vltCollection in database.RowManager.GetCollections(vltClass.Name))
+                var dumpedClassData = new DumpedClassData<TKey>
+                    { Class = vltClass, Collections = new List<DumpedCollection<TKey>>() };
+                foreach (var vltCollection in database.RowManager.GetCollections(vltClass.Key))
                 {
-                    dumpedClassData.Collections.Add(new DumpedCollection
+                    dumpedClassData.Collections.Add(new DumpedCollection<TKey>
                     {
-                        Name = vltCollection.Name,
-                        ParentName = vltCollection.Parent?.Name,
+                        Name = KeyUtils.KeyToString(vltCollection.Key),
+                        ParentName = vltCollection.Parent is { Key: var pk } ? KeyUtils.KeyToString(pk) : null,
                         Data = vltCollection.GetData()
-                            .ToDictionary(e => e.Key, e => e.Value)
+                            .ToDictionary(e => KeyUtils.KeyToString(e.Key), e => e.Value)
                     });
                 }
 
-                File.WriteAllText(Path.Combine(OutputDirectory, $"{vltClass.Name}.json"),
+                File.WriteAllText(Path.Combine(OutputDirectory, $"{vltClass.Key}.json"),
                     JsonConvert.SerializeObject(dumpedClassData, Formatting.Indented));
             }
-
-            _logger.LogInformation("Done!");
-            return Task.FromResult(0);
         }
 
-        private class DumpedCollection
+        private class DumpedCollection<TKey> where TKey : struct, IKey<TKey>
         {
-            [JsonProperty("name")] public string Name { get; set; }
-            [JsonProperty("parent_name")] public string ParentName { get; set; }
+            [JsonProperty("name")] public required string Name { get; set; }
+            [JsonProperty("parent_name")] public string? ParentName { get; set; }
             [JsonProperty("data")] public Dictionary<string, object> Data { get; set; }
         }
 
-        private class DumpedClassData
+        private class DumpedClassData<TKey> where TKey : struct, IKey<TKey>
         {
-            [JsonProperty("class")] public VltClass Class { get; set; }
-            [JsonProperty("collections")] public List<DumpedCollection> Collections { get; set; }
+            [JsonProperty("class")] public VltClass<TKey> Class { get; set; }
+            [JsonProperty("collections")] public List<DumpedCollection<TKey>> Collections { get; set; }
         }
     }
 }

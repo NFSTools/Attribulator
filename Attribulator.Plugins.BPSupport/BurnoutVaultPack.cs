@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using CoreLibraries.IO;
 using VaultLib.Core;
+using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.DB;
 using VaultLib.Core.Pack;
 
@@ -17,7 +18,8 @@ namespace Attribulator.Plugins.BPSupport
             _vaultName = vaultName;
         }
 
-        public IList<Vault> Load(BinaryReader br, Database database, PackLoadingOptions loadingOptions = null)
+        public IList<Vault<TKey>> Load<TKey>(BinaryReader br, Database<TKey> database,
+            PackLoadingOptions loadingOptions = null) where TKey : struct, IKey<TKey>
         {
             var vltOffset = br.ReadUInt32();
             var vltSize = br.ReadUInt32();
@@ -47,14 +49,15 @@ namespace Attribulator.Plugins.BPSupport
             using var loadingWrapper = new VaultReadWrapper(_vaultName, binStream, vltStream,
                 byteOrder);
             var vault = database.LoadVault(loadingWrapper);
-            return new ReadOnlyCollection<Vault>(new List<Vault>(new[] { vault }));
+            return new ReadOnlyCollection<Vault<TKey>>(new List<Vault<TKey>>(new[] { vault }));
         }
 
-        public void Save(BinaryWriter bw, IList<Vault> vaults, PackSavingOptions savingOptions)
+        public void Save<TKey>(BinaryWriter bw, IList<Vault<TKey>> vaults, PackSavingOptions savingOptions)
+            where TKey : struct, IKey<TKey>
         {
             bw.Write(0x10);
             var vault = vaults[0];
-            var vw = new VaultWriter(vault, new VaultWriteOptions() { HashMode = VaultHashMode.Hash64 });
+            var vw = new VaultWriter<TKey>(vault, new VaultWriteOptions() { HashMode = VaultHashMode.Hash64 });
             var streamInfo = vw.BuildVault();
             bw.Write((uint)streamInfo.VltStream.Length);
             bw.Write(0);

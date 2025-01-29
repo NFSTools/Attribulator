@@ -4,22 +4,26 @@ using Attribulator.ModScript.API;
 namespace Attribulator.Plugins.ModScript.Commands
 {
     // rename_node class node name
-    public class RenameNodeModScriptCommand : BaseModScriptCommand
+    public class RenameNodeModScriptCommand : BaseModScriptCommand,
+        IParseableModScriptCommand<RenameNodeModScriptCommand>
     {
         public string ClassName { get; set; }
         public string CollectionName { get; set; }
         public string NewName { get; set; }
 
-        public override void Parse(List<string> parts)
+        public static RenameNodeModScriptCommand Parse(List<string> parts)
         {
             if (parts.Count != 4) throw new CommandParseException($"Expected 4 tokens, got {parts.Count}");
 
-            ClassName = parts[1];
-            CollectionName = parts[2];
-            NewName = parts[3];
+            return new RenameNodeModScriptCommand
+            {
+                ClassName = parts[1],
+                CollectionName = parts[2],
+                NewName = parts[3]
+            };
         }
 
-        public override void Execute(DatabaseHelper databaseHelper)
+        protected override void Execute<TKey>(DatabaseHelper<TKey> databaseHelper)
         {
             var collection = GetCollection(databaseHelper, ClassName, CollectionName);
 

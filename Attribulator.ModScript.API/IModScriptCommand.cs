@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using VaultLib.Core.DataInterfaces;
 
 namespace Attribulator.ModScript.API
 {
@@ -17,16 +18,18 @@ namespace Attribulator.ModScript.API
         /// </summary>
         public long LineNumber { get; set; }
 
-        /// <summary>
-        ///     Parses the given command tokens.
-        /// </summary>
-        /// <param name="parts">The tokens to be parsed.</param>
-        void Parse(List<string> parts);
+        // /// <summary>
+        // ///     Parses the given command tokens.
+        // /// </summary>
+        // /// <param name="parts">The tokens to be parsed.</param>
+        // void Parse(List<string> parts);
 
-        /// <summary>
-        ///     Executes the command.
-        /// </summary>
-        /// <param name="databaseHelper">An instance of the <see cref="DatabaseHelper" /> class.</param>
-        void Execute(DatabaseHelper databaseHelper);
+        void Execute<TKey>(DatabaseHelper<TKey> databaseHelper) where TKey : struct, IKey<TKey>;
+    }
+
+    public interface IParseableModScriptCommand<TSelf> : IModScriptCommand
+        where TSelf : IParseableModScriptCommand<TSelf>
+    {
+        static abstract TSelf Parse(List<string> parts);
     }
 }

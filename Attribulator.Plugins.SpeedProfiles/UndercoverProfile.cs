@@ -4,6 +4,7 @@ using System.Linq;
 using Attribulator.API;
 using Attribulator.API.Data;
 using VaultLib.Core;
+using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.DB;
 using VaultLib.Core.Pack;
 
@@ -12,28 +13,28 @@ namespace Attribulator.Plugins.SpeedProfiles
     /// <summary>
     ///     Basic profile for PC 32-bit NFS Undercover
     /// </summary>
-    public class UndercoverProfile : IProfile
+    public class UndercoverProfile : IProfile<Key32>
     {
-        public Database CreateDatabase()
+        public Database<Key32> CreateDatabase()
         {
             var module = new VaultLib.Support.Undercover.ModuleDef();
-            var database = new Database(new DatabaseOptions(GetGameId(), GetDatabaseType()),
+            var database = new Database<Key32>(new DatabaseOptions(GetGameId(), GetDatabaseType()),
                 module.CreateExportFactory());
             module.RegisterTypes(database.TypeRegistry);
             return database;
         }
 
-        public IEnumerable<LoadedFile> LoadFiles(Database database, string directory)
+        public IEnumerable<LoadedFile<Key32>> LoadFiles(Database<Key32> database, string directory)
         {
             return (from file in GetFilesToLoad()
                 let path = Path.Combine(directory, file)
                 let standardVaultPack = new StandardVaultPack()
                 let br = new BinaryReader(File.OpenRead(path))
                 let vaults = standardVaultPack.Load(br, database, new PackLoadingOptions())
-                select new LoadedFile(Path.GetFileNameWithoutExtension(file), "main", vaults)).ToList();
+                select new LoadedFile<Key32>(Path.GetFileNameWithoutExtension(file), "main", vaults)).ToList();
         }
 
-        public void SaveFiles(Database database, string directory, IEnumerable<LoadedFile> files)
+        public void SaveFiles(Database<Key32> database, string directory, IEnumerable<LoadedFile<Key32>> files)
         {
             foreach (var file in files)
             {

@@ -6,31 +6,38 @@ using VaultLib.Core.Types;
 
 namespace Attribulator.Plugins.ModScript.Commands
 {
-    public class ResizeFieldModScriptCommand : BaseModScriptCommand
+    public class ResizeFieldModScriptCommand : BaseModScriptCommand,
+        IParseableModScriptCommand<ResizeFieldModScriptCommand>
     {
         public string ClassName { get; set; }
         public string CollectionName { get; set; }
         public string FieldName { get; set; }
         public ushort NewCapacity { get; set; }
 
-        public override void Parse(List<string> parts)
+        public static ResizeFieldModScriptCommand Parse(List<string> parts)
         {
             if (parts.Count != 5) throw new CommandParseException($"Expected 5 tokens but got {parts.Count}");
 
-            ClassName = CleanHashString(parts[1]);
-            CollectionName = CleanHashString(parts[2]);
-            FieldName = CleanHashString(parts[3]);
+            var className = CleanHashString(parts[1]);
+            var collectionName = CleanHashString(parts[2]);
+            var fieldName = CleanHashString(parts[3]);
 
             if (!ushort.TryParse(parts[4], out var newCapacity))
                 throw new CommandParseException($"Failed to parse '{parts[4]}' as a number");
 
-            NewCapacity = newCapacity;
+            return new ResizeFieldModScriptCommand
+            {
+                ClassName = className,
+                CollectionName = collectionName,
+                FieldName = fieldName,
+                NewCapacity = newCapacity,
+            };
         }
 
-        public override void Execute(DatabaseHelper databaseHelper)
+        protected override void Execute<TKey>(DatabaseHelper<TKey> databaseHelper)
         {
             var collection = GetCollection(databaseHelper, ClassName, CollectionName);
-            var field = GetField(collection.Class, FieldName);
+            var field = databaseHelper.GetField(collection.Class, FieldName);
 
             if (!field.IsArray)
                 throw new CommandExecutionException($"Field {ClassName}[{FieldName}] is not an array!");
@@ -39,21 +46,27 @@ namespace Attribulator.Plugins.ModScript.Commands
                 throw new CommandExecutionException(
                     $"Cannot resize field {ClassName}[{FieldName}] beyond maximum count (requested {NewCapacity} but limit is {field.MaxCount})");
 
-            var array = collection.GetRawValue<VltArrayType>(FieldName);
+            var array = collection.GetRawValue<VltArrayType<TKey>>(FieldName);
 
             if (NewCapacity < array.Items.Count)
+            {
                 while (NewCapacity < array.Items.Count)
                     array.Items.RemoveAt(array.Items.Count - 1);
+            }
             else if (NewCapacity > array.Items.Count)
+            {
                 while (NewCapacity > array.Items.Count)
                     array.Items.Add(FieldUtils.ConstructFieldType(databaseHelper.Database.TypeRegistry, field));
+            }
 
             if (!field.IsInLayout)
+            {
                 if (array.Capacity != NewCapacity)
                 {
                     array.Capacity = NewCapacity;
                     databaseHelper.MarkVaultAsModified(collection.Vault);
                 }
+            }
         }
     }
 }

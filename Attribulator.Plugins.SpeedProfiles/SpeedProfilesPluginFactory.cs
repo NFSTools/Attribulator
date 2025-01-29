@@ -17,7 +17,7 @@ namespace Attribulator.Plugins.SpeedProfiles
             services.AddTransient<WorldProfile>();
 
             // Console profiles
-            services.AddTransient<CarbonProfilePs2>();
+            // services.AddTransient<CarbonProfilePs2>();
 
             services.AddTransient<SpeedProfilesPlugin>();
         }

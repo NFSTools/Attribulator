@@ -4,6 +4,7 @@ using System.Linq;
 using Attribulator.API;
 using Attribulator.API.Data;
 using Attribulator.Plugins.BPSupport.Types;
+using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.DB;
 using VaultLib.Core.Exports;
 using VaultLib.Core.Exports.Implementations;
@@ -14,22 +15,23 @@ using VaultLib.ModernBase.Structures;
 
 namespace Attribulator.Plugins.BPSupport
 {
-    public class BurnoutParadiseProfile : IProfile
+    public class BurnoutParadiseProfile : IProfile<Key64>
     {
-        public Database CreateDatabase()
+        public Database<Key64> CreateDatabase()
         {
-            var database = new Database(new DatabaseOptions(GetGameId(), GetDatabaseType()),
-                new ExportFactory(() => new DatabaseLoad(), () => new ClassLoad64(), () => new CollectionLoad64(),
+            var database = new Database<Key64>(new DatabaseOptions(GetGameId(), GetDatabaseType()),
+                new ExportFactory<Key64>(() => new DatabaseLoad32On64(), () => new ClassLoad64(),
+                    () => new CollectionLoad64(),
                     () => new ExportEntry64(), () => new PtrRef64()));
-            database.TypeRegistry.Register<RwVector2>("Attrib::Types::RwVector2");
-            database.TypeRegistry.Register<RwVector3>("Attrib::Types::RwVector3");
+            database.TypeRegistry.RegisterStruct<RwVector2>("Attrib::Types::RwVector2");
+            database.TypeRegistry.RegisterStruct<RwVector3>("Attrib::Types::RwVector3");
             database.TypeRegistry.Map<int>("AttribSys::Enums::eSongHint::eSongHint");
             database.TypeRegistry.Map<int>("AttribSys::Enums::eCollisionMixerSliders::eCollisionMixerSliders");
 
             return database;
         }
 
-        public IEnumerable<LoadedFile> LoadFiles(Database database, string directory)
+        public IEnumerable<LoadedFile<Key64>> LoadFiles(Database<Key64> database, string directory)
         {
             var filesToLoad = Directory.GetFiles(directory, "*.bin", SearchOption.TopDirectoryOnly)
                 .Where(f => !Path.GetFileNameWithoutExtension(f).Equals("schema"))
@@ -40,10 +42,10 @@ namespace Attribulator.Plugins.BPSupport
                 let vaultPack = new BurnoutVaultPack(Path.GetFileNameWithoutExtension(file))
                 let br = new BinaryReader(File.OpenRead(file))
                 let vaults = vaultPack.Load(br, database, new PackLoadingOptions())
-                select new LoadedFile(Path.GetFileNameWithoutExtension(file), "main", vaults)).ToList();
+                select new LoadedFile<Key64>(Path.GetFileNameWithoutExtension(file), "main", vaults)).ToList();
         }
 
-        public void SaveFiles(Database database, string directory, IEnumerable<LoadedFile> files)
+        public void SaveFiles(Database<Key64> database, string directory, IEnumerable<LoadedFile<Key64>> files)
         {
             foreach (var file in files)
             {

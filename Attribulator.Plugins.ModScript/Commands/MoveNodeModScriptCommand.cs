@@ -2,33 +2,40 @@
 using System.Linq;
 using Attribulator.ModScript.API;
 using VaultLib.Core.Data;
+using VaultLib.Core.DataInterfaces;
 
 namespace Attribulator.Plugins.ModScript.Commands
 {
     // move_node class node [parent]
-    public class MoveNodeModScriptCommand : BaseModScriptCommand
+    public class MoveNodeModScriptCommand : BaseModScriptCommand, IParseableModScriptCommand<MoveNodeModScriptCommand>
     {
         public string ClassName { get; set; }
         public string CollectionName { get; set; }
         public string ParentName { get; set; }
 
-        public override void Parse(List<string> parts)
+        public static MoveNodeModScriptCommand Parse(List<string> parts)
         {
             if (parts.Count < 3 || parts.Count > 4)
                 throw new CommandParseException("Expected command to be in format: move_node class node [parent]");
 
-            ClassName = CleanHashString(parts[1]);
-            CollectionName = CleanHashString(parts[2]);
-            ParentName = parts.Count == 4 ? parts[3] : null;
+            var className = CleanHashString(parts[1]);
+            var collectionName = CleanHashString(parts[2]);
+            var parentName = parts.Count == 4 ? parts[3] : null;
 
-            if (ParentName == CollectionName)
+            if (parentName == collectionName)
                 throw new CommandParseException("Parent name cannot be the same as collection name.");
+            return new MoveNodeModScriptCommand
+            {
+                ClassName = className,
+                CollectionName = collectionName,
+                ParentName = parentName,
+            };
         }
 
-        public override void Execute(DatabaseHelper databaseHelper)
+        protected override void Execute<TKey>(DatabaseHelper<TKey> databaseHelper)
         {
             var collectionToMove = GetCollection(databaseHelper, ClassName, CollectionName);
-            VltCollection newParentCollection = null;
+            VltCollection<TKey> newParentCollection = null;
 
             if (ParentName != null)
             {
@@ -58,7 +65,8 @@ namespace Attribulator.Plugins.ModScript.Commands
                 databaseHelper.MarkVaultAsModified(collectionToMove.Vault);
         }
 
-        private static bool IsChild(VltCollection root, VltCollection possibleChild)
+        private static bool IsChild<TKey>(VltCollection<TKey> root, VltCollection<TKey> possibleChild)
+            where TKey : struct, IKey<TKey>
         {
             var parent = possibleChild.Parent;
 

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Attribulator.API.Data;
+using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.DB;
 
 namespace Attribulator.API
@@ -9,24 +10,6 @@ namespace Attribulator.API
     /// </summary>
     public interface IProfile
     {
-        Database CreateDatabase();
-        
-        /// <summary>
-        ///     Loads VLT files from the given directory into the given <see cref="Database" /> object.
-        /// </summary>
-        /// <param name="database">The instance of <see cref="Database" /> to load data into.</param>
-        /// <param name="directory">The directory to load VLT files from.</param>
-        /// <returns>An enumerator of <see cref="LoadedFile" /> objects.</returns>
-        IEnumerable<LoadedFile> LoadFiles(Database database, string directory);
-
-        /// <summary>
-        ///     Saves the given files to the given directory.
-        /// </summary>
-        /// <param name="database">The <see cref="Database" /> instance.</param>
-        /// <param name="directory">The directory to save files to.</param>
-        /// <param name="files">The list of <see cref="LoadedFile" /> objects to save.</param>
-        void SaveFiles(Database database, string directory, IEnumerable<LoadedFile> files);
-
         /// <summary>
         ///     Gets the name of the profile.
         /// </summary>
@@ -59,5 +42,26 @@ namespace Attribulator.API
         /// </summary>
         /// <returns>The database type.</returns>
         DatabaseType GetDatabaseType();
+    }
+
+    public interface IProfile<TKey> : IProfile where TKey : struct, IKey<TKey>
+    {
+        Database<TKey> CreateDatabase();
+
+        /// <summary>
+        ///     Loads VLT files from the given directory into the given <see cref="Database" /> object.
+        /// </summary>
+        /// <param name="database">The instance of <see cref="Database" /> to load data into.</param>
+        /// <param name="directory">The directory to load VLT files from.</param>
+        /// <returns>An enumerator of <see cref="LoadedFile" /> objects.</returns>
+        IEnumerable<LoadedFile<TKey>> LoadFiles(Database<TKey> database, string directory);
+
+        /// <summary>
+        ///     Saves the given files to the given directory.
+        /// </summary>
+        /// <param name="database">The <see cref="Database" /> instance.</param>
+        /// <param name="directory">The directory to save files to.</param>
+        /// <param name="files">The list of <see cref="LoadedFile" /> objects to save.</param>
+        void SaveFiles(Database<TKey> database, string directory, IEnumerable<LoadedFile<TKey>> files);
     }
 }

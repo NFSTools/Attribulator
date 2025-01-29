@@ -9,25 +9,32 @@ using VaultLib.Core.Types;
 namespace Attribulator.Plugins.ModScript.Commands
 {
     // add_node class parentNode nodeName
-    public class AddNodeModScriptCommand : BaseModScriptCommand
+    public class AddNodeModScriptCommand : BaseModScriptCommand, IParseableModScriptCommand<AddNodeModScriptCommand>
     {
         public string ClassName { get; set; }
         public string ParentCollectionName { get; set; }
         public string CollectionName { get; set; }
 
-        public override void Parse(List<string> parts)
+        public static AddNodeModScriptCommand Parse(List<string> parts)
         {
             if (parts.Count != 3 && parts.Count != 4)
                 throw new CommandParseException($"3 or 4 tokens expected, got {parts.Count}");
 
-            ClassName = CleanHashString(parts[1]);
-            ParentCollectionName = parts.Count == 4 ? CleanHashString(parts[2]) : "";
-            CollectionName = CleanHashString(parts[^1]);
+            var className = CleanHashString(parts[1]);
+            var parentCollectionName = parts.Count == 4 ? CleanHashString(parts[2]) : "";
+            var collectionName = CleanHashString(parts[^1]);
+
+            return new AddNodeModScriptCommand
+            {
+                ClassName = className,
+                ParentCollectionName = parentCollectionName,
+                CollectionName = collectionName,
+            };
         }
 
-        public override void Execute(DatabaseHelper databaseHelper)
+        protected override void Execute<TKey>(DatabaseHelper<TKey> databaseHelper)
         {
-            VltCollection parentCollection = null;
+            VltCollection<TKey> parentCollection = null;
             if (!string.IsNullOrEmpty(ParentCollectionName))
                 if ((parentCollection = GetCollection(databaseHelper, ClassName, ParentCollectionName, false)) == null)
                     throw new CommandExecutionException(
@@ -37,14 +44,14 @@ namespace Attribulator.Plugins.ModScript.Commands
                 throw new CommandExecutionException(
                     $"add_node failed because collection already exists: {ClassName}/{CollectionName}");
 
-            Vault addToVault;
+            Vault<TKey> addToVault;
 
             if (parentCollection != null)
                 addToVault = parentCollection.Vault;
             else
                 addToVault = databaseHelper.Vaults.FirstOrDefault(vault =>
                     databaseHelper.GetCollectionsInVault(vault)
-                        .Any(collection => collection.Class.Name == ClassName));
+                        .Any(collection => collection.Class.Key == KeyUtils.StringToKey<TKey>(ClassName)));
 
             if (addToVault == null)
                 throw new CommandExecutionException("failed to determine vault to insert new collection into");
@@ -59,7 +66,7 @@ namespace Attribulator.Plugins.ModScript.Commands
                 {
                     var vltBaseType = FieldUtils.CreateFieldValue(databaseHelper.Database.TypeRegistry, baseField);
 
-                    if (vltBaseType is VltArrayType array)
+                    if (vltBaseType is VltArrayType<TKey> array)
                     {
                         array.Capacity = baseField.MaxCount;
                         for (var i = 0; i < array.Capacity; i++)
@@ -67,7 +74,7 @@ namespace Attribulator.Plugins.ModScript.Commands
                                 baseField));
                     }
 
-                    newNode.SetRawValue(baseField.Name,
+                    newNode.SetRawValue(baseField.Key,
                         vltBaseType);
                 }
 
