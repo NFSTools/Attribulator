@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.Hashing;
 
@@ -28,6 +29,26 @@ public static class KeyUtils
         var resolved = HashManager.ResolveVlt(key.Hash);
 
         return resolved == null ? $"0x{key.Hash:X16}" : CleanResolvedString(resolved);
+    }
+    
+    public static string? KeyToOptString<TKey>(TKey key) where TKey : struct, IKey<TKey>
+    {
+        return key switch
+        {
+            Key32 key32 => Key32ToOptString(key32),
+            Key64 key64 => Key64ToOptString(key64),
+            _ => throw new ArgumentException("Unsupported key type", nameof(key))
+        };
+    }
+
+    private static string? Key32ToOptString(Key32 key)
+    {
+        return HashManager.ResolveVlt(key.Hash);
+    }
+
+    private static string? Key64ToOptString(Key64 key)
+    {
+        return HashManager.ResolveVlt(key.Hash);
     }
 
     public static TKey StringToKey<TKey>(string str, bool register = false) where TKey : struct, IKey<TKey>

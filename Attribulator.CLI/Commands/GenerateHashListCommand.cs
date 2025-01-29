@@ -8,6 +8,7 @@ using Attribulator.API.Exceptions;
 using Attribulator.API.Plugin;
 using Attribulator.API.Serialization;
 using Attribulator.API.Services;
+using Attribulator.API.Utils;
 using CommandLine;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
@@ -55,51 +56,57 @@ namespace Attribulator.CLI.Commands
                 throw new CommandException(
                     $"Cannot find storage format that is compatible with directory [{InputDirectory}].");
 
-            throw new NotImplementedException();
-            // var strList = new HashSet<string>();
-            //
-            // switch (profile)
-            // {
-            //     case IProfile<Key32> profile32:
-            //         await GenerateHashListAsync(profile32, storageFormat, strList);
-            //         break;
-            //     case IProfile<Key64> profile64:
-            //         await GenerateHashListAsync(profile64, storageFormat, strList);
-            //         break;
-            //     default:
-            //         throw new CommandException("Profile is not supported");
-            // }
-            //
-            // await File.WriteAllLinesAsync(OutputPath, strList);
-            // _logger.LogInformation("Exported {NumEntries} entries to {OutPath}", strList.Count, OutputPath);
-            // return 0;
+            var strList = new HashSet<string>();
+
+            switch (profile)
+            {
+                case IProfile<Key32> profile32:
+                    await GenerateHashListAsync(profile32, storageFormat, strList);
+                    break;
+                case IProfile<Key64> profile64:
+                    await GenerateHashListAsync(profile64, storageFormat, strList);
+                    break;
+                default:
+                    throw new CommandException("Profile is not supported");
+            }
+
+            await File.WriteAllLinesAsync(OutputPath, strList);
+            _logger.LogInformation("Exported {NumEntries} entries to {OutPath}", strList.Count, OutputPath);
+            return 0;
         }
 
-        // private async Task GenerateHashListAsync<TKey>(IProfile<TKey> profile, IDatabaseStorageFormat storageFormat,
-        //     HashSet<string> strList) where TKey : struct, IKey<TKey>
-        // {
-        //     var database = profile.CreateDatabase();
-        //     _logger.LogInformation("Loading database from disk...");
-        //     await storageFormat.DeserializeAsync(InputDirectory, database);
-        //     _logger.LogInformation("Loaded database");
-        //
-        //
-        //     foreach (var vltClass in database.Classes)
-        //     {
-        //         if (!vltClass.Name.StartsWith("0x")) strList.Add(vltClass.Name);
-        //
-        //         foreach (var vltClassField in vltClass.Fields.Values.Where(vltClassField =>
-        //                      !vltClassField.Name.StartsWith("0x")))
-        //             strList.Add(vltClassField.Name);
-        //     }
-        //
-        //     foreach (var vltCollection in database.RowManager.EnumerateCollections())
-        //     {
-        //         if (!vltCollection.Name.StartsWith("0x"))
-        //         {
-        //             strList.Add(vltCollection.Name);
-        //         }
-        //     }
-        // }
+        private async Task GenerateHashListAsync<TKey>(IProfile<TKey> profile, IDatabaseStorageFormat storageFormat,
+            HashSet<string> strList) where TKey : struct, IKey<TKey>
+        {
+            var database = profile.CreateDatabase();
+            _logger.LogInformation("Loading database from disk...");
+            await storageFormat.DeserializeAsync(InputDirectory, database);
+            _logger.LogInformation("Loaded database");
+
+
+            foreach (var vltClass in database.Classes)
+            {
+                if (KeyUtils.KeyToOptString(vltClass.Key) is { } className)
+                {
+                    strList.Add(className);
+                }
+
+                foreach (var field in vltClass.Fields.Values)
+                {
+                    if (KeyUtils.KeyToOptString(field.Key) is { } fieldName)
+                    {
+                        strList.Add(fieldName);
+                    }
+                }
+            }
+
+            foreach (var vltCollection in database.RowManager.EnumerateCollections())
+            {
+                if (KeyUtils.KeyToOptString(vltCollection.Key) is { } collectionName)
+                {
+                    strList.Add(collectionName);
+                }
+            }
+        }
     }
 }
