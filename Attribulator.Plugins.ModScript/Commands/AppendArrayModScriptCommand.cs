@@ -2,7 +2,6 @@
 using Attribulator.API.Utils;
 using Attribulator.ModScript.API;
 using VaultLib.Core.Types;
-using VaultLib.Core.Types.Abstractions;
 using VaultLib.Core.Utils;
 
 namespace Attribulator.Plugins.ModScript.Commands
@@ -74,7 +73,7 @@ namespace Attribulator.Plugins.ModScript.Commands
                 }
                 else if (itemToEdit is BaseRefSpec<TKey> refSpec)
                 {
-                    refSpec.CollectionKey = KeyUtils.StringToKey<TKey>(Value, true);
+                    refSpec.SetCollectionKey(KeyUtils.StringToKey<TKey>(Value, true));
                 }
                 else
                 {
