@@ -10,7 +10,7 @@ public static class FieldUtils
     public static object CreateFieldValue<TKey>(TypeRegistry<TKey> typeRegistry, VltClassField<TKey> field)
         where TKey : struct, IKey<TKey>
     {
-        var resolvedType = typeRegistry.ResolveType(field.TypeKey);
+        var resolvedType = typeRegistry.ResolveFieldType(field);
         return field.IsArray
             ? new VltArrayType<TKey>(field, resolvedType)
             : typeRegistry.ConstructTypeInstance(resolvedType);
@@ -19,6 +19,6 @@ public static class FieldUtils
     public static object ConstructFieldType<TKey>(TypeRegistry<TKey> typeRegistry, VltClassField<TKey> field)
         where TKey : struct, IKey<TKey>
     {
-        return typeRegistry.ConstructTypeInstance(typeRegistry.ResolveType(field.TypeKey));
+        return typeRegistry.ConstructTypeInstance(typeRegistry.ResolveFieldType(field));
     }
 }

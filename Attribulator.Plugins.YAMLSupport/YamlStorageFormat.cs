@@ -333,7 +333,7 @@ namespace Attribulator.Plugins.YAMLSupport
             if (serializedValue == null)
                 throw new ArgumentNullException(nameof(serializedValue), "serializedValue cannot be null");
 
-            var resolvedType = database.TypeRegistry.ResolveType(field.TypeKey);
+            var resolvedType = database.TypeRegistry.ResolveFieldType(field);
 
             if (!CloakingHelper.IsTypeAStringInDisguise<TKey>(resolvedType))
             {

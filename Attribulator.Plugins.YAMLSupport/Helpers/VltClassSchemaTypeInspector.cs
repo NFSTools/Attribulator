@@ -54,7 +54,7 @@ internal class VltClassSchemaTypeInspector<TKey> : ITypeInspector where TKey : s
 
     private IPropertyDescriptor CreateFieldDescriptor(VltClassField<TKey> field)
     {
-        var fieldType = _database.TypeRegistry.ResolveType(field.TypeKey);
+        var fieldType = _database.TypeRegistry.ResolveFieldType(field);
 
         if (fieldType == null)
         {

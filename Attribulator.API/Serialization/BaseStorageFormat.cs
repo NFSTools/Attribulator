@@ -57,6 +57,7 @@ namespace Attribulator.API.Serialization
                     var fieldKey = KeyUtils.StringToKey<TKey>(loadedDatabaseClassField.Name, true);
                     var typeKey = KeyUtils.StringToKey<TKey>(loadedDatabaseClassField.TypeName, true);
                     var field = new VltClassField<TKey>(
+                        vltClass,
                         fieldKey,
                         typeKey,
                         loadedDatabaseClassField.Flags,
