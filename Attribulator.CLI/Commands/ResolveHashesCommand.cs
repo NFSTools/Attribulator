@@ -17,7 +17,7 @@ namespace Attribulator.CLI.Commands
         private ILogger<ResolveHashesCommand> _logger;
 
         [Value(0, MetaName = "hashes", Required = true,
-            HelpText = "One or more hash values, either in hexadecimal or decimal format.")]
+            HelpText = "One or more hash values, in either hexadecimal or decimal format.")]
         public IEnumerable<string> HashValues { get; [UsedImplicitly] set; }
 
         [Option("dictionary", Required = false, HelpText = "The path to an additional hash dictionary to load.")]
@@ -43,8 +43,8 @@ namespace Attribulator.CLI.Commands
 
                 if (hashValue.StartsWith("0x"))
                 {
-                    if (!ulong.TryParse(hashValue.Substring(2), NumberStyles.AllowHexSpecifier,
-                        CultureInfo.InvariantCulture, out parsedHash))
+                    if (!ulong.TryParse(hashValue.AsSpan(2), NumberStyles.AllowHexSpecifier,
+                            CultureInfo.InvariantCulture, out parsedHash))
                     {
                         _logger.LogError("Could not parse hash value as hexadecimal: {HashValue}", hashValue);
                         return Task.FromResult(1);
@@ -59,12 +59,37 @@ namespace Attribulator.CLI.Commands
                     }
                 }
 
+                string resolved32 = null, resolved64 = HashManager.ResolveVlt(parsedHash);
+
                 if (parsedHash <= uint.MaxValue)
-                    _logger.LogInformation("Hash32 {HashValue:X8} -> {ResolvedValue}", parsedHash,
-                        HashManager.ResolveVlt((uint) parsedHash));
+                {
+                    resolved32 = HashManager.ResolveVlt((uint)parsedHash);
+                }
+
+                if (resolved32 == null && resolved64 == null)
+                {
+                    // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+                    if (parsedHash <= uint.MaxValue)
+                    {
+                        _logger.LogWarning("No result for 0x{HashValue:X8}", parsedHash);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("No result for 0x{HashValue:X16}", parsedHash);
+                    }
+                }
                 else
-                    _logger.LogInformation("Hash64 {HashValue:X16} -> {ResolvedValue}", parsedHash,
-                        HashManager.ResolveVlt(parsedHash));
+                {
+                    if (resolved32 != null)
+                    {
+                        _logger.LogInformation("Hash32 0x{HashValue:X8} -> {ResolvedValue}", parsedHash, resolved32);
+                    }
+
+                    if (resolved64 != null)
+                    {
+                        _logger.LogInformation("Hash64 0x{HashValue:X16} -> {ResolvedValue}", parsedHash, resolved64);
+                    }
+                }
             }
 
             return Task.FromResult(0);
