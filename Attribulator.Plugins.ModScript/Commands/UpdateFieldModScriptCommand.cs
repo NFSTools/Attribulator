@@ -105,7 +105,7 @@ namespace Attribulator.Plugins.ModScript.Commands
                             stringValue.SetString(Value);
                             break;
                         case BaseRefSpec<TKey> refSpec:
-                            refSpec.SetCollectionKey(KeyUtils.StringToKey<TKey>(Value, true));
+                            refSpec.SetCollectionKey(databaseHelper.StringToKey(Value, true));
                             break;
                         default:
                             throw new CommandExecutionException(

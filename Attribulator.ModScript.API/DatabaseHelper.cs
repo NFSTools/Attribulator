@@ -29,11 +29,16 @@ namespace Attribulator.ModScript.API
         public Database<TKey> Database { get; }
         public List<Vault<TKey>> Vaults => Database.Vaults;
 
+        public TKey StringToKey(string text, bool register = false)
+        {
+            return KeyUtils.StringToKey<TKey>(text, register);
+        }
+
         public VltCollection<TKey> FindCollectionByName(string className, string collectionName)
         {
             return Collections.GetValueOrDefault(new VltUtils.CollectionIdentifier<TKey>(
-                KeyUtils.StringToKey<TKey>(className),
-                KeyUtils.StringToKey<TKey>(collectionName)));
+                StringToKey(className),
+                StringToKey(collectionName)));
         }
 
         public IEnumerable<VltCollection<TKey>> GetCollectionsInVault(Vault<TKey> vault)
@@ -49,8 +54,8 @@ namespace Attribulator.ModScript.API
                     $"A collection in the class '{className}' with the name '{collectionName}' already exists.");
 
             var collection = new VltCollection<TKey>(addToVault,
-                Database.FindClass(KeyUtils.StringToKey<TKey>(className)),
-                KeyUtils.StringToKey<TKey>(collectionName, true));
+                Database.FindClass(StringToKey(className)),
+                StringToKey(collectionName, true));
             return AddCollection(collection, parentCollection);
         }
 
@@ -69,7 +74,7 @@ namespace Attribulator.ModScript.API
         {
             var collectionIdentifier = VltUtils.CreateCollectionIdentifier(collection);
             Collections.Remove(collectionIdentifier);
-            collection.SetKey(KeyUtils.StringToKey<TKey>(newName));
+            collection.SetKey(StringToKey(newName));
             if (collection.Class.HasField("CollectionName")) collection.SetRawValue("CollectionName", newName);
             Collections.Add(collectionIdentifier, collection);
             MarkVaultAsModified(collection.Vault);
@@ -134,7 +139,7 @@ namespace Attribulator.ModScript.API
         {
             if (vltClass == null) throw new CommandExecutionException("GetField() was given a null VltClass!");
 
-            var fieldKey = KeyUtils.StringToKey<TKey>(fieldName);
+            var fieldKey = StringToKey(fieldName);
             var fieldIdentifier = VltUtils.CreateFieldIdentifier(vltClass, fieldKey);
             if (_fieldCache.TryGetValue(fieldIdentifier, out var field)) return field;
 

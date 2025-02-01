@@ -56,7 +56,7 @@ namespace Attribulator.Plugins.ModScript.Commands
             }
 
             var newCollection = new VltCollection<TKey>(collection.Vault, collection.Class,
-                KeyUtils.StringToKey<TKey>(DestinationCollectionName, true));
+                databaseHelper.StringToKey(DestinationCollectionName, true));
             databaseHelper.CopyCollection(databaseHelper.Database, collection, newCollection);
 
             if (newCollection.Class.HasField("CollectionName"))
