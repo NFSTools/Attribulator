@@ -20,6 +20,9 @@ namespace Attribulator.CLI.Commands
             HelpText = "One or more hash values, either in hexadecimal or decimal format.")]
         public IEnumerable<string> HashValues { get; [UsedImplicitly] set; }
 
+        [Option("dictionary", Required = false, HelpText = "The path to an additional hash dictionary to load.")]
+        public string DictionaryPath { get; [UsedImplicitly] set; }
+
         public override void SetServiceProvider(IServiceProvider serviceProvider)
         {
             base.SetServiceProvider(serviceProvider);
@@ -29,6 +32,11 @@ namespace Attribulator.CLI.Commands
 
         public override Task<int> Execute()
         {
+            if (DictionaryPath != null)
+            {
+                HashManager.LoadDictionary(DictionaryPath);
+            }
+
             foreach (var hashValue in HashValues)
             {
                 ulong parsedHash;
