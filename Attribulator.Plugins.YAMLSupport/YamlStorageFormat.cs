@@ -243,6 +243,16 @@ namespace Attribulator.Plugins.YAMLSupport
             };
         }
 
+        private static string GetCollectionName<TKey>(VltCollection<TKey> collection) where TKey : struct, IKey<TKey>
+        {
+            if (!collection.HasEntry("CollectionName")
+                || collection.GetRawValue<object>("CollectionName") is not string collectionName)
+                return KeyUtils.KeyToString(collection.Key);
+            return TKey.FromString(collectionName) == collection.Key
+                ? collectionName
+                : KeyUtils.KeyToString(collection.Key);
+        }
+
         private static void ConvertVltCollectionsToSerializedCollections<TKey>(string directory,
             IEnumerable<VltCollection<TKey>> vltCollections,
             ICollection<CustomSerializedCollection<TKey>> serializedCollections) where TKey : struct, IKey<TKey>
@@ -251,8 +261,8 @@ namespace Attribulator.Plugins.YAMLSupport
             {
                 var serializedCollection = new CustomSerializedCollection<TKey>
                 {
-                    Name = KeyUtils.KeyToString(vltCollection.Key),
-                    ParentName = vltCollection.Parent is { Key: var pk } ? KeyUtils.KeyToString(pk) : null,
+                    Name = GetCollectionName(vltCollection),
+                    ParentName = vltCollection.Parent is { } parent ? GetCollectionName(parent) : null,
                     Data = new CustomSerializedCollectionData<TKey>()
                 };
 
