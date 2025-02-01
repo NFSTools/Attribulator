@@ -28,31 +28,16 @@ namespace Attribulator.Plugins.ModScript.Commands
         {
             var collection = GetCollection(databaseHelper, ClassName, CollectionName);
 
-            bool removedAnything = false;
+            var fieldKey = databaseHelper.StringToKey(FieldName);
 
-            if (collection.HasEntry(FieldName))
-            {
-                collection.RemoveValue(FieldName);
-                databaseHelper.MarkVaultAsModified(collection.Vault);
-                removedAnything = true;
-            }
-            else
-            {
-                var hashed = $"0x{Vlt32Hasher.Hash(FieldName):X8}";
-
-                if (collection.HasEntry(hashed))
-                {
-                    collection.RemoveValue(hashed);
-                    databaseHelper.MarkVaultAsModified(collection.Vault);
-                    removedAnything = true;
-                }
-            }
-
-            if (!removedAnything)
+            if (!collection.HasEntry(fieldKey))
             {
                 throw new CommandExecutionException(
                     $"Field {FieldName} not found in collection {ClassName}/{CollectionName}");
             }
+
+            collection.RemoveValue(fieldKey);
+            databaseHelper.MarkVaultAsModified(collection.Vault);
         }
     }
 }
