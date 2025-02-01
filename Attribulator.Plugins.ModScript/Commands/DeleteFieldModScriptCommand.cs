@@ -18,9 +18,9 @@ namespace Attribulator.Plugins.ModScript.Commands
 
             return new DeleteFieldModScriptCommand
             {
-                ClassName = CleanHashString(parts[1]),
-                CollectionName = CleanHashString(parts[2]),
-                FieldName = CleanHashString(parts[3])
+                ClassName = (parts[1]),
+                CollectionName = (parts[2]),
+                FieldName = (parts[3])
             };
         }
 

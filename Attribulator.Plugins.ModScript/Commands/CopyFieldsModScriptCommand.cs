@@ -29,9 +29,9 @@ namespace Attribulator.Plugins.ModScript.Commands
         {
             if (parts.Count != 5) throw new CommandParseException($"Expected 5 tokens, got {parts.Count}");
 
-            var className = CleanHashString(parts[1]);
-            var sourceCollectionName = CleanHashString(parts[2]);
-            var destinationCollectionName = CleanHashString(parts[3]);
+            var className = (parts[1]);
+            var sourceCollectionName = (parts[2]);
+            var destinationCollectionName = (parts[3]);
             var copyOptionEntries = parts[4].Split('|', StringSplitOptions.RemoveEmptyEntries).ToList();
 
             CopyOptions options = 0;

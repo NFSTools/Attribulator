@@ -15,8 +15,8 @@ namespace Attribulator.Plugins.ModScript.Commands
 
             return new DeleteNodeModScriptCommand
             {
-                ClassName = CleanHashString(parts[1]),
-                CollectionName = CleanHashString(parts[2])
+                ClassName = (parts[1]),
+                CollectionName = (parts[2])
             };
         }
 

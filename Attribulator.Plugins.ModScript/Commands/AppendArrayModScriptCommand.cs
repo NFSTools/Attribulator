@@ -20,8 +20,8 @@ namespace Attribulator.Plugins.ModScript.Commands
             if (parts.Count < 4) throw new CommandParseException("Expected at least 4 tokens");
 
             var className = parts[1];
-            var collectionName = CleanHashString(parts[2]);
-            var fieldName = CleanHashString(parts[3]);
+            var collectionName = (parts[2]);
+            var fieldName = (parts[3]);
             string value = null;
 
             if (parts.Count > 4)
@@ -67,18 +67,20 @@ namespace Attribulator.Plugins.ModScript.Commands
                 {
                     itemToEdit = ValueConversionUtils.ConvertPrimitiveToNewPrimitive(itemToEdit.GetType(), Value);
                 }
-                else if (itemToEdit is IStringValue stringValue)
-                {
-                    stringValue.SetString(Value);
-                }
-                else if (itemToEdit is BaseRefSpec<TKey> refSpec)
-                {
-                    refSpec.SetCollectionKey(KeyUtils.StringToKey<TKey>(Value, true));
-                }
                 else
                 {
-                    throw new CommandExecutionException(
-                        $"Object stored in {collection.Class.Key}[{field.Key}] is not a simple type and cannot be used in a value-append command");
+                    switch (itemToEdit)
+                    {
+                        case IStringValue stringValue:
+                            stringValue.SetString(Value);
+                            break;
+                        case BaseRefSpec<TKey> refSpec:
+                            refSpec.SetCollectionKey(KeyUtils.StringToKey<TKey>(Value, true));
+                            break;
+                        default:
+                            throw new CommandExecutionException(
+                                $"Object stored in {collection.Class.Key}[{field.Key}] is not a simple type and cannot be used in a value-append command");
+                    }
                 }
             }
 

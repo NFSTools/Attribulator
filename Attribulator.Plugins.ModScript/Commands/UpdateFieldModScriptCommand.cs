@@ -27,7 +27,7 @@ namespace Attribulator.Plugins.ModScript.Commands
             if (parts.Count < 5) throw new CommandParseException("Expected at least 5 tokens");
 
             var className = parts[1];
-            var collectionName = CleanHashString(parts[2]);
+            var collectionName = parts[2];
             var fieldName = parts[3];
             var propertyPath = new List<string>();
 
@@ -50,8 +50,6 @@ namespace Attribulator.Plugins.ModScript.Commands
                 default:
                     throw new CommandParseException("Badly malformed update_field command...");
             }
-
-            fieldName = CleanHashString(fieldName);
 
             string value;
             if (parts.Count > 5)
@@ -99,35 +97,21 @@ namespace Attribulator.Plugins.ModScript.Commands
                 {
                     itemToEdit = ValueConversionUtils.ConvertPrimitiveToNewPrimitive(itemToEdit.GetType(), Value);
                 }
-                else if (itemToEdit is IStringValue stringValue)
-                {
-                    stringValue.SetString(Value);
-                }
-                else if (itemToEdit is BaseRefSpec<TKey> refSpec)
-                {
-                    refSpec.SetCollectionKey(KeyUtils.StringToKey<TKey>(Value, true));
-                }
                 else
                 {
-                    throw new CommandExecutionException(
-                        $"Object stored in {ClassName}[{FieldName}] is not a simple type and cannot be used in a value-update command");
+                    switch (itemToEdit)
+                    {
+                        case IStringValue stringValue:
+                            stringValue.SetString(Value);
+                            break;
+                        case BaseRefSpec<TKey> refSpec:
+                            refSpec.SetCollectionKey(KeyUtils.StringToKey<TKey>(Value, true));
+                            break;
+                        default:
+                            throw new CommandExecutionException(
+                                $"Object stored in {ClassName}[{FieldName}] is not a simple type and cannot be used in a value-update command");
+                    }
                 }
-                // switch (itemToEdit)
-                // {
-                //     case PrimitiveTypeBase primitiveTypeBase:
-                //         ValueConversionUtils.DoPrimitiveConversion(primitiveTypeBase, Value);
-                //         break;
-                //     case IStringValue stringValue:
-                //         stringValue.SetString(Value);
-                //         break;
-                //     case BaseRefSpec refSpec:
-                //         // NOTE: This is a compatibility feature for certain types, such as GCollectionKey, which are technically a RefSpec.
-                //         refSpec.CollectionKey = Value;
-                //         break;
-                //     default:
-                //         throw new CommandExecutionException(
-                //             $"cannot handle update for {collection.Class.Name}[{field.Name}]");
-                // }
             }
             else
             {

@@ -16,9 +16,9 @@ namespace Attribulator.Plugins.ModScript.Commands
             if (parts.Count != 4)
                 throw new CommandParseException($"Expected 4 tokens, got {parts.Count} ({string.Join(' ', parts)})");
 
-            var className = CleanHashString(parts[1]);
-            var collectionName = CleanHashString(parts[2]);
-            var vaultName = CleanHashString(parts[3]);
+            var className = (parts[1]);
+            var collectionName = (parts[2]);
+            var vaultName = (parts[3]);
 
             return new ChangeVaultModScriptCommand
             {

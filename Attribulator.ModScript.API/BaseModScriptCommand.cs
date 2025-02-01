@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Globalization;
 using VaultLib.Core.Data;
 using VaultLib.Core.DataInterfaces;
@@ -45,20 +44,6 @@ namespace Attribulator.ModScript.API
             if (throwOnMissing)
                 throw new CommandExecutionException($"Cannot find collection: {className}/{collectionName}");
             return null;
-        }
-
-        /// <summary>
-        ///     Converts the given hash-string to its source string if possible.
-        /// </summary>
-        /// <param name="hashString">The string to convert.</param>
-        /// <returns>The original string.</returns>
-        protected static string CleanHashString(string hashString)
-        {
-            if (hashString.StartsWith("0x", StringComparison.Ordinal))
-                hashString =
-                    HashManager.ResolveVlt(uint.Parse(hashString.Substring(2), NumberStyles.AllowHexSpecifier));
-
-            return hashString;
         }
 
         protected static void RemoveCollectionFromCache<TKey>(VltCollection<TKey> vltCollection)

@@ -23,7 +23,7 @@ namespace Attribulator.Plugins.ModScript.Commands
             if (parts.Count < 6) throw new CommandParseException("Expected at least 6 tokens");
 
             var className = parts[1];
-            var collectionName = CleanHashString(parts[2]);
+            var collectionName = (parts[2]);
             var fieldName = parts[3];
 
             var split = fieldName.Split(new[] { '[', ']' }, StringSplitOptions.RemoveEmptyEntries);
@@ -46,7 +46,6 @@ namespace Attribulator.Plugins.ModScript.Commands
                     throw new CommandParseException("Badly malformed update_field command...");
             }
 
-            fieldName = CleanHashString(fieldName);
             var propertyPath = parts.Skip(4).Take(parts.Count - 5).ToList();
             var size = ushort.Parse(parts[^1]);
 

@@ -20,9 +20,9 @@ namespace Attribulator.Plugins.ModScript.Commands
             if (parts.Count != 3 && parts.Count != 4)
                 throw new CommandParseException($"3 or 4 tokens expected, got {parts.Count}");
 
-            var className = CleanHashString(parts[1]);
-            var parentCollectionName = parts.Count == 4 ? CleanHashString(parts[2]) : "";
-            var collectionName = CleanHashString(parts[^1]);
+            var className = (parts[1]);
+            var parentCollectionName = parts.Count == 4 ? (parts[2]) : "";
+            var collectionName = (parts[^1]);
 
             return new AddNodeModScriptCommand
             {

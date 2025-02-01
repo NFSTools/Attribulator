@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using Attribulator.API.Utils;
 using Attribulator.ModScript.API;
-using VaultLib.Core;
 using VaultLib.Core.Types;
 
 namespace Attribulator.Plugins.ModScript.Commands
@@ -19,9 +18,9 @@ namespace Attribulator.Plugins.ModScript.Commands
             if (parts.Count != 4 && parts.Count != 5)
                 throw new CommandParseException($"Expected 4 or 5 tokens, got {parts.Count}");
 
-            var className = CleanHashString(parts[1]);
-            var collectionName = CleanHashString(parts[2]);
-            var fieldName = CleanHashString(parts[3]);
+            var className = parts[1];
+            var collectionName = parts[2];
+            var fieldName = parts[3];
 
             ushort arrayCapacity = 0;
 

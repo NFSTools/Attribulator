@@ -18,8 +18,8 @@ namespace Attribulator.Plugins.ModScript.Commands
             if (parts.Count < 3 || parts.Count > 4)
                 throw new CommandParseException("Expected command to be in format: move_node class node [parent]");
 
-            var className = CleanHashString(parts[1]);
-            var collectionName = CleanHashString(parts[2]);
+            var className = (parts[1]);
+            var collectionName = (parts[2]);
             var parentName = parts.Count == 4 ? parts[3] : null;
 
             if (parentName == collectionName)

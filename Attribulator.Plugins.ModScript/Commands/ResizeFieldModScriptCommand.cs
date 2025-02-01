@@ -18,9 +18,9 @@ namespace Attribulator.Plugins.ModScript.Commands
         {
             if (parts.Count != 5) throw new CommandParseException($"Expected 5 tokens but got {parts.Count}");
 
-            var className = CleanHashString(parts[1]);
-            var collectionName = CleanHashString(parts[2]);
-            var fieldName = CleanHashString(parts[3]);
+            var className = (parts[1]);
+            var collectionName = (parts[2]);
+            var fieldName = (parts[3]);
 
             if (!ushort.TryParse(parts[4], out var newCapacity))
                 throw new CommandParseException($"Failed to parse '{parts[4]}' as a number");
