@@ -4,11 +4,11 @@ using System.IO;
 using System.Linq;
 using Attribulator.API;
 using Attribulator.API.Data;
-using Attribulator.Plugins.SpeedProfiles.World;
 using VaultLib.Core;
 using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.DB;
 using VaultLib.Core.Pack;
+using VaultLib.Support.World;
 
 namespace Attribulator.Plugins.SpeedProfiles
 {
@@ -16,7 +16,7 @@ namespace Attribulator.Plugins.SpeedProfiles
     {
         public Database<Key32> CreateDatabase()
         {
-            var module = new VaultLib.Support.World.ModuleDef();
+            var module = new ModuleDef();
             var database = new Database<Key32>(new DatabaseOptions(GetGameId(), GetDatabaseType()),
                 module.CreateExportFactory());
             module.RegisterTypes(database.TypeRegistry);
@@ -36,7 +36,7 @@ namespace Attribulator.Plugins.SpeedProfiles
 
                 if (file.Contains("gc.vaults"))
                 {
-                    vaultPack = new GameplayVault(null);
+                    vaultPack = new GameplayVaultPack(null);
                     group = "gameplay";
                 }
 
@@ -57,7 +57,7 @@ namespace Attribulator.Plugins.SpeedProfiles
                 IVaultPack vaultPack = new StandardVaultPack();
 
                 if (file.Group == "gameplay")
-                    vaultPack = new GameplayVault(file.Name);
+                    vaultPack = new GameplayVaultPack(file.Name);
 
                 //var standardVaultPack = new StandardVaultPack();
                 Directory.CreateDirectory(Path.Combine(directory, file.Group));
