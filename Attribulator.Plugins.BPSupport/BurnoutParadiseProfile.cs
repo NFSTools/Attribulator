@@ -7,9 +7,7 @@ using Attribulator.Plugins.BPSupport.Types;
 using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.DB;
 using VaultLib.Core.Exports;
-using VaultLib.Core.Exports.Implementations;
 using VaultLib.Core.Pack;
-using VaultLib.Core.Types.EA.Reflection;
 using VaultLib.ModernBase.Exports;
 using VaultLib.ModernBase.Structures;
 
@@ -27,6 +25,18 @@ namespace Attribulator.Plugins.BPSupport
             database.TypeRegistry.RegisterStruct<RwVector3>("Attrib::Types::RwVector3");
             database.TypeRegistry.Map<int>("AttribSys::Enums::eSongHint::eSongHint");
             database.TypeRegistry.Map<int>("AttribSys::Enums::eCollisionMixerSliders::eCollisionMixerSliders");
+            database.TypeRegistry.Map<int>("AttribSys::Enums::PresentationAction::PresentationAction");
+            database.TypeRegistry.Map<int>("AttribSys::Enums::eShiftTypes::eShiftTypes");
+            database.TypeRegistry.Map<int>("AttribSys::Enums::eSampleTags::eSampleTags");
+            database.TypeRegistry.Map<int>("AttribSys::Enums::eReverbTypes::eReverbTypes");
+            database.TypeRegistry.Map<int>("AttribSys::Enums::ePassbyTypes::ePassbyTypes");
+            database.TypeRegistry.Map<int>("AttribSys::Enums::ProceduralShotType::ProceduralShotType");
+            database.TypeRegistry.Map<int>("AttribSys::Enums::ProceduralShakeMethod::ProceduralShakeMethod");
+            database.TypeRegistry.Map<int>("AttribSys::Enums::ParticleBlend::ParticleBlend");
+            database.TypeRegistry.Map<int>("AttribSys::Enums::NativeParticleType::NativeParticleType");
+            database.TypeRegistry.Map<int>("AttribSys::Enums::CarState::CarState");
+            database.TypeRegistry.Map<int>("AttribSys::Enums::County::County");
+            database.TypeRegistry.Map<int>("AttribSys::Enums::OffenceType::OffenceType");
 
             return database;
         }
