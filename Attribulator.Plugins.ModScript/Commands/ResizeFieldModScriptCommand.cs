@@ -46,7 +46,7 @@ namespace Attribulator.Plugins.ModScript.Commands
                 throw new CommandExecutionException(
                     $"Cannot resize field {ClassName}[{FieldName}] beyond maximum count (requested {NewCapacity} but limit is {field.MaxCount})");
 
-            var array = collection.GetRawValue<VltArrayType<TKey>>(FieldName);
+            var array = collection.GetRawValue<VltArrayType<TKey>>(field.Key);
 
             if (NewCapacity < array.Items.Count)
             {

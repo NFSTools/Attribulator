@@ -46,11 +46,12 @@ namespace Attribulator.Plugins.ModScript.Commands
             if (!field.IsArray)
                 throw new CommandExecutionException($"Field {ClassName}[{FieldName}] is not an array!");
 
-            if (!collection.HasEntry(FieldName))
+            var fieldKey = databaseHelper.StringToKey(FieldName);
+            if (!collection.HasEntry(fieldKey))
                 throw new CommandExecutionException(
                     $"Collection {ClassName}[{CollectionName}] does not have an entry for {FieldName}.");
 
-            var array = collection.GetRawValue<VltArrayType<TKey>>(FieldName);
+            var array = collection.GetRawValue<VltArrayType<TKey>>(fieldKey);
 
             if (array.Items.Count == array.Capacity && field.IsInLayout)
                 throw new CommandExecutionException("Cannot append to a full array when it is a layout field");
