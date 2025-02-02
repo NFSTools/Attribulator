@@ -2,6 +2,7 @@
 using System.Linq;
 using Attribulator.API.Utils;
 using Attribulator.ModScript.API;
+using Attribulator.ModScript.API.Utils;
 using VaultLib.Core;
 using VaultLib.Core.Data;
 using VaultLib.Core.Types;
@@ -59,9 +60,20 @@ namespace Attribulator.Plugins.ModScript.Commands
             var newNode = databaseHelper.AddCollection(addToVault, ClassName, CollectionName, parentCollection);
             var vltClass = newNode.Class;
 
-            if (parentCollection != null)
-                databaseHelper.CopyCollection(databaseHelper.Database, parentCollection, newNode);
+            var defaultCollection = databaseHelper.FindCollectionByName(ClassName, "default");
+
+            if (defaultCollection != null)
+            {
+                foreach (var baseField in vltClass.BaseFields)
+                {
+                    newNode.SetRawValue(baseField.Key, ValueCloningUtils.CloneValue(databaseHelper.Database,
+                        defaultCollection.GetRawValue(baseField.Key),
+                        vltClass,
+                        baseField, newNode));
+                }
+            }
             else
+            {
                 foreach (var baseField in vltClass.BaseFields)
                 {
                     var vltBaseType = FieldUtils.CreateFieldValue(databaseHelper.Database.TypeRegistry, baseField);
@@ -77,6 +89,7 @@ namespace Attribulator.Plugins.ModScript.Commands
                     newNode.SetRawValue(baseField.Key,
                         vltBaseType);
                 }
+            }
 
             if (vltClass.HasField("CollectionName")) newNode.SetRawValue("CollectionName", CollectionName);
         }
