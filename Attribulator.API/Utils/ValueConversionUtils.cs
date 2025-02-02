@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using Attribulator.API.Exceptions;
+using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.Hashing;
 using VaultLib.Core.Types;
 using VaultLib.Core.Types.EA.Reflection;
@@ -40,6 +41,16 @@ namespace Attribulator.API.Utils
             if (primitiveType == typeof(bool))
             {
                 return Convert.ToBoolean(primitiveString);
+            }
+
+            if (primitiveType == typeof(Key32))
+            {
+                return KeyUtils.StringToKey<Key32>(primitiveString);
+            }
+
+            if (primitiveType == typeof(Key64))
+            {
+                return KeyUtils.StringToKey<Key64>(primitiveString);
             }
 
             if (primitiveType.IsPrimitive)
