@@ -84,17 +84,18 @@ namespace Attribulator.ModScript.API
         {
             var removed = new List<VltCollection<TKey>> { collection };
 
-            Database.RowManager.RemoveCollection(collection);
-
             foreach (var child in Database.RowManager.GetCollections(collection.Class.Key)
                          .Where(c => ReferenceEquals(c.Parent, collection))
                          .ToList())
             {
                 removed.AddRange(RemoveCollection(child));
             }
+            
+            Collections.Remove(VltUtils.CreateCollectionIdentifier(collection));
+            Database.RowManager.RemoveCollection(collection);
 
             MarkVaultAsModified(collection.Vault);
-
+            
             return removed;
         }
 
