@@ -152,9 +152,9 @@ namespace Attribulator.API.Serialization
                 {
                     var vaultName = vault.Name;
                     var vaultDirectory = Path.Combine(baseDirectory, vaultName).Trim();
-                    var newVault = new Vault<TKey>(vaultName)
+                    var newVault = new Vault<TKey>(destinationDatabase, vaultName)
                     {
-                        Database = destinationDatabase, IsPrimaryVault = vaultName == loadedDatabase.PrimaryVaultName,
+                        IsPrimaryVault = vaultName == loadedDatabase.PrimaryVaultName,
                         Version = vault.Version
                     };
                     if (Directory.Exists(vaultDirectory))
