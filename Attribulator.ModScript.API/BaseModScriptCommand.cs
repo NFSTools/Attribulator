@@ -30,7 +30,7 @@ namespace Attribulator.ModScript.API
         /// <param name="throwOnMissing">Whether to throw an exception if the collection is not found.</param>
         /// <returns>An instance of the <see cref="VltCollection" /> class.</returns>
         /// <exception cref="CommandExecutionException">if the collection cannot be found</exception>
-        protected static VltCollection<TKey> GetCollection<TKey>(DatabaseHelper<TKey> database, string className,
+        protected static VltCollection<TKey>? GetCollection<TKey>(DatabaseHelper<TKey> database, string className,
             string collectionName,
             bool throwOnMissing = true) where TKey : struct, IKey<TKey>
         {

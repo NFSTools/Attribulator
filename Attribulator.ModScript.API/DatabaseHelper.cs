@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using Attribulator.API.Utils;
@@ -34,7 +35,7 @@ namespace Attribulator.ModScript.API
             return KeyUtils.StringToKey<TKey>(text, register);
         }
 
-        public VltCollection<TKey> FindCollectionByName(string className, string collectionName)
+        public VltCollection<TKey>? FindCollectionByName(string className, string collectionName)
         {
             var cid = new VltUtils.CollectionIdentifier<TKey>(
                 StringToKey(className),
@@ -62,7 +63,7 @@ namespace Attribulator.ModScript.API
         }
 
         public VltCollection<TKey> AddCollection(Vault<TKey> addToVault, string className, string collectionName,
-            VltCollection<TKey> parentCollection)
+            VltCollection<TKey>? parentCollection)
         {
             if (FindCollectionByName(className, collectionName) != null)
                 throw new DuplicateNameException(
@@ -75,7 +76,7 @@ namespace Attribulator.ModScript.API
         }
 
         public VltCollection<TKey> AddCollection(VltCollection<TKey> collection,
-            VltCollection<TKey> parentCollection = null)
+            VltCollection<TKey>? parentCollection = null)
         {
             Database.RowManager.AddCollection(collection);
             parentCollection?.AddChild(collection);
@@ -104,12 +105,12 @@ namespace Attribulator.ModScript.API
             {
                 removed.AddRange(RemoveCollection(child));
             }
-            
+
             Collections.Remove(VltUtils.CreateCollectionIdentifier(collection));
             Database.RowManager.RemoveCollection(collection);
 
             MarkVaultAsModified(collection.Vault);
-            
+
             return removed;
         }
 
