@@ -36,9 +36,24 @@ namespace Attribulator.ModScript.API
 
         public VltCollection<TKey> FindCollectionByName(string className, string collectionName)
         {
-            return Collections.GetValueOrDefault(new VltUtils.CollectionIdentifier<TKey>(
+            var cid = new VltUtils.CollectionIdentifier<TKey>(
                 StringToKey(className),
-                StringToKey(collectionName)));
+                StringToKey(collectionName));
+            var fromLocalDict = Collections.GetValueOrDefault(cid);
+#if DEBUG
+            var fromDb = Database.RowManager.FindCollection(cid.ClassKey, cid.CollectionKey);
+            if ((fromLocalDict == null) !=
+                (fromDb == null))
+            {
+                if (fromLocalDict == null)
+                    throw new Exception(
+                        $"CORRUPTED STATE - collection ({className}, {collectionName}) found in DB but not in ModScript cache");
+                if (fromDb == null)
+                    throw new Exception(
+                        $"CORRUPTED STATE - collection ({className}, {collectionName}) found in ModScript cache but not in DB");
+            }
+#endif
+            return fromLocalDict;
         }
 
         public IEnumerable<VltCollection<TKey>> GetCollectionsInVault(Vault<TKey> vault)
