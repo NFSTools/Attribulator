@@ -186,6 +186,20 @@ namespace Attribulator.Plugins.ModScript.Commands
 
                     itemToEdit = matrix;
                 }
+                else if (itemToEdit is BaseRefSpec<TKey> baseRefSpec && PropertyPath.Count == 1
+                                                                     && (PropertyPath[0] == "Class" ||
+                                                                         PropertyPath[0] == "Collection"))
+                {
+                    switch (PropertyPath[0])
+                    {
+                        case "Class":
+                            baseRefSpec.SetClassKey(databaseHelper.StringToKey(Value, true));
+                            break;
+                        case "Collection":
+                            baseRefSpec.SetCollectionKey(databaseHelper.StringToKey(Value, true));
+                            break;
+                    }
+                }
                 else
                 {
                     var parsedProperties = PropertyUtils.ParsePath(PropertyPath).ToList();
