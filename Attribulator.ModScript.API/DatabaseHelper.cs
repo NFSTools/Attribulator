@@ -72,11 +72,10 @@ namespace Attribulator.ModScript.API
 
         public void RenameCollection(VltCollection<TKey> collection, string newName)
         {
-            var collectionIdentifier = VltUtils.CreateCollectionIdentifier(collection);
-            Collections.Remove(collectionIdentifier);
+            Collections.Remove(VltUtils.CreateCollectionIdentifier(collection));
             collection.SetKey(StringToKey(newName));
             if (collection.Class.HasField("CollectionName")) collection.SetRawValue("CollectionName", newName);
-            Collections.Add(collectionIdentifier, collection);
+            Collections.Add(VltUtils.CreateCollectionIdentifier(collection), collection);
             MarkVaultAsModified(collection.Vault);
         }
 
