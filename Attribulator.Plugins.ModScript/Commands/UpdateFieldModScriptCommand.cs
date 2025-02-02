@@ -77,10 +77,12 @@ namespace Attribulator.Plugins.ModScript.Commands
         {
             var collection = GetCollection(databaseHelper, ClassName, CollectionName);
             var field = databaseHelper.GetField(collection.Class, FieldName);
-            var data = collection.GetRawValue(field.Key);
-            var itemToEdit = data;
+            var rawValue = collection.GetRawValue(field.Key);
+            // var itemToEdit = rawValue;
 
-            if (data is VltArrayType<TKey> array)
+            object itemToEdit;
+
+            if (rawValue is VltArrayType<TKey> array)
             {
                 if (ArrayIndex == -1)
                     ArrayIndex = array.Items.Count - 1;
@@ -89,6 +91,10 @@ namespace Attribulator.Plugins.ModScript.Commands
                 else
                     throw new CommandExecutionException(
                         $"update_field command is out of bounds. Checked: 0 <= {ArrayIndex} < {array.Items.Count}");
+            }
+            else
+            {
+                itemToEdit = rawValue;
             }
 
             if (PropertyPath.Count == 0)
@@ -193,7 +199,15 @@ namespace Attribulator.Plugins.ModScript.Commands
                 }
             }
 
-            collection.SetRawValue(field.Key, itemToEdit);
+            if (rawValue is VltArrayType<TKey> array2)
+            {
+                array2.Items[ArrayIndex] = itemToEdit;
+                collection.SetRawValue(field.Key, array2);
+            }
+            else
+            {
+                collection.SetRawValue(field.Key, itemToEdit);
+            }
 
             databaseHelper.MarkVaultAsModified(collection.Vault);
         }
