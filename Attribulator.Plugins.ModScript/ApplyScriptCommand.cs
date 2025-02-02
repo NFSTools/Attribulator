@@ -114,18 +114,20 @@ namespace Attribulator.Plugins.ModScript
             var files = (await storageFormat.DeserializeAsync(InputDirectory, database)).ToList();
             _logger.LogInformation("Loaded database");
 
+            var stopwatch = Stopwatch.StartNew();
             var modScriptDatabase = new DatabaseHelper<TKey>(database);
             var totalCommands = 0L;
-            var totalMilliseconds = 0.0d;
             var errorsDict = new Dictionary<string, List<(long, string, Exception)>>();
 
             foreach (var scriptFile in scriptFiles)
             {
                 _logger.LogInformation("Processing script: {FileName}", scriptFile);
-                if (!ExecuteScript(modScriptDatabase, scriptFile, errorsDict, ref totalCommands,
-                        ref totalMilliseconds)) return 1;
+                if (!ExecuteScript(modScriptDatabase, scriptFile, errorsDict, ref totalCommands)) return 1;
             }
 
+            stopwatch.Stop();
+
+            var totalMilliseconds = stopwatch.Elapsed.TotalMilliseconds;
             var totalCommandsPerSecond =
                 (ulong)(totalCommands / (totalMilliseconds / 1000.0));
 
@@ -138,10 +140,8 @@ namespace Attribulator.Plugins.ModScript
 
             if (DryRun)
             {
-                foreach (var scriptFile in scriptFiles)
+                foreach (var (scriptFile, errors) in errorsDict)
                 {
-                    var errors = errorsDict[scriptFile];
-
                     if (errors.Count == 0)
                     {
                         _logger.LogInformation("{FileName}: no errors", scriptFile);
@@ -205,7 +205,7 @@ namespace Attribulator.Plugins.ModScript
 
         private bool ExecuteScript<TKey>(DatabaseHelper<TKey> modScriptDatabase, string scriptFile,
             Dictionary<string, List<(long, string, Exception)>> errorsDict,
-            ref long totalCommands, ref double totalMilliseconds) where TKey : struct, IKey<TKey>
+            ref long totalCommands) where TKey : struct, IKey<TKey>
         {
             var fileStopwatch = Stopwatch.StartNew();
             var numCommands = 0L;
@@ -232,8 +232,7 @@ namespace Attribulator.Plugins.ModScript
                         }
 
                         _logger.LogInformation("Running script referenced by command: {ResolvedPath}", resolvedPath);
-                        if (!ExecuteScript(modScriptDatabase, resolvedPath, errorsDict, ref totalCommands,
-                                ref totalMilliseconds))
+                        if (!ExecuteScript(modScriptDatabase, resolvedPath, errorsDict, ref totalCommands))
                         {
                             throw new CommandExecutionException("External script failed");
                         }
@@ -265,7 +264,6 @@ namespace Attribulator.Plugins.ModScript
                 commandsPerSecond);
 
             totalCommands += numCommands;
-            totalMilliseconds += fileStopwatch.Elapsed.TotalMilliseconds;
             errorsDict.Add(scriptFile, errors);
             return true;
         }
