@@ -35,7 +35,7 @@ namespace Attribulator.Plugins.ModScript.Commands
 
         protected override void Execute<TKey>(DatabaseHelper<TKey> databaseHelper)
         {
-            VltCollection<TKey> parentCollection = null;
+            VltCollection<TKey>? parentCollection = null;
             if (!string.IsNullOrEmpty(ParentCollectionName))
                 if ((parentCollection = GetCollection(databaseHelper, ClassName, ParentCollectionName, false)) == null)
                     throw new CommandExecutionException(
@@ -45,7 +45,7 @@ namespace Attribulator.Plugins.ModScript.Commands
                 throw new CommandExecutionException(
                     $"add_node failed because collection already exists: {ClassName}/{CollectionName}");
 
-            Vault<TKey> addToVault;
+            Vault<TKey>? addToVault;
 
             if (parentCollection != null)
                 addToVault = parentCollection.Vault;
