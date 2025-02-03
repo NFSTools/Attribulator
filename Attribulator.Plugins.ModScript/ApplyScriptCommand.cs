@@ -51,6 +51,10 @@ namespace Attribulator.Plugins.ModScript
         [UsedImplicitly]
         public bool DisableBinGeneration { get; set; }
 
+        [Option("save-all", HelpText = "Save all vaults, even those that haven't changed")]
+        [UsedImplicitly]
+        public bool SaveAllVaults { get; set; }
+
         [Option("dry-run",
             HelpText =
                 "Perform a \"dry run\", which will attempt to execute every script command, record errors, and not save new files.")]
@@ -160,13 +164,13 @@ namespace Attribulator.Plugins.ModScript
             {
                 var modifiedVaultNames = modScriptDatabase.GetModifiedVaults().ToList();
 
-                if (modifiedVaultNames.Count > 0)
+                if (SaveAllVaults || modifiedVaultNames.Count > 0)
                 {
                     _logger.LogInformation("Saving database");
 
                     bool VaultFilter(Vault<TKey> vault)
                     {
-                        return modifiedVaultNames.Contains(vault.Name);
+                        return SaveAllVaults || modifiedVaultNames.Contains(vault.Name);
                     }
 
                     var modifiedFiles = files.Where(f => f.Vaults.Any(VaultFilter)).ToList();
