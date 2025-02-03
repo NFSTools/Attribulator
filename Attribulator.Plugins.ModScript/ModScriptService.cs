@@ -25,13 +25,6 @@ namespace Attribulator.Plugins.ModScript
                         : new[] { element }) // Keep the entire item
                     .SelectMany(element => element).ToList();
 
-                for (var index = 0; index < parts.Count; index++)
-                {
-                    var part = parts[index];
-                    if (part.StartsWith("0x", StringComparison.Ordinal))
-                        parts[index] = $"0x{part.Substring(2).ToUpper()}";
-                }
-
                 // Find command
                 if (_commandMappings.TryGetValue(parts[0], out var creator))
                 {
