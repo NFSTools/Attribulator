@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
+using VaultLib.Core.Types.Attrib;
 
 namespace Attribulator.ModScript.API.Utils
 {
@@ -100,6 +101,26 @@ namespace Attribulator.ModScript.API.Utils
 
                 var pi = examiningType
                     .GetProperty(parsedProperty.Name, BindingFlags.Public | BindingFlags.Instance);
+
+                if (pi == null)
+                {
+                    if (typeof(RefSpec32).IsAssignableFrom(examiningType)
+                        || typeof(RefSpec64).IsAssignableFrom(examiningType)
+                        || typeof(RefSpecPacked32).IsAssignableFrom(examiningType)
+                        || typeof(RefSpecPacked64).IsAssignableFrom(examiningType))
+                    {
+                        if (parsedProperty.Name == "Class")
+                        {
+                            pi = examiningType
+                                .GetProperty("ClassKey", BindingFlags.Public | BindingFlags.Instance);
+                        }
+                        else if (parsedProperty.Name == "Collection")
+                        {
+                            pi = examiningType
+                                .GetProperty("CollectionKey", BindingFlags.Public | BindingFlags.Instance);
+                        }
+                    }
+                }
 
                 if (pi == null)
                     throw new MissingFieldException(
