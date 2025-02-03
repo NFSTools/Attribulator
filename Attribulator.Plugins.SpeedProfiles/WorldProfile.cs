@@ -68,7 +68,8 @@ namespace Attribulator.Plugins.SpeedProfiles
                 {
                     Quirks = new VaultWriteQuirks
                     {
-                        StartChunkBeforeDepChunk = true
+                        StartChunkBeforeDepChunk = true,
+                        EnableBinEndChunk = true
                     }
                 }));
                 bw.Close();
