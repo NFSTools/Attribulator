@@ -26,13 +26,31 @@ namespace Attribulator.Plugins.YAMLSupport
     /// </summary>
     public class YamlStorageFormat : BaseStorageFormat
     {
+        private static SerializerBuilder CreateDefaultSerializerBuilder<TKey>() where TKey : struct, IKey<TKey>
+        {
+            return new SerializerBuilder()
+                .WithTypeConverter(new VltKeyTypeConverter<TKey>())
+                .WithAttributeOverride<Matrix4x4>(m => m.Translation, new YamlIgnoreAttribute())
+                .WithAttributeOverride<Matrix4x4>(m => m.IsIdentity, new YamlIgnoreAttribute())
+                .WithQuotingNecessaryStrings(true)
+                .EnsureRoundtrip()
+                .DisableAliases();
+        }
+
+        private static DeserializerBuilder CreateDefaultDeserializerBuilder<TKey>() where TKey : struct, IKey<TKey>
+        {
+            return new DeserializerBuilder()
+                .WithEnforceRequiredMembers()
+                .WithTypeConverter(new VltKeyTypeConverter<TKey>());
+        }
+
         public override SerializedDatabaseInfo LoadInfo<TKey>(string sourceDirectory,
             Database<TKey> destinationDatabase)
         {
             using var dbs = new StreamReader(Path.Combine(sourceDirectory, "info.yml"));
 
-            var deserializer = new DeserializerBuilder().Build();
-            var serializer = new SerializerBuilder().Build();
+            var deserializer = CreateDefaultDeserializerBuilder<TKey>().Build();
+            var serializer = CreateDefaultSerializerBuilder<TKey>().Build();
 
             // Insane strategy to get proper static values:
             // 1. Read the schema with StaticValue as an object. Complex types turn into dictionaries.
@@ -44,6 +62,7 @@ namespace Attribulator.Plugins.YAMLSupport
 
             foreach (var serializedDatabaseClass in serializedDatabaseInfo.Classes)
             {
+                var classKey = KeyUtils.StringToKey<TKey>(serializedDatabaseClass.Name);
                 foreach (var serializedDatabaseClassField in serializedDatabaseClass.Fields)
                 {
                     if ((serializedDatabaseClassField.Flags & DefinitionFlags.IsStatic) == 0)
@@ -51,8 +70,10 @@ namespace Attribulator.Plugins.YAMLSupport
                         continue;
                     }
 
+                    var fieldKey = KeyUtils.StringToKey<TKey>(serializedDatabaseClassField.Name);
+                    var fieldTypeKey = KeyUtils.StringToKey<TKey>(serializedDatabaseClassField.TypeName);
                     var fieldUnderlyingType =
-                        destinationDatabase.TypeRegistry.ResolveType(serializedDatabaseClassField.TypeName);
+                        destinationDatabase.TypeRegistry.ResolveFieldType(classKey, fieldKey, fieldTypeKey);
 
                     var effectiveFieldUnderlyingType = CloakingHelper.IsTypeAStringInDisguise<TKey>(fieldUnderlyingType)
                         ? typeof(string)
@@ -133,22 +154,16 @@ namespace Attribulator.Plugins.YAMLSupport
                 serializedDatabaseInfo.Classes.Add(serializedDatabaseClass);
             }
 
-            var infoSerializer = new SerializerBuilder().WithQuotingNecessaryStrings(true).Build();
+            var infoSerializer = CreateDefaultSerializerBuilder<TKey>().Build();
 
             using var sw = new StreamWriter(Path.Combine(destinationDirectory, "info.yml"));
             infoSerializer.Serialize(sw, serializedDatabaseInfo);
 
             var classSpecificSerializers = sourceDatabase.Classes.ToDictionary(c => c.Key, c =>
             {
-                return new SerializerBuilder()
-                    .WithQuotingNecessaryStrings(true)
-                    .DisableAliases()
+                return CreateDefaultSerializerBuilder<TKey>()
                     .WithTypeInspector(
                         inspector => new VltClassSchemaTypeInspector<TKey>(inspector, sourceDatabase, c))
-                    .WithTypeConverter(new VltKeyTypeConverter<TKey>())
-                    // add YamlIgnore to some annoying matrix properties
-                    .WithAttributeOverride<Matrix4x4>(m => m.Translation, new YamlIgnoreAttribute())
-                    .WithAttributeOverride<Matrix4x4>(m => m.IsIdentity, new YamlIgnoreAttribute())
                     .Build();
             });
 
@@ -221,9 +236,8 @@ namespace Attribulator.Plugins.YAMLSupport
         protected override async Task<IEnumerable<SerializedCollection<TKey>>> LoadDataFileAsync<TKey>(string path,
             Database<TKey> database, VltClass<TKey> vltClass)
         {
-            var deserializer = new DeserializerBuilder()
+            var deserializer = CreateDefaultDeserializerBuilder<TKey>()
                 .WithTypeInspector(inspector => new VltClassSchemaTypeInspector<TKey>(inspector, database, vltClass))
-                .WithTypeConverter(new VltKeyTypeConverter<TKey>())
                 .Build();
 
             var results = deserializer.Deserialize<List<CustomSerializedCollection<TKey>>>(
