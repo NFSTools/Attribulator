@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using Attribulator.API.Utils;
 using Attribulator.ModScript.API;
-using VaultLib.Core;
 using VaultLib.Core.Types;
 
 namespace Attribulator.Plugins.ModScript.Commands
@@ -9,18 +8,18 @@ namespace Attribulator.Plugins.ModScript.Commands
     public class ResizeFieldModScriptCommand : BaseModScriptCommand,
         IParseableModScriptCommand<ResizeFieldModScriptCommand>
     {
-        public string ClassName { get; set; }
-        public string CollectionName { get; set; }
-        public string FieldName { get; set; }
-        public ushort NewCapacity { get; set; }
+        public required string ClassName { get; init; }
+        public required string CollectionName { get; init; }
+        public required string FieldName { get; init; }
+        public ushort NewCapacity { get; init; }
 
         public static ResizeFieldModScriptCommand Parse(List<string> parts)
         {
             if (parts.Count != 5) throw new CommandParseException($"Expected 5 tokens but got {parts.Count}");
 
-            var className = (parts[1]);
-            var collectionName = (parts[2]);
-            var fieldName = (parts[3]);
+            var className = parts[1];
+            var collectionName = parts[2];
+            var fieldName = parts[3];
 
             if (!ushort.TryParse(parts[4], out var newCapacity))
                 throw new CommandParseException($"Failed to parse '{parts[4]}' as a number");
@@ -36,7 +35,7 @@ namespace Attribulator.Plugins.ModScript.Commands
 
         protected override void Execute<TKey>(DatabaseHelper<TKey> databaseHelper)
         {
-            var collection = GetCollection(databaseHelper, ClassName, CollectionName);
+            var collection = GetCollection(databaseHelper, ClassName, CollectionName)!;
             var field = databaseHelper.GetField(collection.Class, FieldName);
 
             if (!field.IsArray)

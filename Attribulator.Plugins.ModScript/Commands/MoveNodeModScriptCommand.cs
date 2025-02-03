@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using Attribulator.ModScript.API;
 using VaultLib.Core.Data;
 using VaultLib.Core.DataInterfaces;
@@ -9,17 +8,17 @@ namespace Attribulator.Plugins.ModScript.Commands
     // move_node class node [parent]
     public class MoveNodeModScriptCommand : BaseModScriptCommand, IParseableModScriptCommand<MoveNodeModScriptCommand>
     {
-        public string ClassName { get; set; }
-        public string CollectionName { get; set; }
-        public string ParentName { get; set; }
+        public required string ClassName { get; init; }
+        public required string CollectionName { get; init; }
+        public required string? ParentName { get; init; }
 
         public static MoveNodeModScriptCommand Parse(List<string> parts)
         {
-            if (parts.Count < 3 || parts.Count > 4)
+            if (parts.Count is < 3 or > 4)
                 throw new CommandParseException("Expected command to be in format: move_node class node [parent]");
 
-            var className = (parts[1]);
-            var collectionName = (parts[2]);
+            var className = parts[1];
+            var collectionName = parts[2];
             var parentName = parts.Count == 4 ? parts[3] : null;
 
             if (parentName == collectionName)
@@ -34,12 +33,12 @@ namespace Attribulator.Plugins.ModScript.Commands
 
         protected override void Execute<TKey>(DatabaseHelper<TKey> databaseHelper)
         {
-            var collectionToMove = GetCollection(databaseHelper, ClassName, CollectionName);
-            VltCollection<TKey> newParentCollection = null;
+            var collectionToMove = GetCollection(databaseHelper, ClassName, CollectionName)!;
+            VltCollection<TKey>? newParentCollection = null;
 
             if (ParentName != null)
             {
-                newParentCollection = GetCollection(databaseHelper, ClassName, ParentName);
+                newParentCollection = GetCollection(databaseHelper, ClassName, ParentName)!;
 
                 if (IsChild(collectionToMove, newParentCollection))
                     throw new CommandExecutionException(
@@ -53,7 +52,7 @@ namespace Attribulator.Plugins.ModScript.Commands
 
             if (newParentCollection == null)
             {
-                collectionToMove.Parent.RemoveChild(collectionToMove);
+                collectionToMove.Parent!.RemoveChild(collectionToMove);
             }
             else
             {

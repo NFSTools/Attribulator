@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Attribulator.ModScript.API;
-using VaultLib.Core.Hashing;
 
 namespace Attribulator.Plugins.ModScript.Commands
 {
@@ -8,9 +7,9 @@ namespace Attribulator.Plugins.ModScript.Commands
     public class DeleteFieldModScriptCommand : BaseModScriptCommand,
         IParseableModScriptCommand<DeleteFieldModScriptCommand>
     {
-        public string ClassName { get; set; }
-        public string CollectionName { get; set; }
-        public string FieldName { get; set; }
+        public required string ClassName { get; init; }
+        public required string CollectionName { get; init; }
+        public required string FieldName { get; init; }
 
         public static DeleteFieldModScriptCommand Parse(List<string> parts)
         {
@@ -18,15 +17,15 @@ namespace Attribulator.Plugins.ModScript.Commands
 
             return new DeleteFieldModScriptCommand
             {
-                ClassName = (parts[1]),
-                CollectionName = (parts[2]),
-                FieldName = (parts[3])
+                ClassName = parts[1],
+                CollectionName = parts[2],
+                FieldName = parts[3]
             };
         }
 
         protected override void Execute<TKey>(DatabaseHelper<TKey> databaseHelper)
         {
-            var collection = GetCollection(databaseHelper, ClassName, CollectionName);
+            var collection = GetCollection(databaseHelper, ClassName, CollectionName)!;
 
             var fieldKey = databaseHelper.StringToKey(FieldName);
 

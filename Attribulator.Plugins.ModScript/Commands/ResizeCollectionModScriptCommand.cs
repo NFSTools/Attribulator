@@ -11,12 +11,12 @@ namespace Attribulator.Plugins.ModScript.Commands
     public class ResizeCollectionModScriptCommand : BaseModScriptCommand,
         IParseableModScriptCommand<ResizeCollectionModScriptCommand>
     {
-        public string ClassName { get; set; }
-        public string CollectionName { get; set; }
-        public string FieldName { get; set; }
-        public int ArrayIndex { get; set; }
-        public List<string> PropertyPath { get; set; }
-        public ushort Size { get; set; }
+        public required string ClassName { get; init; }
+        public required string CollectionName { get; init; }
+        public required string FieldName { get; init; }
+        public int ArrayIndex { get; init; }
+        public required List<string> PropertyPath { get; init; }
+        public ushort Size { get; init; }
 
         public static ResizeCollectionModScriptCommand Parse(List<string> parts)
         {
@@ -62,20 +62,21 @@ namespace Attribulator.Plugins.ModScript.Commands
 
         protected override void Execute<TKey>(DatabaseHelper<TKey> databaseHelper)
         {
-            var collection = GetCollection(databaseHelper, ClassName, CollectionName);
+            var collection = GetCollection(databaseHelper, ClassName, CollectionName)!;
             var field = databaseHelper.GetField(collection.Class, FieldName);
             var data = collection.GetRawValue(field.Key);
             var itemToEdit = data;
+            var arrayIndex = ArrayIndex;
 
             if (data is VltArrayType<TKey> array)
             {
-                if (ArrayIndex == -1)
-                    ArrayIndex = array.Items.Count - 1;
-                if (ArrayIndex >= 0 && ArrayIndex < array.Items.Count)
-                    itemToEdit = array.Items[ArrayIndex];
+                if (arrayIndex == -1)
+                    arrayIndex = array.Items.Count - 1;
+                if (arrayIndex >= 0 && arrayIndex < array.Items.Count)
+                    itemToEdit = array.Items[arrayIndex];
                 else
                     throw new CommandExecutionException(
-                        $"resize_collection command is out of bounds. Checked: 0 <= {ArrayIndex} < {array.Items.Count}");
+                        $"resize_collection command is out of bounds. Checked: 0 <= {arrayIndex} < {array.Items.Count}");
             }
 
             var parsedProperties = PropertyUtils.ParsePath(PropertyPath).ToList();

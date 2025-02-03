@@ -5,7 +5,7 @@ namespace Attribulator.Plugins.ModScript.Commands
 {
     public class GameModScriptCommand : BaseModScriptCommand, IParseableModScriptCommand<GameModScriptCommand>
     {
-        public string Game { get; private set; }
+        public required string Game { get; init; }
 
         public static GameModScriptCommand Parse(List<string> parts)
         {

@@ -4,7 +4,6 @@ using System.Linq;
 using Attribulator.ModScript.API;
 using Attribulator.ModScript.API.Utils;
 using VaultLib.Core.Data;
-using VaultLib.Core.Types;
 
 namespace Attribulator.Plugins.ModScript.Commands
 {
@@ -20,18 +19,18 @@ namespace Attribulator.Plugins.ModScript.Commands
             OverwriteOptional = 4 // copy+overwrite all optional fields
         }
 
-        public string ClassName { get; set; }
-        public string SourceCollectionName { get; set; }
-        public string DestinationCollectionName { get; set; }
-        public CopyOptions Options { get; set; }
+        public required string ClassName { get; init; }
+        public required string SourceCollectionName { get; init; }
+        public required string DestinationCollectionName { get; init; }
+        public CopyOptions Options { get; init; }
 
         public static CopyFieldsModScriptCommand Parse(List<string> parts)
         {
             if (parts.Count != 5) throw new CommandParseException($"Expected 5 tokens, got {parts.Count}");
 
-            var className = (parts[1]);
-            var sourceCollectionName = (parts[2]);
-            var destinationCollectionName = (parts[3]);
+            var className = parts[1];
+            var sourceCollectionName = parts[2];
+            var destinationCollectionName = parts[3];
             var copyOptionEntries = parts[4].Split('|', StringSplitOptions.RemoveEmptyEntries).ToList();
 
             CopyOptions options = 0;
@@ -54,8 +53,8 @@ namespace Attribulator.Plugins.ModScript.Commands
 
         protected override void Execute<TKey>(DatabaseHelper<TKey> databaseHelper)
         {
-            var srcCollection = GetCollection(databaseHelper, ClassName, SourceCollectionName);
-            var dstCollection = GetCollection(databaseHelper, ClassName, DestinationCollectionName);
+            var srcCollection = GetCollection(databaseHelper, ClassName, SourceCollectionName)!;
+            var dstCollection = GetCollection(databaseHelper, ClassName, DestinationCollectionName)!;
             var values = new Dictionary<VltClassField<TKey>, object>();
 
             if ((Options & CopyOptions.Base) != 0)

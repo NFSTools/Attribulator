@@ -5,7 +5,7 @@ namespace Attribulator.Plugins.ModScript.Commands
 {
     public class VersionModScriptCommand : BaseModScriptCommand, IParseableModScriptCommand<VersionModScriptCommand>
     {
-        public string Version { get; private init; }
+        public required string Version { get; init; }
 
         static VersionModScriptCommand IParseableModScriptCommand<VersionModScriptCommand>.Parse(List<string> parts)
         {

@@ -9,21 +9,21 @@ using VaultLib.Core.Types;
 
 namespace Attribulator.Plugins.ModScript.Commands
 {
-    // add_node class parentNode nodeName
+    // add_node class [parentNode] nodeName
     public class AddNodeModScriptCommand : BaseModScriptCommand, IParseableModScriptCommand<AddNodeModScriptCommand>
     {
-        public string ClassName { get; set; }
-        public string ParentCollectionName { get; set; }
-        public string CollectionName { get; set; }
+        public required string ClassName { get; init; }
+        public required string? ParentCollectionName { get; init; }
+        public required string CollectionName { get; init; }
 
         public static AddNodeModScriptCommand Parse(List<string> parts)
         {
             if (parts.Count != 3 && parts.Count != 4)
                 throw new CommandParseException($"3 or 4 tokens expected, got {parts.Count}");
 
-            var className = (parts[1]);
-            var parentCollectionName = parts.Count == 4 ? (parts[2]) : "";
-            var collectionName = (parts[^1]);
+            var className = parts[1];
+            var parentCollectionName = parts.Count == 4 ? parts[2] : null;
+            var collectionName = parts[^1];
 
             return new AddNodeModScriptCommand
             {

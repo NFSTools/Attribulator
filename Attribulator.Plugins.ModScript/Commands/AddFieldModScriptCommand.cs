@@ -8,10 +8,10 @@ namespace Attribulator.Plugins.ModScript.Commands
     // add_field class node field
     public class AddFieldModScriptCommand : BaseModScriptCommand, IParseableModScriptCommand<AddFieldModScriptCommand>
     {
-        public string ClassName { get; set; }
-        public string CollectionName { get; set; }
-        public string FieldName { get; set; }
-        public ushort ArrayCapacity { get; set; }
+        public required string ClassName { get; init; }
+        public required string CollectionName { get; init; }
+        public required string FieldName { get; init; }
+        public ushort ArrayCapacity { get; init; }
 
         public static AddFieldModScriptCommand Parse(List<string> parts)
         {
@@ -37,7 +37,7 @@ namespace Attribulator.Plugins.ModScript.Commands
 
         protected override void Execute<TKey>(DatabaseHelper<TKey> databaseHelper)
         {
-            var collection = GetCollection(databaseHelper, ClassName, CollectionName);
+            var collection = GetCollection(databaseHelper, ClassName, CollectionName)!;
             var field = collection.Class[FieldName];
 
             if (field.IsInLayout)

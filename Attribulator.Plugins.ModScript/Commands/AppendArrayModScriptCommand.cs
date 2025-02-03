@@ -10,19 +10,19 @@ namespace Attribulator.Plugins.ModScript.Commands
     public class AppendArrayModScriptCommand : BaseModScriptCommand,
         IParseableModScriptCommand<AppendArrayModScriptCommand>
     {
-        public string ClassName { get; set; }
-        public string CollectionName { get; set; }
-        public string FieldName { get; set; }
-        public string Value { get; set; }
+        public required string ClassName { get; init; }
+        public required string CollectionName { get; init; }
+        public required string FieldName { get; init; }
+        public required string? Value { get; init; }
 
         public static AppendArrayModScriptCommand Parse(List<string> parts)
         {
             if (parts.Count < 4) throw new CommandParseException("Expected at least 4 tokens");
 
             var className = parts[1];
-            var collectionName = (parts[2]);
-            var fieldName = (parts[3]);
-            string value = null;
+            var collectionName = parts[2];
+            var fieldName = parts[3];
+            string? value = null;
 
             if (parts.Count > 4)
             {
@@ -40,7 +40,7 @@ namespace Attribulator.Plugins.ModScript.Commands
 
         protected override void Execute<TKey>(DatabaseHelper<TKey> databaseHelper)
         {
-            var collection = GetCollection(databaseHelper, ClassName, CollectionName);
+            var collection = GetCollection(databaseHelper, ClassName, CollectionName)!;
             var field = databaseHelper.GetField(collection.Class, FieldName);
 
             if (!field.IsArray)

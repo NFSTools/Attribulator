@@ -7,9 +7,9 @@ namespace Attribulator.Plugins.ModScript.Commands
     public class RenameNodeModScriptCommand : BaseModScriptCommand,
         IParseableModScriptCommand<RenameNodeModScriptCommand>
     {
-        public string ClassName { get; set; }
-        public string CollectionName { get; set; }
-        public string NewName { get; set; }
+        public required string ClassName { get; init; }
+        public required string CollectionName { get; init; }
+        public required string NewName { get; init; }
 
         public static RenameNodeModScriptCommand Parse(List<string> parts)
         {
@@ -25,7 +25,7 @@ namespace Attribulator.Plugins.ModScript.Commands
 
         protected override void Execute<TKey>(DatabaseHelper<TKey> databaseHelper)
         {
-            var collection = GetCollection(databaseHelper, ClassName, CollectionName);
+            var collection = GetCollection(databaseHelper, ClassName, CollectionName)!;
 
             if (GetCollection(databaseHelper, ClassName, NewName, false) != null)
                 throw new CommandExecutionException(

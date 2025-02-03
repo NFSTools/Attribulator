@@ -1,17 +1,16 @@
 ﻿using System.Collections.Generic;
-using Attribulator.API.Utils;
 using Attribulator.ModScript.API;
 using VaultLib.Core.Data;
 
 namespace Attribulator.Plugins.ModScript.Commands
 {
-    // copy_node class sourceNode parentNode nodeName
+    // copy_node class sourceNode [parentNode] nodeName
     public class CopyNodeModScriptCommand : BaseModScriptCommand, IParseableModScriptCommand<CopyNodeModScriptCommand>
     {
-        public string ClassName { get; set; }
-        public string SourceCollectionName { get; set; }
-        public string ParentCollectionName { get; set; }
-        public string DestinationCollectionName { get; set; }
+        public required string ClassName { get; init; }
+        public required string SourceCollectionName { get; init; }
+        public required string? ParentCollectionName { get; init; }
+        public required string DestinationCollectionName { get; init; }
 
         public static CopyNodeModScriptCommand Parse(List<string> parts)
         {
@@ -20,7 +19,7 @@ namespace Attribulator.Plugins.ModScript.Commands
 
             var className = parts[1];
             var sourceCollectionName = parts[2];
-            var parentCollectionName = parts.Count == 5 ? parts[3] : "";
+            var parentCollectionName = parts.Count == 5 ? parts[3] : null;
             var destinationCollectionName = parts[^1];
 
             return new CopyNodeModScriptCommand
@@ -44,7 +43,7 @@ namespace Attribulator.Plugins.ModScript.Commands
                 throw new CommandExecutionException(
                     $"copy_node failed because there is already a collection called '{DestinationCollectionName}'");
 
-            VltCollection<TKey> parentCollection = null;
+            VltCollection<TKey>? parentCollection = null;
 
             if (!string.IsNullOrWhiteSpace(ParentCollectionName))
             {

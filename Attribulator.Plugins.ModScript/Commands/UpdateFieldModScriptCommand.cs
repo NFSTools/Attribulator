@@ -15,12 +15,12 @@ namespace Attribulator.Plugins.ModScript.Commands
     public class UpdateFieldModScriptCommand : BaseModScriptCommand,
         IParseableModScriptCommand<UpdateFieldModScriptCommand>
     {
-        public string ClassName { get; set; }
-        public string CollectionName { get; set; }
-        public string FieldName { get; set; }
-        public int ArrayIndex { get; set; }
-        public List<string> PropertyPath { get; set; }
-        public string Value { get; set; }
+        public required string ClassName { get; init; }
+        public required string CollectionName { get; init; }
+        public required string FieldName { get; init; }
+        public int ArrayIndex { get; init; }
+        public required List<string> PropertyPath { get; init; }
+        public required string Value { get; init; }
 
         public static UpdateFieldModScriptCommand Parse(List<string> parts)
         {
@@ -75,22 +75,24 @@ namespace Attribulator.Plugins.ModScript.Commands
 
         protected override void Execute<TKey>(DatabaseHelper<TKey> databaseHelper)
         {
-            var collection = GetCollection(databaseHelper, ClassName, CollectionName);
+            var collection = GetCollection(databaseHelper, ClassName, CollectionName)!;
             var field = databaseHelper.GetField(collection.Class, FieldName);
             var rawValue = collection.GetRawValue(field.Key);
             // var itemToEdit = rawValue;
 
             object itemToEdit;
 
+            var arrayIndex = ArrayIndex;
+
             if (rawValue is VltArrayType<TKey> array)
             {
-                if (ArrayIndex == -1)
-                    ArrayIndex = array.Items.Count - 1;
-                if (ArrayIndex >= 0 && ArrayIndex < array.Items.Count)
-                    itemToEdit = array.Items[ArrayIndex];
+                if (arrayIndex == -1)
+                    arrayIndex = array.Items.Count - 1;
+                if (arrayIndex >= 0 && arrayIndex < array.Items.Count)
+                    itemToEdit = array.Items[arrayIndex];
                 else
                     throw new CommandExecutionException(
-                        $"update_field command is out of bounds. Checked: 0 <= {ArrayIndex} < {array.Items.Count}");
+                        $"update_field command is out of bounds. Checked: 0 <= {arrayIndex} < {array.Items.Count}");
             }
             else
             {
@@ -215,7 +217,7 @@ namespace Attribulator.Plugins.ModScript.Commands
 
             if (rawValue is VltArrayType<TKey> array2)
             {
-                array2.Items[ArrayIndex] = itemToEdit;
+                array2.Items[arrayIndex] = itemToEdit;
                 collection.SetRawValue(field.Key, array2);
             }
             else

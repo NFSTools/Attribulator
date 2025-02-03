@@ -6,8 +6,8 @@ namespace Attribulator.Plugins.ModScript.Commands
     public class DeleteNodeModScriptCommand : BaseModScriptCommand,
         IParseableModScriptCommand<DeleteNodeModScriptCommand>
     {
-        public string ClassName { get; set; }
-        public string CollectionName { get; set; }
+        public required string ClassName { get; init; }
+        public required string CollectionName { get; init; }
 
         public static DeleteNodeModScriptCommand Parse(List<string> parts)
         {
@@ -15,14 +15,14 @@ namespace Attribulator.Plugins.ModScript.Commands
 
             return new DeleteNodeModScriptCommand
             {
-                ClassName = (parts[1]),
-                CollectionName = (parts[2])
+                ClassName = parts[1],
+                CollectionName = parts[2]
             };
         }
 
         protected override void Execute<TKey>(DatabaseHelper<TKey> databaseHelper)
         {
-            var collection = GetCollection(databaseHelper, ClassName, CollectionName);
+            var collection = GetCollection(databaseHelper, ClassName, CollectionName)!;
 
             databaseHelper.RemoveCollection(collection).ForEach(RemoveCollectionFromCache);
         }

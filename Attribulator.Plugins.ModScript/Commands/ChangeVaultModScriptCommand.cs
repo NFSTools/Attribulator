@@ -7,18 +7,18 @@ namespace Attribulator.Plugins.ModScript.Commands
     public class ChangeVaultModScriptCommand : BaseModScriptCommand,
         IParseableModScriptCommand<ChangeVaultModScriptCommand>
     {
-        public string ClassName { get; set; }
-        public string CollectionName { get; set; }
-        public string VaultName { get; set; }
+        public required string ClassName { get; init; }
+        public required string CollectionName { get; init; }
+        public required string VaultName { get; init; }
 
         public static ChangeVaultModScriptCommand Parse(List<string> parts)
         {
             if (parts.Count != 4)
                 throw new CommandParseException($"Expected 4 tokens, got {parts.Count} ({string.Join(' ', parts)})");
 
-            var className = (parts[1]);
-            var collectionName = (parts[2]);
-            var vaultName = (parts[3]);
+            var className = parts[1];
+            var collectionName = parts[2];
+            var vaultName = parts[3];
 
             return new ChangeVaultModScriptCommand
             {
@@ -30,7 +30,7 @@ namespace Attribulator.Plugins.ModScript.Commands
 
         protected override void Execute<TKey>(DatabaseHelper<TKey> databaseHelper)
         {
-            var collection = GetCollection(databaseHelper, ClassName, CollectionName);
+            var collection = GetCollection(databaseHelper, ClassName, CollectionName)!;
             var vault = databaseHelper.Database.Vaults.Find(v => v.Name == VaultName);
 
             if (vault == null) throw new CommandExecutionException($"Cannot find vault: {VaultName}");

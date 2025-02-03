@@ -5,7 +5,7 @@ namespace Attribulator.Plugins.ModScript.Commands;
 
 public class ExecScriptModScriptCommand : BaseModScriptCommand, IParseableModScriptCommand<ExecScriptModScriptCommand>
 {
-    public string FileName { get; set; }
+    public required string FileName { get; init; }
 
     public static ExecScriptModScriptCommand Parse(List<string> parts)
     {
