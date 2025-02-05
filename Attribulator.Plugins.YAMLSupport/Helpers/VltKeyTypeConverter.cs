@@ -21,9 +21,10 @@ public class VltKeyTypeConverter<TKey> : IYamlTypeConverter where TKey : struct,
         return KeyUtils.StringToKey<TKey>(scalar.Value, true);
     }
 
-    public void WriteYaml(IEmitter emitter, object value, Type type, ObjectSerializer serializer)
+    public void WriteYaml(IEmitter emitter, object? value, Type type, ObjectSerializer serializer)
     {
-        emitter.Emit(new Scalar(AnchorName.Empty, TagName.Empty, KeyUtils.KeyToString((TKey)value),
+        var key = (TKey)value!;
+        emitter.Emit(new Scalar(AnchorName.Empty, TagName.Empty, KeyUtils.KeyToString(key),
             ScalarStyle.DoubleQuoted, isPlainImplicit: false, isQuotedImplicit: true));
     }
 }

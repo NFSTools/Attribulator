@@ -29,7 +29,10 @@ namespace Attribulator.Plugins.YAMLSupport
         private static SerializerBuilder CreateDefaultSerializerBuilder<TKey>() where TKey : struct, IKey<TKey>
         {
             return new SerializerBuilder()
-                .WithTypeConverter(new VltKeyTypeConverter<TKey>())
+                .WithTypeConverter(new VltKeyTypeConverter<Key32>())
+                .WithTypeConverter(new VltKeyTypeConverter<Key64>())
+                .WithTypeConverter(new VltKeyTypeConverter<BinKey32>())
+                .WithTypeConverter(new VltKeyTypeConverter<BinKey64>())
                 .WithAttributeOverride<Matrix4x4>(m => m.Translation, new YamlIgnoreAttribute())
                 .WithAttributeOverride<Matrix4x4>(m => m.IsIdentity, new YamlIgnoreAttribute())
                 .WithQuotingNecessaryStrings(true)
@@ -41,7 +44,10 @@ namespace Attribulator.Plugins.YAMLSupport
         {
             return new DeserializerBuilder()
                 .WithEnforceRequiredMembers()
-                .WithTypeConverter(new VltKeyTypeConverter<TKey>());
+                .WithTypeConverter(new VltKeyTypeConverter<Key32>())
+                .WithTypeConverter(new VltKeyTypeConverter<Key64>())
+                .WithTypeConverter(new VltKeyTypeConverter<BinKey32>())
+                .WithTypeConverter(new VltKeyTypeConverter<BinKey64>());
         }
 
         public override SerializedDatabaseInfo LoadInfo<TKey>(string sourceDirectory,

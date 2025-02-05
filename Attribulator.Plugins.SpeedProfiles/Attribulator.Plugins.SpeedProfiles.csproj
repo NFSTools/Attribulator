@@ -26,6 +26,10 @@
         <EmbeddedResource Include="Resources\hashes.txt">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </EmbeddedResource>
+        <None Remove="Resources\hashes_bin.txt" />
+        <EmbeddedResource Include="Resources\hashes_bin.txt">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </EmbeddedResource>
     </ItemGroup>
 
     <ItemGroup>
