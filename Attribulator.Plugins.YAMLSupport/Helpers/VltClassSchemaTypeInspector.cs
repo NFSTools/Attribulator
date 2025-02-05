@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using Attribulator.API.Utils;
 using VaultLib.Core.Data;
 using VaultLib.Core.DataInterfaces;
@@ -36,7 +37,7 @@ internal class VltClassSchemaTypeInspector<TKey> : ITypeInspector where TKey : s
         return _innerInspector.GetProperties(type, container);
     }
 
-    public IPropertyDescriptor GetProperty(Type type, object container, string name, bool ignoreUnmatched,
+    public IPropertyDescriptor GetProperty(Type type, object? container, string name, bool ignoreUnmatched,
         bool caseInsensitivePropertyMatching)
     {
         // we don't need to mess with anything but CustomSerializedCollectionData
@@ -45,11 +46,19 @@ internal class VltClassSchemaTypeInspector<TKey> : ITypeInspector where TKey : s
             return _innerInspector.GetProperty(type, container, name, ignoreUnmatched,
                 caseInsensitivePropertyMatching);
         }
+        
+        var fieldKey = KeyUtils.StringToKey<TKey>(name, true);
+        if (_vltClass.TryGetField(fieldKey, out var vltClassField))
+        {
+            return CreateFieldDescriptor(vltClassField);
+        }
+        
+        if (ignoreUnmatched)
+        {
+            return null!;
+        }
 
-        // todo: error handling?
-        var field = _vltClass[KeyUtils.StringToKey<TKey>(name, true)];
-
-        return CreateFieldDescriptor(field);
+        throw new SerializationException($"Field '{name}' doesn't exist in class.");
     }
 
     private IPropertyDescriptor CreateFieldDescriptor(VltClassField<TKey> field)
