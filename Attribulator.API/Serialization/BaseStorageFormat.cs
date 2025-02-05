@@ -35,7 +35,17 @@ namespace Attribulator.API.Serialization
             Database<TKey> destinationDatabase, IEnumerable<string> fileNames = null) where TKey : struct, IKey<TKey>
         {
             var loadedFiles = new List<LoadedFile<TKey>>();
-            var loadedDatabase = LoadInfo(sourceDirectory, destinationDatabase);
+            SerializedDatabaseInfo loadedDatabase;
+
+            try
+            {
+                loadedDatabase = LoadInfo(sourceDirectory, destinationDatabase);
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Error while loading database info", e);
+            }
+
             var fileNameList = fileNames?.ToList() ?? new List<string>();
 
             if (string.IsNullOrEmpty(loadedDatabase.PrimaryVaultName))

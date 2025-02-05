@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Attribulator.API.Data;
 using Attribulator.API.Serialization;
@@ -91,8 +92,17 @@ namespace Attribulator.Plugins.YAMLSupport
 
                     var serializedStaticValue = serializer.Serialize(serializedDatabaseClassField.StaticValue);
 
-                    serializedDatabaseClassField.StaticValue =
-                        deserializer.Deserialize(serializedStaticValue, staticType);
+                    try
+                    {
+                        serializedDatabaseClassField.StaticValue =
+                            deserializer.Deserialize(serializedStaticValue, staticType);
+                    }
+                    catch (Exception e)
+                    {
+                        throw new SerializationException(
+                            $"Error while deserializing static data for field {serializedDatabaseClassField.Name} in class {serializedDatabaseClass.Name}",
+                            e);
+                    }
                 }
             }
 
