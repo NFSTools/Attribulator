@@ -6,12 +6,14 @@ using Attribulator.API.Exceptions;
 using Attribulator.API.Plugin;
 using Attribulator.API.Serialization;
 using Attribulator.API.Services;
+using Attribulator.API.Utils;
 using CommandLine;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.DB;
+using VaultLib.Core.Hashing;
 
 namespace Attribulator.CLI.Commands
 {
@@ -36,6 +38,10 @@ namespace Attribulator.CLI.Commands
         [UsedImplicitly]
         public string StorageFormatName { get; set; }
 
+        [Option("hash-dictionary", HelpText = "Path to an additional hash dictionary to load.")]
+        [UsedImplicitly]
+        public string? HashDictionaryPath { get; set; }
+
         public override void SetServiceProvider(IServiceProvider serviceProvider)
         {
             base.SetServiceProvider(serviceProvider);
@@ -54,6 +60,14 @@ namespace Attribulator.CLI.Commands
             var profile = ServiceProvider.GetRequiredService<IProfileService>().GetProfile(ProfileName);
             var storageFormat = ServiceProvider.GetRequiredService<IStorageFormatService>()
                 .GetStorageFormat(StorageFormatName);
+
+            if (!string.IsNullOrEmpty(HashDictionaryPath))
+            {
+                _logger.LogInformation("Loading hash dictionary: {HashDictionaryPath}", HashDictionaryPath);
+                HashManager.LoadDictionary(HashDictionaryPath);
+                KeyUtils.LoadBinDictionary(HashDictionaryPath);
+            }
+
             switch (profile)
             {
                 case IProfile<Key32> profile32:
