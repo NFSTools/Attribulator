@@ -69,12 +69,20 @@ namespace Attribulator.API.Utils
         {
             if (primitiveType == typeof(ulong))
                 return ulong.Parse(hexString, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+            if (primitiveType == typeof(long))
+                return long.Parse(hexString, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
             if (primitiveType == typeof(uint))
                 return uint.Parse(hexString, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+            if (primitiveType == typeof(int))
+                return int.Parse(hexString, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
             if (primitiveType == typeof(ushort))
                 return ushort.Parse(hexString, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+            if (primitiveType == typeof(short))
+                return short.Parse(hexString, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
             if (primitiveType == typeof(byte))
                 return byte.Parse(hexString, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+            if (primitiveType == typeof(sbyte))
+                return sbyte.Parse(hexString, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
             throw new InvalidCastException($"Can't convert hexadecimal string '{hexString}' to {primitiveType}.");
         }
     }
