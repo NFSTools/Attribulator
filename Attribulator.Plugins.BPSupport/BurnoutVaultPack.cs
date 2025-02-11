@@ -57,7 +57,7 @@ namespace Attribulator.Plugins.BPSupport
         {
             bw.Write(0x10);
             var vault = vaults[0];
-            var vw = new VaultWriter<TKey>(vault, new VaultWriteOptions() { HashMode = VaultHashMode.Hash64 });
+            var vw = new VaultWriter<TKey>(vault, new VaultWriteOptions());
             var streamInfo = vw.BuildVault();
             bw.Write((uint)streamInfo.VltStream.Length);
             bw.Write(0);

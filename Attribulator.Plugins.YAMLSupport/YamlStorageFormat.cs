@@ -364,7 +364,7 @@ namespace Attribulator.Plugins.YAMLSupport
             return blobPath[(directory.Length + 1)..];
         }
 
-        protected override object ConvertSerializedValueToDataValue<TKey>(Database<TKey> database, string gameId,
+        protected override object ConvertSerializedValueToDataValue<TKey>(Database<TKey> database,
             string dir,
             VltClass<TKey> vltClass,
             VltClassField<TKey> field,

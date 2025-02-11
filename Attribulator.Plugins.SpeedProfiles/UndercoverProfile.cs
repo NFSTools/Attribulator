@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using Attribulator.API;
 using Attribulator.API.Data;
+using CoreLibraries.IO;
 using VaultLib.Core;
 using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.DB;
@@ -18,10 +19,9 @@ namespace Attribulator.Plugins.SpeedProfiles
         public Database<Key32> CreateDatabase()
         {
             var module = new VaultLib.Support.Undercover.ModuleDef();
-            var database = new Database<Key32>(new DatabaseOptions(GetGameId(), GetDatabaseType()),
-                module.CreateExportFactory());
-            module.RegisterTypes(database.TypeRegistry);
-            return database;
+            var typeRegistryBuilder = new TypeRegistryBuilder<Key32>(ByteOrder.Little);
+            module.RegisterTypes(typeRegistryBuilder);
+            return new Database<Key32>(module.CreateExportFactory(), typeRegistryBuilder);
         }
 
         public IEnumerable<LoadedFile<Key32>> LoadFiles(Database<Key32> database, string directory)
@@ -83,11 +83,6 @@ namespace Attribulator.Plugins.SpeedProfiles
         public string GetProfileId()
         {
             return "UNDERCOVER";
-        }
-
-        public DatabaseType GetDatabaseType()
-        {
-            return DatabaseType.X86Database;
         }
 
         private static IEnumerable<string> GetFilesToLoad()

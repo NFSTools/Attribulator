@@ -60,9 +60,7 @@ namespace Attribulator.Plugins.ModScript.Commands
             if ((Options & CopyOptions.Base) != 0)
                 foreach (var baseField in srcCollection.Class.BaseFields)
                     values.Add(baseField,
-                        ValueCloningUtils.CloneValue(databaseHelper.Database, srcCollection.GetRawValue(baseField.Key),
-                            srcCollection.Class,
-                            baseField, dstCollection));
+                        ValueCloningUtils.CloneValue(srcCollection.GetRawValue(baseField.Key)));
 
             if ((Options & CopyOptions.Optional) != 0)
                 foreach (var (key, value) in srcCollection.GetData())
@@ -71,8 +69,7 @@ namespace Attribulator.Plugins.ModScript.Commands
 
                     if (!field.IsInLayout)
                         values.Add(field,
-                            ValueCloningUtils.CloneValue(databaseHelper.Database, value, srcCollection.Class, field,
-                                dstCollection));
+                            ValueCloningUtils.CloneValue(value));
                 }
 
             // base will always overwrite

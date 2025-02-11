@@ -66,10 +66,8 @@ namespace Attribulator.Plugins.ModScript.Commands
             {
                 foreach (var baseField in vltClass.BaseFields)
                 {
-                    newNode.SetRawValue(baseField.Key, ValueCloningUtils.CloneValue(databaseHelper.Database,
-                        defaultCollection.GetRawValue(baseField.Key),
-                        vltClass,
-                        baseField, newNode));
+                    newNode.SetRawValue(baseField.Key,
+                        ValueCloningUtils.CloneValue(defaultCollection.GetRawValue(baseField.Key)));
                 }
             }
             else

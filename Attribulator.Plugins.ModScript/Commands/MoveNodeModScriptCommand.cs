@@ -50,14 +50,7 @@ namespace Attribulator.Plugins.ModScript.Commands
 
             var oldVault = collectionToMove.Vault;
 
-            if (newParentCollection == null)
-            {
-                collectionToMove.Parent!.RemoveChild(collectionToMove);
-            }
-            else
-            {
-                newParentCollection.AddChild(collectionToMove);
-            }
+            collectionToMove.SetParent(newParentCollection);
 
             databaseHelper.MarkVaultAsModified(oldVault);
             if (oldVault != collectionToMove.Vault)

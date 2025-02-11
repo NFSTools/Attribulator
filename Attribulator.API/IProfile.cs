@@ -36,12 +36,6 @@ namespace Attribulator.API
         ///     <code>MOST_WANTED</code>
         /// </example>
         string GetProfileId();
-
-        /// <summary>
-        ///     Gets the database type of the profile.
-        /// </summary>
-        /// <returns>The database type.</returns>
-        DatabaseType GetDatabaseType();
     }
 
     public interface IProfile<TKey> : IProfile where TKey : struct, IKey<TKey>

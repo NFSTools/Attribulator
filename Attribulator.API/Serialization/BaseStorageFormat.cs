@@ -77,8 +77,7 @@ namespace Attribulator.API.Serialization
                         loadedDatabaseClassField.Offset);
                     // Handle static value
                     if (loadedDatabaseClassField.StaticValue != null)
-                        field.StaticValue = ConvertSerializedValueToDataValue(destinationDatabase,
-                            destinationDatabase.Options.GameId, sourceDirectory,
+                        field.StaticValue = ConvertSerializedValueToDataValue(destinationDatabase, sourceDirectory,
                             vltClass, field, null,
                             loadedDatabaseClassField.StaticValue);
 
@@ -129,8 +128,7 @@ namespace Attribulator.API.Serialization
                                 $"Cannot find field: {vltClass.Key}/{key}");
 
                         newCollection.SetRawValue(key,
-                            ConvertSerializedValueToDataValue(destinationDatabase,
-                                destinationDatabase.Options.GameId, vaultDirectory,
+                            ConvertSerializedValueToDataValue(destinationDatabase, vaultDirectory,
                                 vltClass, field,
                                 newCollection, value));
                     }
@@ -253,7 +251,8 @@ namespace Attribulator.API.Serialization
 
                     if (parentKey is null) continue;
                     var parentCollection = collectionDictionary[parentKey];
-                    parentCollection.AddChild(collection);
+
+                    collection.SetParent(parentCollection);
                 }
             }
 
@@ -318,7 +317,7 @@ namespace Attribulator.API.Serialization
             VltClass<TKey> vltClass) where TKey : struct, IKey<TKey>;
 
         // TODO: rework value deserialization
-        protected abstract object ConvertSerializedValueToDataValue<TKey>(Database<TKey> database, string gameId,
+        protected abstract object ConvertSerializedValueToDataValue<TKey>(Database<TKey> database,
             string dir,
             VltClass<TKey> vltClass,
             VltClassField<TKey> field,

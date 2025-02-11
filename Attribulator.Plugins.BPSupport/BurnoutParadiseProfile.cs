@@ -4,6 +4,8 @@ using System.Linq;
 using Attribulator.API;
 using Attribulator.API.Data;
 using Attribulator.Plugins.BPSupport.Types;
+using CoreLibraries.IO;
+using VaultLib.Core;
 using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.DB;
 using VaultLib.Core.Exports;
@@ -17,28 +19,30 @@ namespace Attribulator.Plugins.BPSupport
     {
         public Database<Key64> CreateDatabase()
         {
-            var database = new Database<Key64>(new DatabaseOptions(GetGameId(), GetDatabaseType()),
+            var typeRegistryBuilder = new TypeRegistryBuilder<Key64>(ByteOrder.Little);
+            typeRegistryBuilder.RegisterStruct<RwVector2>("Attrib::Types::RwVector2");
+            typeRegistryBuilder.RegisterStruct<RwVector3>("Attrib::Types::RwVector3");
+            typeRegistryBuilder.Map<int>("AttribSys::Enums::eSongHint::eSongHint");
+            typeRegistryBuilder.Map<int>("AttribSys::Enums::eCollisionMixerSliders::eCollisionMixerSliders");
+            typeRegistryBuilder.Map<int>("AttribSys::Enums::PresentationAction::PresentationAction");
+            typeRegistryBuilder.Map<int>("AttribSys::Enums::eShiftTypes::eShiftTypes");
+            typeRegistryBuilder.Map<int>("AttribSys::Enums::eSampleTags::eSampleTags");
+            typeRegistryBuilder.Map<int>("AttribSys::Enums::eReverbTypes::eReverbTypes");
+            typeRegistryBuilder.Map<int>("AttribSys::Enums::ePassbyTypes::ePassbyTypes");
+            typeRegistryBuilder.Map<int>("AttribSys::Enums::ProceduralShotType::ProceduralShotType");
+            typeRegistryBuilder.Map<int>("AttribSys::Enums::ProceduralShakeMethod::ProceduralShakeMethod");
+            typeRegistryBuilder.Map<int>("AttribSys::Enums::ParticleBlend::ParticleBlend");
+            typeRegistryBuilder.Map<int>("AttribSys::Enums::NativeParticleType::NativeParticleType");
+            typeRegistryBuilder.Map<int>("AttribSys::Enums::CarState::CarState");
+            typeRegistryBuilder.Map<int>("AttribSys::Enums::County::County");
+            typeRegistryBuilder.Map<int>("AttribSys::Enums::OffenceType::OffenceType");
+
+            return new Database<Key64>(
                 new ExportFactory<Key64>(() => new DatabaseLoad32On64(), () => new ClassLoad64(),
                     () => new CollectionLoad64(),
-                    () => new ExportEntry64(), () => new PtrRef64()));
-            database.TypeRegistry.RegisterStruct<RwVector2>("Attrib::Types::RwVector2");
-            database.TypeRegistry.RegisterStruct<RwVector3>("Attrib::Types::RwVector3");
-            database.TypeRegistry.Map<int>("AttribSys::Enums::eSongHint::eSongHint");
-            database.TypeRegistry.Map<int>("AttribSys::Enums::eCollisionMixerSliders::eCollisionMixerSliders");
-            database.TypeRegistry.Map<int>("AttribSys::Enums::PresentationAction::PresentationAction");
-            database.TypeRegistry.Map<int>("AttribSys::Enums::eShiftTypes::eShiftTypes");
-            database.TypeRegistry.Map<int>("AttribSys::Enums::eSampleTags::eSampleTags");
-            database.TypeRegistry.Map<int>("AttribSys::Enums::eReverbTypes::eReverbTypes");
-            database.TypeRegistry.Map<int>("AttribSys::Enums::ePassbyTypes::ePassbyTypes");
-            database.TypeRegistry.Map<int>("AttribSys::Enums::ProceduralShotType::ProceduralShotType");
-            database.TypeRegistry.Map<int>("AttribSys::Enums::ProceduralShakeMethod::ProceduralShakeMethod");
-            database.TypeRegistry.Map<int>("AttribSys::Enums::ParticleBlend::ParticleBlend");
-            database.TypeRegistry.Map<int>("AttribSys::Enums::NativeParticleType::NativeParticleType");
-            database.TypeRegistry.Map<int>("AttribSys::Enums::CarState::CarState");
-            database.TypeRegistry.Map<int>("AttribSys::Enums::County::County");
-            database.TypeRegistry.Map<int>("AttribSys::Enums::OffenceType::OffenceType");
-
-            return database;
+                    () => new ExportEntry64(), () => new PtrRef64()),
+                typeRegistryBuilder
+            );
         }
 
         public IEnumerable<LoadedFile<Key64>> LoadFiles(Database<Key64> database, string directory)
@@ -81,11 +85,6 @@ namespace Attribulator.Plugins.BPSupport
         public string GetProfileId()
         {
             return "BURNOUT_PARADISE";
-        }
-
-        public DatabaseType GetDatabaseType()
-        {
-            return DatabaseType.X64Database;
         }
     }
 }

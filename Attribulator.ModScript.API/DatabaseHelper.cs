@@ -79,7 +79,7 @@ namespace Attribulator.ModScript.API
             VltCollection<TKey>? parentCollection = null)
         {
             Database.RowManager.AddCollection(collection);
-            parentCollection?.AddChild(collection);
+            collection.SetParent(parentCollection);
 
             Collections[VltUtils.CreateCollectionIdentifier(collection)] = collection;
             MarkVaultAsModified(collection.Vault);
@@ -120,7 +120,7 @@ namespace Attribulator.ModScript.API
             {
                 var field = from.Class[dataPair.Key];
                 to.SetRawValue(dataPair.Key,
-                    ValueCloningUtils.CloneValue(database, dataPair.Value, to.Class, field, to));
+                    ValueCloningUtils.CloneValue(dataPair.Value));
             }
 
             MarkVaultAsModified(to.Vault);
