@@ -8,18 +8,17 @@ using VaultLib.Core;
 using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.DB;
 using VaultLib.Core.Pack;
-using VaultLib.Support.Carbon;
 
-namespace Attribulator.Plugins.SpeedProfiles
+namespace Attribulator.Plugins.SpeedProfiles.PC
 {
     /// <summary>
-    ///     Basic profile for PC 32-bit NFS Carbon
+    ///     Basic profile for PC 32-bit NFS Most Wanted
     /// </summary>
-    public class CarbonProfile : IProfile<Key32>
+    public class MostWantedProfile : IProfile<Key32>
     {
         public Database<Key32> CreateDatabase()
         {
-            var module = new ModuleDef32();
+            var module = new VaultLib.Support.MostWanted.ModuleDef32();
             var typeRegistryBuilder = new TypeRegistryBuilder<Key32>(ByteOrder.Little);
             module.RegisterTypes(typeRegistryBuilder);
             return new Database<Key32>(module.CreateExportFactory(), typeRegistryBuilder);
@@ -67,17 +66,17 @@ namespace Attribulator.Plugins.SpeedProfiles
 
         public string GetName()
         {
-            return "Need for Speed Carbon";
+            return "Need for Speed Most Wanted";
         }
 
         public string GetGameId()
         {
-            return "CARBON";
+            return "MOST_WANTED";
         }
 
         public string GetProfileId()
         {
-            return "CARBON";
+            return "MOST_WANTED";
         }
 
         private static IEnumerable<string> GetFilesToLoad()

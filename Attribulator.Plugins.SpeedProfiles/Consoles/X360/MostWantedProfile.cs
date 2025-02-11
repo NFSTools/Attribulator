@@ -9,17 +9,17 @@ using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.DB;
 using VaultLib.Core.Pack;
 
-namespace Attribulator.Plugins.SpeedProfiles
+namespace Attribulator.Plugins.SpeedProfiles.Consoles.X360
 {
     /// <summary>
-    ///     Basic profile for PC 32-bit NFS Undercover
+    ///     Basic profile for PC 32-bit NFS Most Wanted
     /// </summary>
-    public class UndercoverProfile : IProfile<Key32>
+    public class MostWantedProfile : IProfile<Key32>
     {
         public Database<Key32> CreateDatabase()
         {
-            var module = new VaultLib.Support.Undercover.ModuleDef();
-            var typeRegistryBuilder = new TypeRegistryBuilder<Key32>(ByteOrder.Little);
+            var module = new VaultLib.Support.MostWanted.ModuleDef32();
+            var typeRegistryBuilder = new TypeRegistryBuilder<Key32>(ByteOrder.Big);
             module.RegisterTypes(typeRegistryBuilder);
             return new Database<Key32>(module.CreateExportFactory(), typeRegistryBuilder);
         }
@@ -30,7 +30,7 @@ namespace Attribulator.Plugins.SpeedProfiles
                 let path = Path.Combine(directory, file)
                 let standardVaultPack = new StandardVaultPack()
                 let br = new BinaryReader(File.OpenRead(path))
-                let vaults = standardVaultPack.Load(br, database, new PackLoadingOptions())
+                let vaults = standardVaultPack.Load(br, database, new PackLoadingOptions(ByteOrder.Big))
                 select new LoadedFile<Key32>(Path.GetFileNameWithoutExtension(file), "main", vaults)).ToList();
         }
 
@@ -44,13 +44,7 @@ namespace Attribulator.Plugins.SpeedProfiles
                 Directory.CreateDirectory(Path.Combine(directory, file.Group));
                 var outPath = Path.Combine(directory, file.Group, file.Name + ".bin");
                 using var bw = new BinaryWriter(File.Open(outPath, FileMode.Create, FileAccess.ReadWrite));
-                vaultPack.Save(bw, file.Vaults.ToList(), new PackSavingOptions(vaultWriteOptions: new VaultWriteOptions
-                {
-                    Quirks = new VaultWriteQuirks
-                    {
-                        StartChunkBeforeDepChunk = true
-                    }
-                }));
+                vaultPack.Save(bw, file.Vaults.ToList(), new PackSavingOptions(ByteOrder.Big));
                 bw.Close();
 
                 if (file.Name == "gameplay")
@@ -72,22 +66,22 @@ namespace Attribulator.Plugins.SpeedProfiles
 
         public string GetName()
         {
-            return "Need for Speed Undercover";
+            return "Need for Speed Most Wanted (Xbox 360)";
         }
 
         public string GetGameId()
         {
-            return "UNDERCOVER";
+            return "MOST_WANTED";
         }
 
         public string GetProfileId()
         {
-            return "UNDERCOVER";
+            return "MOST_WANTED_X360";
         }
 
         private static IEnumerable<string> GetFilesToLoad()
         {
-            return new[] { "attributes.bin", "cars_vault.bin", "fe_attrib.bin", "gameplay.bin" };
+            return new[] { "attributes.bin", "fe_attrib.bin", "gameplay.bin" };
         }
     }
 }

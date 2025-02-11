@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Attribulator.API;
@@ -9,19 +10,33 @@ using VaultLib.Core.DataInterfaces;
 using VaultLib.Core.DB;
 using VaultLib.Core.Pack;
 
-namespace Attribulator.Plugins.SpeedProfiles
+namespace Attribulator.Plugins.SpeedProfiles.Consoles.PlayStation2
 {
     /// <summary>
-    ///     Basic profile for PC 32-bit NFS ProStreet
+    ///     Basic profile for PS2 32-bit NFS Carbon
     /// </summary>
-    public class ProStreetProfile : IProfile<Key32>
+    public class CarbonProfile : IProfile<Key32>
     {
         public Database<Key32> CreateDatabase()
         {
-            var module = new VaultLib.Support.ProStreet.ModuleDef();
             var typeRegistryBuilder = new TypeRegistryBuilder<Key32>(ByteOrder.Little);
+            typeRegistryBuilder.RegisterPrimitive("EA::Reflection::Bool", r =>
+            {
+                var x = r.ReadUInt32();
+                Debug.Assert(x is 0 or 1, "x is 0 or 1", $"Boolean value was not 0 or 1: {x}");
+                return x == 1;
+            }, (b, w) => w.Write(b ? 1u : 0u));
+
+            var module = new VaultLib.Support.Carbon.ModuleDef32();
             module.RegisterTypes(typeRegistryBuilder);
-            return new Database<Key32>(module.CreateExportFactory(), typeRegistryBuilder);
+
+            typeRegistryBuilder.RegisterStruct<Consoles.PlayStation2.CarbonFinal.SteeringSensitivityParameter>(
+                "SteeringSensitivityParameter");
+
+            return new Database<Key32>(
+                module.CreateExportFactory(),
+                typeRegistryBuilder
+            );
         }
 
         public IEnumerable<LoadedFile<Key32>> LoadFiles(Database<Key32> database, string directory)
@@ -66,22 +81,22 @@ namespace Attribulator.Plugins.SpeedProfiles
 
         public string GetName()
         {
-            return "Need for Speed ProStreet";
+            return "Need for Speed Carbon (PlayStation 2)";
         }
 
         public string GetGameId()
         {
-            return "PROSTREET";
+            return "CARBON";
         }
 
         public string GetProfileId()
         {
-            return "PROSTREET";
+            return "CARBON_PS2";
         }
 
         private static IEnumerable<string> GetFilesToLoad()
         {
-            return new[] { "attributes.bin", "cars_vault.bin", "fe_attrib.bin", "gameplay.bin" };
+            return new[] { "attributes.bin", "fe_attrib.bin", "gameplay.bin" };
         }
     }
 }

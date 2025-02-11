@@ -11,7 +11,7 @@ using VaultLib.Core.DB;
 using VaultLib.Core.Pack;
 using VaultLib.Support.World;
 
-namespace Attribulator.Plugins.SpeedProfiles
+namespace Attribulator.Plugins.SpeedProfiles.PC
 {
     public class WorldProfile : IProfile<Key32>
     {
