@@ -7,6 +7,7 @@ using Attribulator.API.Utils;
 using Attribulator.ModScript.API;
 using Attribulator.ModScript.API.Utils;
 using VaultLib.Core.Types;
+using VaultLib.Core.Types.Attrib.Types;
 using VaultLib.Core.Utils;
 
 namespace Attribulator.Plugins.ModScript.Commands
@@ -123,8 +124,7 @@ namespace Attribulator.Plugins.ModScript.Commands
             }
             else
             {
-                // TODO for VaultLib: change Matrix to be multiple floats instead of 1 array
-                if (itemToEdit is Matrix4x4 matrix && PropertyPath.Count == 1)
+                if (itemToEdit is Matrix matrix && PropertyPath.Count == 1)
                 {
                     var matrixPath =
                         PropertyPath[0].Split(new[] { '[', ']' }, StringSplitOptions.RemoveEmptyEntries)[1];
