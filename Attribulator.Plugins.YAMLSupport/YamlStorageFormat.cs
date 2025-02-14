@@ -30,13 +30,13 @@ namespace Attribulator.Plugins.YAMLSupport
         private static SerializerBuilder CreateDefaultSerializerBuilder<TKey>() where TKey : struct, IKey<TKey>
         {
             return new SerializerBuilder()
+                .WithQuotingNecessaryStrings(true)
                 .WithTypeConverter(new VltKeyTypeConverter<Key32>())
                 .WithTypeConverter(new VltKeyTypeConverter<Key64>())
                 .WithTypeConverter(new VltKeyTypeConverter<BinKey32>())
                 .WithTypeConverter(new VltKeyTypeConverter<BinKey64>())
                 .WithAttributeOverride<Matrix4x4>(m => m.Translation, new YamlIgnoreAttribute())
                 .WithAttributeOverride<Matrix4x4>(m => m.IsIdentity, new YamlIgnoreAttribute())
-                .WithQuotingNecessaryStrings(true)
                 .EnsureRoundtrip()
                 .DisableAliases();
         }
