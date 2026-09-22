@@ -79,14 +79,17 @@ namespace Attribulator.Plugins.SpeedProfiles
         }
 
         private static IEnumerable<string> GetFilesToLoad(string directory)
-        {
-            yield return Path.Combine(directory, "attributes.bin");
-            yield return Path.Combine(directory, "commerce.bin");
-            yield return Path.Combine(directory, "fe_attrib.bin");
+		{
+			yield return Path.Combine(directory, "attributes.bin");
+			var commercePath = Path.Combine(directory, "commerce.bin");
+			
+            if (File.Exists(commercePath))
+				yield return commercePath;
 
-            foreach (var file in Directory.GetFiles(Path.Combine(directory, "gc.vaults"), "*.bin",
-                SearchOption.TopDirectoryOnly))
-                yield return file;
-        }
+			yield return Path.Combine(directory, "fe_attrib.bin");
+			foreach (var file in Directory.GetFiles(Path.Combine(directory, "gc.vaults"), "*.bin",
+				SearchOption.TopDirectoryOnly))
+				yield return file;
+		}
     }
 }
